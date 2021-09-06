@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=300, initial-scale=0.55, maximum-scale=0.55, user-scalable=no">
+  <title>keyboard Setting</title>
+  <script language="JavaScript" src="./config.js"></script>
+  <script language="JavaScript" src="./index.js"></script>
+  <style><!--
+html {
+  -ms-user-select: none;
+  -moz-user-select: -moz-none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+    outline : none;
+}
+body {
+    margin: 0;
+    padding: 0;
+  -ms-user-select: none;
+  -moz-user-select: -moz-none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+    font-size: 30;
+    background-color: #90c1f4;
+}
+form {
+    margin: 0;
+    padding: 0;
+    display: inline-block;
+}
+
+div {
+    margin: 0;
+    padding: 0;
+}
+
+#body_box {
+    margin: 0;
+    padding: 16px;
+    position: absolute;
+}
+
+
+#setting_box {
+    font-size: 22px;
+    padding: 24px 24px 24px 24px;
+    margin: 0 0 10px 0;
+    border: solid 4px #0a2f88;
+    background-color: #f6feff;
+    min-width: 550px;
+    max-width: 600px;
+}
+
+#layer_box {
+    font-size: 30px;
+    padding: 24px 24px 24px 24px;
+    margin: 0 0 10px 0;
+    border: solid 4px #0a2f88;
+    background-color: #f6feff;
+}
+
+#select_box {
+    border: solid 4px #0a2f88;
+    background-color: #f6feff;
+}
+
+.button {
+   border: 3px solid #122406;
+   background: #a2c88d;
+   background: -moz-linear-gradient(top, #d8f7cd, #a2c88d);
+   background: -webkit-linear-gradient(top, #d8f7cd, #a2c88d);
+   background: -moz-linear-gradient(top, #d8f7cd, #a2c88d);
+   background: -ms-linear-gradient(top, #d8f7cd, #a2c88d);
+   background: -o-linear-gradient(top, #d8f7cd, #a2c88d);
+   padding: 11px 22px;
+   -webkit-border-radius: 16px;
+   -moz-border-radius: 16px;
+   border-radius: 16px;
+   color: #000000;
+   font-size: 30px;
+   font-family: Helvetica, Arial, Sans-Serif;
+   text-decoration: none;
+   vertical-align: middle;
+}
+
+.update_button {
+   border: 3px solid #122406;
+   background: #63beca;
+   background: -moz-linear-gradient(top, #99dbf4, #63beca);
+   background: -webkit-linear-gradient(top, #99dbf4, #63beca);
+   background: -moz-linear-gradient(top, #99dbf4, #63beca);
+   background: -ms-linear-gradient(top, #99dbf4, #63beca);
+   background: -o-linear-gradient(top, #99dbf4, #63beca);
+   padding: 11px 22px;
+   -webkit-border-radius: 16px;
+   -moz-border-radius: 16px;
+   border-radius: 16px;
+   color: #000000;
+   font-size: 30px;
+   font-family: Helvetica, Arial, Sans-Serif;
+   text-decoration: none;
+   vertical-align: middle;
+}
+
+.lists {
+    border: solid 1px black;
+}
+
+  //--></style>
+</head>
+<body>
+<div id="body_box">
+<table style="width: 600px; padding: 0 0 15px 0;" ><tr>
+<td><font style="margin: 0; padding: 0 0 16px 0;font-size: 30px; display: inline-block;"><b id="top_title">キーボード設定</b></font></td>
+<td align="right"><div id="top_menu_box">
+    <a href="#" class="button" onClick="javascript:mst.view_detail_setting();return false;">設定メニュー</a>
+</div></td>
+</tr></table>
+<div id="layer_box"></div>
+<div id="key_img_box" style="padding: 0 0 16px 0; display: none;">
+    <div id="key_box">
+    <canvas id="key_img" style="position: absolute;"></canvas>
+    <div id="key_objs_box" style="position: absolute;"></div>
+    </div>
+</div>
+<div id="setting_box" style="display: none;"></div>
+<div id="select_box" style="display: none;"></div>
+<div id="info_box" style="font-size: 30px;"></div><br><br>
+<div id="menu_box" style="display: none;">
+<center>
+<a href="#" class="button" onClick="javascript:mst.end_setting(1);return false;">保存して終了</a>　　　
+<a href="#" class="button" onClick="javascript:mst.end_setting(0);return false;">保存せずに終了</a>
+</center>
+<br><br>
+</div>
+</div>
+<script language="JavaScript"><!--
+
+// ページの表示が終わったら初期処理実行
+window.onload = function() {
+    mst.init();
+}
+
+//--></script>
+</body>
+</html>

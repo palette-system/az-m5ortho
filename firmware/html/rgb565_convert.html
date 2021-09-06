@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>rgb565 convert</title>
+</head>
+<body>
+<h3>RGB565 コンバーター</h3>
+<h5>指定したサイズに画像を縮小し、RGB565に変換するツールです。</h5>
+<br>
+
+作成する画像のサイズ：<br>
+<input type="text" id="size_width" style="width: 120px; text-align: right;" value="240"> × <input type="text" id="size_height" style="width: 120px; text-align: right;" value="240"><br>
+<input type="checkbox" id="size_flg" checked> サイズに合わせて画像を伸縮する<br><br>
+
+余白部分の色：<br>
+<input type="text" id="blank_color" style="width: 120px; text-align: right;" value="#000000"><br><br>
+
+画像選択：<br>
+<input type="file" accept="image/*"><br><br>
+
+作成した画像：<br>
+<canvas id="canvas" width="0" height="0"></canvas><br><br>
+
+RGB565：<br>
+<textarea id="rgb565_text" style="width: 900px; height: 400px;"></textarea>
+
+<!-- 以下、JavaScript -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script type="text/javascript">
+$(function() {
+  var file = null; // 選択ファイルが格納される変数
+  var blob = null; // 画像(BLOBデータ)が格納される変数
+
+  function toHex(v) {
+      return '0x' + (('00' + v.toString(16).toUpperCase()).substr(-2));
+  }
+
+  // ファイルが選択されたら実行される関数
+  $('input[type=file]').change(function() {
+
+    // ファイルを取得する
+    file = $(this).prop('files')[0];
+
+    // 選択されたファイルが画像かどうか判定する
+    // ここでは、jpeg形式とpng形式のみを画像をみなす
+    if (file.type != 'image/jpeg' && file.type != 'image/png' && file.type != 'image/bmp') {
+      // 画像でない場合は何もせず終了する
+      file = null;
+      blob = null;
+      return;
+    }
+
+    // 画像をリサイズする
+    var image = new Image();
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      image.onload = function() {
+
+        var max_width = parseInt($("#size_width").val());
+        var max_height = parseInt($("#size_height").val());
+        // 縮小後のサイズを計算する
+        var width, height;
+        var view_x, view_y;
+        if( $("#size_flg").prop('checked')){
+          // 指定サイズに合わせて画像を伸縮する場合
+          if((image.width / image.height) > (max_width / max_height)){
+            // ヨコ長の画像は横サイズを定数にあわせる
+            var ratio = image.height/image.width;
+            width = max_width;
+            height = max_width * ratio;
+            view_x = 0;
+            view_y = (max_height - height) / 2;
+          } else {
+            // タテ長の画像は縦のサイズを定数にあわせる
+            var ratio = image.width/image.height;
+            width = max_height * ratio;
+            height = max_height;
+            view_x = (max_width - width) / 2;
+            view_y = 0;
+          }
+        } else {
+          // 元の画像サイズままの場合
+          max_width = image.width;
+          max_height = image.height;
+          width = image.width;
+          height = image.height;
+          view_x = 0;
+          view_y = 0;
+        }
+
+        // 縮小画像を描画するcanvasのサイズを上で算出した値に変更する
+        var canvas = $('#canvas')
+                     .attr('width', max_width)
+                     .attr('height', max_height);
+
+        var ctx = canvas[0].getContext('2d');
+
+        // canvasに既に描画されている画像があればそれを消す
+        ctx.rect( 0, 0, max_width, max_height ) ;
+        ctx.fillStyle = $("#blank_color").val() ;
+        ctx.fill() ;
+
+        // canvasに縮小画像を描画する
+        ctx.drawImage(image,
+          0, 0, image.width, image.height,
+          view_x, view_y, width, height
+        );
+        
+        // canvasからrgb565のデータを取得
+        imageData = ctx.getImageData(0, 0, max_width, max_height);
+        console.log(imageData.data.length);
+        console.log(imageData.data);
+        var i = 0, j = 0;
+        var cr, cg, cb, ch, cl;
+        var res = "";
+        while (i < imageData.data.length) {
+            cr = imageData.data[i] >> 3;
+            cg = imageData.data[i + 1] >> 2;
+            cb = imageData.data[i + 2] >> 3;
+            ch = cr << 3 | cg >> 3;
+            cl = (cg & 0x07) << 5 | cb;
+            if (j == 0) res += "  ";
+            res += (i > 0)? ",": " ";
+            res += toHex(cl) + ","+toHex(ch);
+            j++;
+            if (j > 8) {
+                res += "\n";
+                j = 0;
+            }
+            i += 4;
+        }
+        var fname = file.name.split(".")[0] + "_img";
+        var ccode = "// "+file.name+"   [ "+max_width+" x "+max_height+" ]\n";
+        ccode += "const uint8_t "+fname+"["+(imageData.data.length / 2)+"] PROGMEM  = {\n" + res + "};\n";
+        $("#rgb565_text").html(ccode);
+        
+
+      }
+      image.src = e.target.result;
+    }
+    reader.readAsDataURL(file);
+  });
+
+
+
+});
+</script>
+</body>
+</html>

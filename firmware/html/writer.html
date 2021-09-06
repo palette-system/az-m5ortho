@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=300, initial-scale=0.55, maximum-scale=0.55, user-scalable=no">
+  <title>firmware writer</title>
+  <style><!--
+html {
+  -ms-user-select: none;
+  -moz-user-select: -moz-none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+    outline : none;
+}
+body {
+    margin: 0;
+    padding: 0;
+  -ms-user-select: none;
+  -moz-user-select: -moz-none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+    font-size: 30;
+    background-color: #90c1f4;
+}
+form {
+    margin: 0;
+    padding: 0;
+    display: inline-block;
+}
+
+div {
+    margin: 0;
+    padding: 0;
+}
+
+#body_box {
+    margin: 0;
+    padding: 16px;
+    position: absolute;
+}
+
+
+#setting_box {
+    font-size: 22px;
+    padding: 24px 24px 24px 24px;
+    margin: 0 0 10px 0;
+    border: solid 4px #0a2f88;
+    background-color: #f6feff;
+    min-width: 550px;
+    max-width: 600px;
+}
+
+
+
+
+
+.button {
+   border: 3px solid #122406;
+   background: #a2c88d;
+   background: -moz-linear-gradient(top, #d8f7cd, #a2c88d);
+   background: -webkit-linear-gradient(top, #d8f7cd, #a2c88d);
+   background: -moz-linear-gradient(top, #d8f7cd, #a2c88d);
+   background: -ms-linear-gradient(top, #d8f7cd, #a2c88d);
+   background: -o-linear-gradient(top, #d8f7cd, #a2c88d);
+   padding: 11px 22px;
+   -webkit-border-radius: 16px;
+   -moz-border-radius: 16px;
+   border-radius: 16px;
+   color: #000000;
+   font-size: 30px;
+   font-family: Helvetica, Arial, Sans-Serif;
+   text-decoration: none;
+   vertical-align: middle;
+}
+
+
+  //--></style>
+</head>
+<body>
+<div id="body_box">
+<font style="margin: 0; padding: 0 0 16px 0;font-size: 30px; display: inline-block;"><b id="top_title">ファームウェア</b></font>
+<div id="setting_box">
+<br>
+<b>bin ファイルを選択して下さい。</b><br><br>
+<form method="POST" enctype="multipart/form-data" id="firmware_form">
+<input type="file" id="firmware_file" name="update" style="font-size: 25px;border: 4px solid black;background-color: #e6f1ff;padding: 12px;width: 500px;"><br><br>
+</form>
+<br><br>
+<div id="info_box"></div>
+<br><br>
+<center id="btm_box">
+<a id="write_btn" href="#" class="button">書込み</a>
+</center>
+<br><br>
+</div>
+</div>
+<script language="JavaScript"><!--
+
+function $(id) { return document.getElementById(id); }
+function show(id) { if (!$(id)) { return; } else { $(id).style.display = "block"; } }
+function hide(id) { if (!$(id)) { return; } else { $(id).style.display = "none"; } }
+function set_html(id, html) { $(id).innerHTML = html; }
+
+var wr = {};
+
+// ファームウェア更新エラー時の処理
+wr.firmware_update_error = function(err) {
+    set_html("setting_box", "<b>エラー</b><br>ページを閉じて下さい。");
+};
+
+// ファームウェア更新OK
+wr.firmware_update_ok = function(xhr) {
+    set_html("setting_box", "<b>書込み成功</b><br>ページを閉じて下さい。");
+};
+
+// ファームウェア更新
+wr.firmware_update = function() {
+    if (!wr.firmware_file_data || !wr.firmware_file_data.length) {
+        set_html("info_box", "bin ファイルを指定して下さい");
+        return;
+    }
+    set_html("btm_box", "");
+    // フォームの情報を送信
+    var fd = new FormData($("firmware_form"));
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/firmware_update", true);
+    xhr.upload.addEventListener('progress', function(evt) {
+        if (!evt.lengthComputable) return;
+        var per = Math.round((evt.loaded / evt.total) * 100);
+        if (per < 100) {
+            set_html("setting_box", "ファイル送信中： " + per + " %");
+        } else {
+            set_html("setting_box", "ファームウェア更新中 ...");
+        }
+    });
+    xhr.addEventListener("error", wr.firmware_update_error);
+    xhr.upload.addEventListener("abort", wr.firmware_update_error);
+    xhr.upload.addEventListener("error", wr.firmware_update_error);
+    xhr.upload.addEventListener("timeout", wr.firmware_update_error);
+    xhr.onreadystatechange = function(e) {
+        if (this.readyState == 4 && this.status == 200) {
+            wr.firmware_update_ok(this);
+        } else {
+            wr.firmware_update_error(null);
+        }
+    };
+    xhr.send(fd);
+};
+
+// ページの表示が終わったら初期処理実行
+window.onload = function() {
+    wr.firmware_file_data = null;
+    $("firmware_file").addEventListener('change', (evt) => {
+        if (evt.target.files[0].name.split(".").pop() != "bin") {
+            set_html("info_box", "bin ファイルを指定して下さい");
+            wr.firmware_file_data = null;
+            return false;
+        }
+        // 選択されたファイルの情報を保持
+        set_html("info_box", "");
+        wr.firmware_file_data = evt.target.files;
+    });
+    $("write_btn").addEventListener('click', (evt) => {
+        wr.firmware_update();
+    });
+}
+
+//--></script>
+</body>
+</html>
