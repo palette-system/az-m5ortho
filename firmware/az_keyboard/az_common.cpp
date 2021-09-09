@@ -96,6 +96,8 @@ short *row_list;
 short *direct_list;
 short *touch_list;
 
+// バッテリーオブジェクト
+AXP192 power;
 
 // ステータス用LED点滅
 void IRAM_ATTR status_led_write() {
@@ -177,9 +179,6 @@ AzCommon::AzCommon() {
 void AzCommon::common_start() {
     // M5Stack初期化
     M5.begin();
-    M5.Lcd.setRotation(0); // 画面の向きを横向きに
-    // M5.Lcd.drawBitmap(0, 0, 240, 320, (uint16_t *)m5_palettesystem_img);
-    M5.Lcd.fillScreen(TFT_BLACK);
     // 乱数初期化
     randomSeed(millis());
     // ファイルシステム初期化

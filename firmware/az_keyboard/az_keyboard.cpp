@@ -79,8 +79,7 @@ void AzKeyboard::start_keyboard() {
     my_function.begin();
 
     // 液晶は待ち受け画像
-    if (common_cls.on_tft_unit()) disp->view_type = DISP_TYPE_STANDBY;
-    M5.Lcd.drawBitmap(0, 0, 240, 320, (uint16_t *)m5_palettesystem_img);
+    disp->view_standby_image();
   
 }
 
@@ -263,7 +262,7 @@ void AzKeyboard::send_webhook(const JsonObject &key_set) {
         return;
     }
     // 液晶にwebhook中を表示する
-    if (common_cls.on_tft_unit()) disp->view_webhook();
+    disp->view_webhook();
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
     char res_char[1024];
     // httpリクエスト送信
@@ -272,7 +271,7 @@ void AzKeyboard::send_webhook(const JsonObject &key_set) {
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
     ESP_LOGD(LOG_TAG, "http res: %S\n", res_char);
     // 液晶に待ち受け画像を表示する
-    if (common_cls.on_tft_unit()) disp->view_standby_image();
+    disp->view_standby_image();
     send_string(res_char);
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
 }
@@ -322,7 +321,7 @@ void AzKeyboard::key_down_action(int key_num) {
         return;
     }
     // 打鍵QRコード表示中は何もしない
-    if (common_cls.on_tft_unit() && disp->_qr_flag) return;
+    if (disp->_qr_flag) return;
     // 動作タイプ別の動作
     if (action_type == 1) {
         // 通常キー入力
@@ -587,7 +586,82 @@ void AzKeyboard::unit_loop_exec(void) {
     }
 }
 
-// 押された所を1にする
+// マウスジョイスティック動作
+void AzKeyboard::mouse_loop_joy() {
+    if(M5.Touch.ispressed()) {
+        int x, y, send_x, send_y;
+        TouchPoint_t tp;
+        if (last_touch_index < 0) {
+          last_touch_index = 0;
+          touch_send_count = 0;
+          touch_send_index = 0;
+        }
+        tp = M5.Touch.getPressPoint();
+        x = 240 - tp.y;
+        y = tp.x;
+        if (x > 20 && x < 220 && y > 20 && y < 300) {
+            send_x = ( x - start_touch_x) / 8;
+            send_y = (y - start_touch_y) / 8;
+            if (last_touch_index == 0) {
+                start_touch_x = x;
+                start_touch_y = y;
+                // M5.Lcd.drawRoundRect(x, y, 17, 17, 3, TFT_RED);
+            } else if (send_x != 0 || send_y != 0) {
+                bleKeyboard.mouse_move(send_x, send_y, 0, 0);
+                touch_send_count++;
+            }
+            last_touch_x = x;
+            last_touch_y = y;
+            last_touch_index++;
+        }
+    } else {
+        if (last_touch_index >= 0 && last_touch_index < 40&& touch_send_count == 0 && !bleKeyboard.mouse_press_check(1)
+            ) {
+            bleKeyboard.mouse_press(1);
+            delay(50);
+            bleKeyboard.mouse_release(1);
+        }
+        last_touch_index = -1;
+    }
+}
+
+// マウスタッチパッド動作
+void AzKeyboard::mouse_loop_pad() {
+    if(M5.Touch.ispressed()) {
+        int x, y, send_x, send_y;
+        TouchPoint_t tp;
+        if (last_touch_index < 0) {
+          last_touch_index = 0;
+          touch_send_count = 0;
+          touch_send_index = 0;
+        }
+        tp = M5.Touch.getPressPoint();
+        x = 240 - tp.y;
+        y = tp.x;
+        if (x > 20 && x < 220 && y > 20 && y < 300) {
+            send_x = ( x - start_touch_x);
+            send_y = (y - start_touch_y);
+            if (last_touch_index == 0) {
+                start_touch_x = x;
+                start_touch_y = y;
+            } else if (send_x != 0 || send_y != 0) {
+                bleKeyboard.mouse_move(send_x, send_y, 0, 0);
+                touch_send_count++;
+            }
+            start_touch_x = x;
+            start_touch_y = y;
+            last_touch_index++;
+        }
+    } else {
+        if (last_touch_index >= 0 && last_touch_index < 40&& touch_send_count == 0 && !bleKeyboard.mouse_press_check(1)
+            ) {
+            bleKeyboard.mouse_press(1);
+            delay(50);
+            bleKeyboard.mouse_release(1);
+        }
+        last_touch_index = -1;
+    }
+}
 
 // 定期実行の処理
 void AzKeyboard::loop_exec(void) {
@@ -610,47 +684,15 @@ void AzKeyboard::loop_exec(void) {
     // キー入力クリア処理
     press_data_clear();
 
+    // タッチパネルマウス操作
+    // mouse_loop_pad();
+    mouse_loop_joy();
+
     // 打鍵数定期処理(自動保存など)
     dakeycls.loop_exec();
 
     // RGB_LEDを制御する定期処理
     rgb_led_cls.rgb_led_loop_exec();
-
-    if(M5.Touch.ispressed()) {
-        int x, y, send_x, send_y;
-        TouchPoint_t tp;
-        if (last_touch_index < 0) {
-          last_touch_index = 0;
-          touch_send_count = 0;
-          touch_send_index = 0;
-        }
-        tp = M5.Touch.getPressPoint();
-        x = 240 - tp.y;
-        y = tp.x;
-        if (x > 20 && x < 220 && y > 20 && y < 300) {
-            send_x = ( x - start_touch_x) / 10;
-            send_y = (y - start_touch_y) / 10;
-            if (last_touch_index == 0) {
-                start_touch_x = x;
-                start_touch_y = y;
-                // M5.Lcd.drawRoundRect(x, y, 17, 17, 3, TFT_RED);
-            } else if (send_x != 0 || send_y != 0) {
-                bleKeyboard.mouse_move(send_x, send_y, 0, 0);
-                touch_send_count++;
-            }
-            last_touch_x = x;
-            last_touch_y = y;
-            last_touch_index++;
-        }
-    } else {
-        if (last_touch_index >= 0 && last_touch_index < 40&& touch_send_count == 0 
-            ) {
-            bleKeyboard.mouse_press(1);
-            delay(50);
-            bleKeyboard.mouse_release(1);
-        }
-        last_touch_index = -1;
-    }
 
     // 現在のキーの状態を前回部分にコピー
     common_cls.key_old_copy();

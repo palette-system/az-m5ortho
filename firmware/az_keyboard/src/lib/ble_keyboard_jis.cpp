@@ -366,6 +366,11 @@ void BleKeyboardJIS::mouse_release(uint8_t b)
     this->mouse_move(0,0,0,0);
 };
 
+bool BleKeyboardJIS::mouse_press_check(uint8_t b)
+{
+	return (this->_MouseButtons & b);
+};
+
 void BleKeyboardJIS::mouse_move(signed char x, signed char y, signed char wheel, signed char hWheel)
 {
     if (this->isConnected()) {

@@ -12,16 +12,15 @@
 #include <WiFiMulti.h>
 #include <HTTPClient.h>
 #include <Adafruit_NeoPixel.h>
+#include  <AXP192.h>
 
 #include "src/lib/neopixel.h"
 #include "src/lib/display.h"
 #include "src/lib/HTTPClient_my.h"
-#include "m5ortho.h"
 
 
 // キーボード
-#include "src/keyboard/az_macro.h"
-// #include "src/keyboard/az_66jp.h"
+#include "src/keyboard/az_m5ortho.h"
 
 
 #if defined(CONFIG_ARDUHAL_ESP_LOG)
@@ -228,6 +227,8 @@ extern AzCommon common_cls;
 // 設定JSONオブジェクト
 extern JsonObject setting_obj;
 
+// バッテリーオブジェクト
+extern AXP192 power;
 
 
 

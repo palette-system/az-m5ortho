@@ -27,6 +27,8 @@ void Display::begin(int option_type) {
 	this->_qr_flag = 0;
 	this->_last_view_type = 255;
 	this->_last_view_info = 255;
+    M5.Lcd.setRotation(DISPLAY_ROTATION); // 画面の向きを横向きに
+    M5.Lcd.fillScreen(TFT_BLACK);
 }
 
 // 画面いっぱい黒い画面
@@ -103,16 +105,16 @@ void Display::view_dakagi_qr_on() {
 
 // 画面を真っ暗にする
 void Display::view_full_black() {
-//    this->_tft->fillScreen(BLACK);
+    M5.Lcd.fillScreen(BLACK);
+	this->_last_view_type = 255;
 }
 
 
-// 起動ムービー(AZ-Macro用)
-#ifdef KEYBOARD_AZMACRO
 void Display::open_movie() {
 }
 // 設定モード画面表示
 void Display::view_setting_mode() {
+    M5.Lcd.drawBitmap(0, 0, 240, 320, (uint16_t *)m5_setting_img);
 	this->_last_view_type = DISP_TYPE_SETTING;
 }
 // 保存中画面表示
@@ -160,24 +162,8 @@ void Display::view_dakagi_qr() {
 // 待ち受け画像表示
 void Display::view_standby_image() {
 	if (this->_last_view_type == DISP_TYPE_STANDBY) return; // 最後に表示したのが待ち受けなら何もしない
-	if (this->_stimg_load_flag) {
-		// SPRAMにデータロード済みならSPRAMに入ってる待ち受け画像を表示
-//		this->_tft->viewBMPspi_head(0, 0, 135, 240);
-//		this->_tft->viewBMPspi_data(this->_stimg_data, 64800);
-	} else if (ESP.getFreePsram() > 64800) {
-		// SPRAMに空き容量があれば待ち受け画像をSPRAMにロード
-		this->_stimg_data = (uint8_t *)ps_malloc(64800);
-		if(SPIFFS.exists("/stimg.dat")){
-			File fp = SPIFFS.open("/stimg.dat", "r");
-			int s = fp.read(this->_stimg_data, 64800);
-			fp.close();
-		}
-//		this->_tft->viewBMPspi_head(0, 0, 135, 240);
-//		this->_tft->viewBMPspi_data(this->_stimg_data, 64800);
-	} else {
-		// SPRAMに空きが無ければファイルから直接表示
-//	    this->_tft->viewBMPFile(0,0, 135, 240, "/stimg.dat", 0);
-	}
+	M5.Lcd.drawBitmap(0, 0, 240, 320, (uint16_t *)m5_palettesystem_img);
+	M5.Lcd.printf("BAT: %f", power.GetBatVoltage());
 	this->_last_view_type = DISP_TYPE_STANDBY;
 	this->_last_view_info = 255;
 }
@@ -207,7 +193,6 @@ void Display::view_error_wifi_conn() {
 void Display::view_dakey_save_comp() {
 }
 
-#endif
 
 
 

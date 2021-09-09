@@ -31,10 +31,8 @@ void setup() {
         common_cls.set_status_led_timer();
     }
     // ディスプレイ初期化
-    if (common_cls.on_tft_unit()) {
-        disp = new Display();
-        disp->begin(option_type_int);
-    }
+    disp = new Display();
+    disp->begin(option_type_int);
     // RGB_LEDクラス初期化
     if (setting_obj.containsKey("rgb_pin") &&
             setting_obj.containsKey("matrix_row") &&

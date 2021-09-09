@@ -25,6 +25,8 @@ class AzKeyboard
         void press_mouse_list_push(int key_num, short move_x, short move_y, short move_speed); // マウス移動中リストに追加
         void press_mouse_list_remove(int key_num); // マウス移動中リストから削除
         void move_mouse_loop(); // マウス移動処理
+        void mouse_loop_joy(); // マウスジョイスティック動作
+        void mouse_loop_pad(); // マウスタッチパッド動作
         void press_data_clear(); // キーを押したままリストをクリア
     
     private:

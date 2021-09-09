@@ -94,7 +94,7 @@ bool handleUrl(String path) {
 
     } else if (path.indexOf("/firmware_version") == 0) {
         // ファームウェアのバージョン教えて
-        sprintf(scmd, "{\"v\": \"%S\", \"t\": %D}", FIRMWARE_VERSION, AZESP32_TYPE);
+        sprintf(scmd, "{\"v\": \"%S\", \"t\": %D, \"d\": %D}", FIRMWARE_VERSION, AZESP32_TYPE, DISPLAY_ROTATION);
         server.send(200,"text/html", scmd);
         return true;
 
@@ -308,7 +308,7 @@ void start_wifi() {
                 Update.printError(Serial);
             }
             // 液晶に保存中画面を表示する
-            if (common_cls.on_tft_unit()) disp->view_save();
+            disp->view_save();
         } else if (upload.status == UPLOAD_FILE_WRITE) {
             /* flashing firmware to ESP*/
             ESP_LOGD(LOG_TAG, "Update: write %D\n", upload.currentSize);
@@ -325,7 +325,7 @@ void start_wifi() {
             // ステータスLED消灯
             status_led_mode = 0;
             // 液晶を黒い画面に
-            if (common_cls.on_tft_unit()) disp->view_black();
+            disp->view_black();
         }
     });
     // ファイルアップロード
@@ -345,7 +345,7 @@ void start_wifi() {
                 sprintf(upload_buf, "{\"stat\": 1, \"err\": \"open error\"}");
             }
             // 液晶に保存中画面を表示する
-            if (common_cls.on_tft_unit()) disp->view_save();
+            disp->view_save();
         } else if (upload.status == UPLOAD_FILE_WRITE) {
             if (upload_stat == 0) {
                 if(!upfp.write(upload.buf, upload.currentSize)){
@@ -361,7 +361,7 @@ void start_wifi() {
                 upfp.close();
             }
             // 液晶に設定モードを表示
-            if (common_cls.on_tft_unit()) disp->view_setting_mode();
+            disp->view_setting_mode();
         }
     });
     // 受け取ったデータを液晶に流し込む
@@ -404,10 +404,7 @@ void AzSetting::start_setting() {
     status_led_mode = 2;
 
     // 液晶に設定モード画面を表示する
-    if (common_cls.on_tft_unit()) {
-        disp->view_setting_mode();
-    }
-    M5.Lcd.drawBitmap(0, 0, 240, 320, (uint16_t *)m5_setting_img);
+    disp->view_setting_mode();
 }
 
 // キーが押された時の処理

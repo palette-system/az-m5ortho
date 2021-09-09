@@ -385,6 +385,7 @@ class BleKeyboardJIS
     void mouse_click(uint8_t b);
     void mouse_press(uint8_t b);
     void mouse_release(uint8_t b);
+	bool mouse_press_check(uint8_t b);
     void mouse_move(signed char x, signed char y, signed char wheel, signed char hWheel);
     size_t press_set(uint8_t k); // 指定したキーだけ押す
     size_t press_raw(unsigned short k);
