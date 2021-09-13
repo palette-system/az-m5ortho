@@ -696,7 +696,13 @@ void AzKeyboard::loop_exec(void) {
 
     // 現在のキーの状態を前回部分にコピー
     common_cls.key_old_copy();
+    // M5.Lcd.setCursor(0, 0);
+    // M5.Lcd.printf("m %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT));
+    // M5.Lcd.printf("m %D %D\n", ESP.getHeapSize(), ESP.getFreeHeap());
 
+    // lvgl
+    // lv_task_handler();
+    
     delay(5);
 
   }

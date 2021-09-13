@@ -2,6 +2,10 @@
 #define AzCommon_h
 
 #include <M5Core2.h>
+#include <Arduino.h>
+#include <lvgl.h>
+#include <Wire.h>
+#include <SPI.h>
 
 #include "FS.h"
 #include "SPIFFS.h"
@@ -81,6 +85,21 @@ struct mrom_data_set {
     int boot_mode; // 起動モード 0=キーボード / 1=設定モード
     char uid[12];
 };
+
+// ArduinoJSON SPRAM用の定義
+struct SpiRamAllocator {
+  void* allocate(size_t size) {
+    return heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+  }
+  void deallocate(void* pointer) {
+    heap_caps_free(pointer);
+  }
+  void* reallocate(void* ptr, size_t new_size) {
+    return heap_caps_realloc(ptr, new_size, MALLOC_CAP_SPIRAM);
+  }
+};
+using SpiRamJsonDocument = BasicJsonDocument<SpiRamAllocator>;
+
 
 // クラスの定義
 class AzCommon
@@ -232,5 +251,15 @@ extern AXP192 power;
 
 
 
+extern TFT_eSPI lvtft;
+extern lv_disp_buf_t disp_buf;
+extern lv_color_t lvbuf[LV_HOR_RES_MAX * 10];
+extern uint32_t frame;
+extern uint32_t startTime;
+
+bool my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data);
+void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
+void event_handler(lv_obj_t * obj, lv_event_t event);
+void lv_setup();
 
 #endif

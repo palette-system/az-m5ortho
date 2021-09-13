@@ -1,3 +1,6 @@
+// 環境の作り方
+// https://raspberrypi.mongonta.com/howto-start-m5stack-core2arduinoide/
+
 #include "az_common.h"
 #include "az_keyboard.h"
 #include "az_setting.h"
