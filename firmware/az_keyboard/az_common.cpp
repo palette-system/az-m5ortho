@@ -845,8 +845,8 @@ bool AzCommon::create_setting_json() {
 void AzCommon::pin_setup() {
     
   // I2C初期化
-  if (Wire1.begin(26, 14)) {
-      Wire1.setClock(1700000);
+  if (Wire.begin(26, 14)) {
+      Wire.setClock(1700000);
       M5.Lcd.printf("Wire1 begin ok\n");
   } else {
       M5.Lcd.printf("Wire1 begin ng\n");
@@ -855,7 +855,7 @@ void AzCommon::pin_setup() {
   // IOエキスパンダ初期化
   int i, j;
   for (i=0; i<4; i++) {
-      if (iomcp[i].begin_I2C(0x20 + i, &Wire1)) {
+      if (iomcp[i].begin_I2C(0x20 + i, &Wire)) {
           M5.Lcd.printf("begin_I2C %D ok\n", i);
       } else {
           M5.Lcd.printf("begin_I2C %D ng\n", i);
