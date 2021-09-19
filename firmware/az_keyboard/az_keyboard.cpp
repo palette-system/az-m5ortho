@@ -48,8 +48,8 @@ void AzKeyboard::start_keyboard() {
     bleKeyboard.begin();
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
     
-    // キーボードの言語を指定(日本語=0/ US=1)
-    bleKeyboard.set_keyboard_language(setting_obj["keyboard_language"].as<signed int>());
+    // キーボードの言語を指定(日本語=0/ US=1 / 日本語(US記号) = 2)
+    bleKeyboard.set_keyboard_language(keyboard_language);
 
     // ステータスLED点灯
     status_led_mode = 1;
@@ -256,7 +256,7 @@ void AzKeyboard::move_mouse_loop() {
 
 
 // WEBフックを送信する
-void AzKeyboard::send_webhook(const JsonObject &key_set) {
+void AzKeyboard::send_webhook(char *jstr) {
     if (!wifi_conn_flag) {
         send_string("wifi not connected.");
         return;
@@ -266,7 +266,7 @@ void AzKeyboard::send_webhook(const JsonObject &key_set) {
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
     char res_char[1024];
     // httpリクエスト送信
-    String r = common_cls.send_webhook(key_set);
+    String r = common_cls.send_webhook(jstr);
     r.toCharArray(res_char, 1024);
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
     ESP_LOGD(LOG_TAG, "http res: %S\n", res_char);
@@ -287,31 +287,30 @@ void AzKeyboard::send_string(char *send_char) {
         // 連続して同じ文字の入力だったら一回離す
         if (i > 0 && send_char[i] == send_char[i - 1]) {
             bleKeyboard.releaseAll();
-            delay(70);
+            delay(30);
         }
         // 指定したキーだけ押す
         bleKeyboard.press_set(send_char[i]);
-        delay(70);
+        delay(30);
         i++;
     }
     // 全て離す
     bleKeyboard.releaseAll();
 }
 
-// キーが押された時の処理
 void AzKeyboard::key_down_action(int key_num) {
     int i, m, k, r, lid;
     // キーの設定取得
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
-    JsonObject key_set = common_cls.get_key_setting(select_layer_no, key_num);
+    setting_key_press key_set = common_cls.get_key_setting(select_layer_no, key_num);
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
     // キーの押された時の設定があるか確認
-    if (key_set.isNull() || !key_set.containsKey("press") || !key_set["press"].containsKey("action_type")) {
+    if (key_set.layer < 0 || key_set.key_num < 0 || key_set.action_type < 0) {
         // 設定が無ければ何もしない
         return;
     }
     // キーが押された時の動作タイプ取得
-    int action_type = key_set["press"]["action_type"].as<signed int>();
+    int action_type = key_set.action_type;
     // キーボードの接続が無ければ何もしない(レイヤー切り替え、WEBフック以外)
     if (action_type != 3 && action_type != 4 && action_type != 6 && action_type != 7 && action_type != 8 && !bleKeyboard.isConnected()) {
         // 押したよリストに追加だけする
@@ -321,36 +320,30 @@ void AzKeyboard::key_down_action(int key_num) {
         return;
     }
     // 打鍵QRコード表示中は何もしない
-    if (disp->_qr_flag) return;
+    if (common_cls.on_tft_unit() && disp->_qr_flag) return;
     // 動作タイプ別の動作
     if (action_type == 1) {
         // 通常キー入力
-        m = key_set["press"]["key"].size();
-        r = -1;
-    	if (key_set["press"].containsKey("repeat_interval")) r = key_set["press"]["repeat_interval"];
-        for (i=0; i<m; i++) {
-            k = key_set["press"]["key"][i].as<signed int>();
-            if (r < 0 || r > 50) {
-                if (k & MOUSE_CODE) {
+        setting_normal_input normal_input;
+        memcpy(&normal_input, key_set.data, sizeof(setting_normal_input));
+        for (i=0; i<normal_input.key_length; i++) {
+            if (normal_input.repeat_interval < 0 || normal_input.repeat_interval > 50) {
+                if (normal_input.key[i] & MOUSE_CODE) {
                     // マウスボタンだった場合
-                    bleKeyboard.mouse_press(k - MOUSE_CODE); // マウスボタンを押す
+                    bleKeyboard.mouse_press(normal_input.key[i] - MOUSE_CODE); // マウスボタンを押す
                 } else {
                     // キーコードだった場合
-                    bleKeyboard.press_raw(k); // キーを押す
+                    bleKeyboard.press_raw(normal_input.key[i]); // キーを押す
                 }
             }
             // キー押したよリストに追加
-            press_key_list_push(action_type, key_num, k, select_layer_no, r);
-            ESP_LOGD(LOG_TAG, "key press : %D %D\r\n", key_num, k);
+            press_key_list_push(action_type, key_num, normal_input.key[i], select_layer_no, normal_input.repeat_interval);
+            ESP_LOGD(LOG_TAG, "key press : %D %D\r\n", key_num, normal_input.key[i]);
         }
 
     } else if (action_type == 2) {
         // 固定テキストの入力
-        String text_str = key_set["press"]["text"].as<String>();
-        char text_char[512];
-        text_str += "\0";
-        text_str.toCharArray(text_char, 512);
-        send_string(text_char); // 特定の文章を送る
+        send_string(key_set.data); // 特定の文章を送る
         // キー押したよリストに追加
         press_key_list_push(action_type, key_num, -1, select_layer_no, -1);
 
@@ -358,25 +351,26 @@ void AzKeyboard::key_down_action(int key_num) {
         // マウス移動リストクリア
         press_mouse_list_clean();
         // レイヤーの切り替え
-        lid = key_set["press"]["layer"].as<signed int>();
-        m = select_layer_no;
+        lid = *key_set.data;
         select_layer_no = lid;
         // 最後に押されたレイヤーボタン設定
         last_select_layer_key = key_num;
         // キー押したよリストに追加
-        press_key_list_push(action_type, key_num, -1, m, -1);
+        press_key_list_push(action_type, key_num, -1, select_layer_no, -1);
         ESP_LOGD(LOG_TAG, "key press layer : %D %D\r\n", key_num, lid);
 
     } else if (action_type == 4) {
         // webフック
-        send_webhook(key_set["press"]["webhook"]);
+        send_webhook(key_set.data);
         
     } else if (action_type == 5) {
         // マウス移動
+        setting_mouse_move mouse_move_input;
+        memcpy(&mouse_move_input, key_set.data, sizeof(setting_mouse_move));
         press_mouse_list_push(key_num,
-            key_set["press"]["move"]["x"].as<signed int>(),
-            key_set["press"]["move"]["y"].as<signed int>(),
-            key_set["press"]["move"]["speed"].as<signed int>());
+            mouse_move_input.x,
+            mouse_move_input.y,
+            mouse_move_input.speed);
         // キー押したよリストに追加
         press_key_list_push(action_type, key_num, -1, select_layer_no, -1);
 
@@ -388,7 +382,7 @@ void AzKeyboard::key_down_action(int key_num) {
 
     } else if (action_type == 7 && ankeycls.ankey_flag == 0) {
         // LED設定ボタン(暗記処理中は動作無視)
-        m = key_set["press"]["led_setting_type"].as<signed int>();
+        m = *key_set.data;
         if (m == 0) {
             // ON / OFF
             rgb_led_cls.setting_status();
@@ -408,7 +402,7 @@ void AzKeyboard::key_down_action(int key_num) {
 
     } else if (action_type == 8 && ankeycls.ankey_flag == 0) {
         // 打鍵設定ボタン(暗記処理中は動作無視)
-        m = key_set["press"]["dakagi_settype"].as<signed int>();
+        m = *key_set.data;
         if (m == 0) {
             // サーモグラフ表示
             disp->view_dakagi_thermo_on();
@@ -686,7 +680,7 @@ void AzKeyboard::loop_exec(void) {
 
     // タッチパネルマウス操作
     // mouse_loop_pad();
-    mouse_loop_joy();
+    // mouse_loop_joy();
 
     // 打鍵数定期処理(自動保存など)
     dakeycls.loop_exec();
@@ -701,7 +695,7 @@ void AzKeyboard::loop_exec(void) {
     // M5.Lcd.printf("m %D %D\n", ESP.getHeapSize(), ESP.getFreeHeap());
 
     // lvgl
-    // lv_task_handler();
+    lv_task_handler();
     
     delay(5);
 

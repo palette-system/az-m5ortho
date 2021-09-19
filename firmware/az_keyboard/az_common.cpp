@@ -1,9 +1,22 @@
 #include "az_common.h"
 
 
-// セッティングJSONを保持する領域
-SpiRamJsonDocument *setting_doc;
-JsonObject setting_obj;
+// キーが押された時の設定
+uint16_t setting_length;
+setting_key_press *setting_press;
+// wifi設定
+uint8_t wifi_data_length;
+setting_wifi *wifi_data;
+// アクセスポイントパスワード
+char *ap_pass_char;
+// RGBLED
+int8_t rgb_pin;
+int8_t matrix_row;
+int8_t matrix_col;
+int8_t *led_num;
+int8_t *key_matrix;
+uint8_t led_num_length;
+uint8_t key_matrix_length;
 
 
 #define GPIO_OUT       *(volatile uint32_t *)0x3FF44004
@@ -44,6 +57,9 @@ int key_input_length;
 // キーボードタイプの番号
 int keyboard_type_int;
 
+// キーボードの言語(日本語=0/ US=1 / 日本語(US記号) = 2)
+uint8_t keyboard_language;
+
 // オプションタイプの番号
 int option_type_int;
 
@@ -52,6 +68,12 @@ uint8_t trackball_direction;
 
 // トラックボールのカーソル移動速度
 uint8_t trackball_speed;
+
+// 踏みキーの反転フラグ
+bool foot_inversion;
+
+// オープニングムービー再生フラグ
+bool op_movie_flag;
 
 // タップした位置
 short start_touch_x;
@@ -101,6 +123,10 @@ short *touch_list;
 // バッテリーオブジェクト
 AXP192 power;
 
+// I/Oエキスパンダ用
+Adafruit_MCP23X17 iomcp[4];
+
+// LVGL用
 TFT_eSPI lvtft = TFT_eSPI();
 lv_disp_buf_t disp_buf;
 lv_color_t lvbuf[LV_HOR_RES_MAX * 10];
@@ -226,10 +252,7 @@ void AzCommon::set_status_led_timer() {
 void AzCommon::wifi_connect() {
     // WIFI 接続
     int i;
-    int wifi_len = setting_obj["wifi"].size();
-    String ssid, pass;
-    char ssid_char[64], pass_char[64];
-    if (wifi_len <= 0) {
+    if (wifi_data_length <= 0) {
         ESP_LOGD(LOG_TAG, "wifi : not setting\r\n");
         wifi_conn_flag = 0;
         return;
@@ -237,13 +260,9 @@ void AzCommon::wifi_connect() {
     // 液晶にWiFi接続中画面を表示する
     if (common_cls.on_tft_unit()) disp->view_wifi_conn();
     // WiFiに接続(一番電波が強いAPへ接続)
-    for (i=0; i<wifi_len; i++) {
-        ssid = setting_obj["wifi"][i]["ssid"].as<String>();
-        pass = setting_obj["wifi"][i]["pass"].as<String>();
-        ssid.toCharArray(ssid_char, 64);
-        pass.toCharArray(pass_char, 64);
-        wifiMulti.addAP(ssid_char, pass_char);
-        ESP_LOGD(LOG_TAG, "wifi : [%S] [%S]\r\n", ssid_char, pass_char);
+    for (i=0; i<wifi_data_length; i++) {
+        wifiMulti.addAP(wifi_data[i].ssid, wifi_data[i].pass);
+        ESP_LOGD(LOG_TAG, "wifi : [%S] [%S]", wifi_data[i].ssid, wifi_data[i].pass);
     }
     ESP_LOGD(LOG_TAG, "wifi : connect start\r\n");
     i = 0;
@@ -333,18 +352,25 @@ String AzCommon::send_webhook_post_file(char *url, char *file_path) {
 }
 
 // webリクエストを送信する
-String AzCommon::send_webhook(const JsonObject &prm) {
+String AzCommon::send_webhook(char *setting_data) {
+    ESP_LOGD(LOG_TAG, "send_webhook start: %S %D\r\n", setting_data, strlen(setting_data));
+    int n = strlen(setting_data) + 1;
+    char jchar[n];
+    memcpy(jchar, setting_data, n);
+    DynamicJsonDocument setting_doc(n + 512);
+    deserializeJson(setting_doc, jchar);
+    JsonObject prm = setting_doc.as<JsonObject>();
     String url = prm["url"].as<String>();
-    char url_char[1024];
+    int m = url.length() + 1;
+    char url_char[m];
     url += "\0";
-    url.toCharArray(url_char, 1024);
+    url.toCharArray(url_char, m);
     if (url.startsWith("http://") || url.startsWith("https://")) {
         return http_request(url_char, prm);        
     } else {
         return String("url error");
     }
 }
-
 
 // HTTPリクエストを送信する
 String AzCommon::http_request(char *url, const JsonObject &prm) {
@@ -419,8 +445,22 @@ int AzCommon::split(String data, char delimiter, String *dst){
     return (index + 1);
 }
 
+// レイヤー名、キー名から番号を抜き出す
+int split_num(char *c) {
+    // _の文字まで進める
+    while (c[0] != 0x5F && c[0] != 0x00) {
+        c++;
+    }
+    if (c[0] == 0x5F) c++;
+    return String(c).toInt();
+}
+
 // JSONデータを読み込む
 void AzCommon::load_setting_json() {
+    // セッティングJSONを保持する領域
+    SpiRamJsonDocument setting_doc(SETTING_JSON_BUF_SIZE);
+    JsonObject setting_obj;
+
     // ファイルが無い場合はデフォルトファイル作成
     if (!SPIFFS.exists(SETTING_JSON_PATH)) {
         if (!create_setting_json()) return;
@@ -428,22 +468,35 @@ void AzCommon::load_setting_json() {
     // ファイルオープン
     File json_file = SPIFFS.open(SETTING_JSON_PATH);
     if(!json_file){
-        ESP_LOGD(LOG_TAG, "load_setting_json open error\n");
+        // ファイルが開けなかった場合はデフォルトファイル作り直して再起動
+        ESP_LOGD(LOG_TAG, "json file open error\n");
+        create_setting_json();
+        delay(1000);
+        ESP.restart(); // ESP32再起動
         return;
     }
     // 読み込み＆パース
-    setting_doc = new SpiRamJsonDocument(SETTING_JSON_BUF_SIZE);
-    DeserializationError err = deserializeJson(*setting_doc, json_file);
+    DeserializationError err = deserializeJson(setting_doc, json_file);
     if (err) {
-        M5.Lcd.printf("load_setting_json deserializeJson error %D\n", err);
-        ESP_LOGD(LOG_TAG, "load_setting_json deserializeJson error %D\n", err);
+        ESP_LOGD(LOG_TAG, "load_setting_json deserializeJson error\n");
+        create_setting_json();
+        delay(1000);
+        ESP.restart(); // ESP32再起動
         return;
     }
-
-        M5.Lcd.printf("load_setting_json deserializeJson ok\n");
-        ESP_LOGD(LOG_TAG, "load_setting_json deserializeJson OK!\n");
+    json_file.close();
     // オブジェクトを保持
-    setting_obj = setting_doc->as<JsonObject>();
+    setting_obj = setting_doc.as<JsonObject>();
+
+    // キーボードタイプは必須なので項目が無ければ設定ファイル作り直し(設定ファイル壊れた時用)
+    if (!setting_obj.containsKey("keyboard_type")) {
+        ESP_LOGD(LOG_TAG, "json not keyboard_type error\n");
+        create_setting_json();
+        delay(1000);
+        ESP.restart(); // ESP32再起動
+        return;
+    }
+    
     ESP_LOGD(LOG_TAG, "status_pin: %D\r\n", setting_obj["status_pin"].as<signed int>());
     // ステータス表示用ピン番号取得
     if (setting_obj.containsKey("status_pin")) {
@@ -453,12 +506,16 @@ void AzCommon::load_setting_json() {
     default_layer_no = setting_obj["default_layer"].as<signed int>();
     // 今選択してるレイヤーをデフォルトに
     select_layer_no = default_layer_no;
-    // キーボードのタイプ番号を取得
-    get_keyboard_type_int();
     // オプションタイプの番号を取得
-    get_option_type_int();
+    option_type_int = 0;
+    if (setting_obj.containsKey("option_set") && setting_obj["option_set"].containsKey("type")) {
+        get_option_type_int(setting_obj);
+    }
+    // オープニングムービー再生取得
+    op_movie_flag = false;
+    if (setting_obj["option_set"]["op_movie"].as<signed int>() > 0) op_movie_flag = true;
     // col,len情報取得
-    int i;
+    int i, j, m;
     col_len = setting_obj["keyboard_pin"]["col"].size();
     row_len = setting_obj["keyboard_pin"]["row"].size();
     direct_len = setting_obj["keyboard_pin"]["direct"].size();
@@ -479,13 +536,184 @@ void AzCommon::load_setting_json() {
     for (i=0; i<touch_len; i++) {
         touch_list[i] = setting_obj["keyboard_pin"]["touch"][i].as<signed int>();
     }
-    
+    // キーの設定を取得
+    // まずは設定の数を取得
+    char lkey[16];
+    char kkey[16];
+    int lnum, knum;
+    JsonObject::iterator it_l;
+    JsonObject::iterator it_k;
+    JsonObject layers, keys;
+    JsonObject press_obj;
+    String text_str;
+    setting_normal_input normal_input;
+    setting_mouse_move mouse_move_input;
+    // まずはキー設定されている数を取得
+    layers = setting_obj["layers"].as<JsonObject>();
+    setting_length = 0;
+    for (it_l=layers.begin(); it_l!=layers.end(); ++it_l) {
+        setting_length += setting_obj["layers"][it_l->key().c_str()]["keys"].size();
+    }
+    ESP_LOGD(LOG_TAG, "setting total %D\n", setting_length);
+    // 設定数分メモリ確保
+    ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
+    setting_press = new setting_key_press[setting_length];
+    ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
+    // キー設定読み込み
+    i = 0;
+    for (it_l=layers.begin(); it_l!=layers.end(); ++it_l) {
+        sprintf(lkey, "%S", it_l->key().c_str());
+        lnum = split_num(lkey);
+        keys = setting_obj["layers"][lkey]["keys"].as<JsonObject>();
+        for (it_k=keys.begin(); it_k!=keys.end(); ++it_k) {
+            sprintf(kkey, "%S", it_k->key().c_str());
+            knum = split_num(kkey);
+            // ESP_LOGD(LOG_TAG, "layers %S %S [ %D %D ]\n", lkey, kkey, lnum, knum);
+            press_obj = setting_obj["layers"][lkey]["keys"][kkey]["press"].as<JsonObject>();
+            setting_press[i].layer = lnum;
+            setting_press[i].key_num = knum;
+            setting_press[i].action_type = press_obj["action_type"].as<signed int>();
+            if (setting_press[i].action_type == 1) {
+                // 通常入力
+                normal_input.key_length = press_obj["key"].size();
+                normal_input.key = new uint16_t[normal_input.key_length];
+                for (j=0; j<normal_input.key_length; j++) {
+                      normal_input.key[j] = press_obj["key"][j].as<signed int>();
+                }
+                if (press_obj.containsKey("repeat_interval")) {
+                    normal_input.repeat_interval = press_obj["repeat_interval"].as<signed int>();
+                } else {
+                    normal_input.repeat_interval = 51;
+                }
+                setting_press[i].data = (char *)new setting_normal_input;
+                memcpy(setting_press[i].data, &normal_input, sizeof(setting_normal_input));
+            } else if (setting_press[i].action_type == 2) {
+                // テキスト入力
+                text_str = press_obj["text"].as<String>();
+                m = text_str.length() + 1;
+                setting_press[i].data = new char[m];
+                text_str.toCharArray(setting_press[i].data, m);
+            } else if (setting_press[i].action_type == 3) {
+                // レイヤー切り替え
+                setting_press[i].data = new char;
+                *setting_press[i].data = press_obj["layer"].as<signed int>();
+            } else if (setting_press[i].action_type == 4) {
+                // WEBフック
+                text_str = "";
+                serializeJson(press_obj["webhook"], text_str);
+                m = text_str.length() + 1;
+                setting_press[i].data = new char[m];
+                text_str.toCharArray(setting_press[i].data, m);
+                
+            } else if (setting_press[i].action_type == 5) {
+                // マウス移動
+                mouse_move_input.x = press_obj["move"]["x"].as<signed int>();
+                mouse_move_input.y = press_obj["move"]["y"].as<signed int>();
+                mouse_move_input.speed = press_obj["move"]["speed"].as<signed int>();
+                setting_press[i].data = (char *)new setting_mouse_move;
+                memcpy(setting_press[i].data, &mouse_move_input, sizeof(setting_mouse_move));
+
+            } else if (setting_press[i].action_type == 6) {
+                // 暗記ボタン
+                text_str = press_obj["ankey_file"].as<String>();
+                m = text_str.length() + 1;
+                setting_press[i].data = new char[m];
+                text_str.toCharArray(setting_press[i].data, m);
+
+            } else if (setting_press[i].action_type == 7) {
+                // LED設定ボタン
+                setting_press[i].data = new char;
+                *setting_press[i].data = press_obj["led_setting_type"].as<signed int>();
+                
+            } else if (setting_press[i].action_type == 8) {
+                // 打鍵設定ボタン
+                setting_press[i].data = new char;
+                *setting_press[i].data = press_obj["dakagi_settype"].as<signed int>();
+
+            }
+            i++;
+        }
+    }
+    for (i=0; i<setting_length; i++) {
+        if (setting_press[i].action_type == 1) {
+            memcpy(&normal_input, setting_press[i].data, sizeof(setting_normal_input));
+            ESP_LOGD(LOG_TAG, "setting_press %D %D %D %D [%D, %D]", i, setting_press[i].layer, setting_press[i].key_num, setting_press[i].action_type, normal_input.key_length, normal_input.repeat_interval);
+            for (j=0; j<normal_input.key_length; j++) {
+                ESP_LOGD(LOG_TAG, "setting_press %D ", normal_input.key[j]);
+            }
+        } else if (setting_press[i].action_type == 2) {
+            ESP_LOGD(LOG_TAG, "setting_press %D %D %D %D [ %S ]\n", i, setting_press[i].layer, setting_press[i].key_num, setting_press[i].action_type, setting_press[i].data);
+        } else if (setting_press[i].action_type == 3) {
+            ESP_LOGD(LOG_TAG, "setting_press %D %D %D %D [ %D ]\n", i, setting_press[i].layer, setting_press[i].key_num, setting_press[i].action_type, *setting_press[i].data);
+        } else if (setting_press[i].action_type == 4) {
+            ESP_LOGD(LOG_TAG, "setting_press %D %D %D %D [ %S ]\n", i, setting_press[i].layer, setting_press[i].key_num, setting_press[i].action_type, setting_press[i].data);
+        } else if (setting_press[i].action_type == 5) {
+            memcpy(&mouse_move_input, setting_press[i].data, sizeof(setting_mouse_move));
+            ESP_LOGD(LOG_TAG, "setting_press %D %D %D %D [ %D, %D, %D ]\n", i, setting_press[i].layer, setting_press[i].key_num, setting_press[i].action_type, mouse_move_input.x, mouse_move_input.y, mouse_move_input.speed);
+        } else {
+            ESP_LOGD(LOG_TAG, "setting_press %D %D %D %D\n", i, setting_press[i].layer, setting_press[i].key_num, setting_press[i].action_type);
+        }
+    }
+    ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
+
+    // wifiの設定読み出し
+    String ssid, pass;
+    wifi_data_length = setting_obj["wifi"].size(); // wifiの設定数
+    wifi_data = new setting_wifi[wifi_data_length];
+    for (i=0; i<wifi_data_length; i++) {
+        ssid = setting_obj["wifi"][i]["ssid"].as<String>();
+        pass = setting_obj["wifi"][i]["pass"].as<String>();
+        m = ssid.length() + 1;
+        wifi_data[i].ssid = new char[m];
+        ssid.toCharArray(wifi_data[i].ssid, m);
+        m = pass.length() + 1;
+        wifi_data[i].pass = new char[m];
+        pass.toCharArray(wifi_data[i].pass, m);
+    }
+    for (i=0; i<wifi_data_length; i++) {
+        ESP_LOGD(LOG_TAG, "wifi setting [ %S , %S ]\n", wifi_data[i].ssid, wifi_data[i].pass );
+    }
+
+    // アクセスポイントのパスワード
+    String ap_pass = setting_obj["ap"]["pass"].as<String>();
+    m = ap_pass.length() + 1;
+    ap_pass_char = new char[m];
+    ap_pass.toCharArray(ap_pass_char, m);
+
+    // 設定されているデフォルトレイヤー取得
+    default_layer_no = setting_obj["default_layer"].as<signed int>();
+
+    // キーボードタイプの番号を取得する
+    get_keyboard_type_int(setting_obj["keyboard_type"].as<String>());
+
+    // キーボードの言語取得
+    keyboard_language = setting_obj["keyboard_language"].as<signed int>();
+
+    // RGBLED設定の取得
+    rgb_pin = -1;
+    if (setting_obj.containsKey("rgb_pin")) rgb_pin = setting_obj["rgb_pin"].as<signed int>();
+    matrix_row = -1;
+    if (setting_obj.containsKey("matrix_row")) matrix_row = setting_obj["matrix_row"].as<signed int>();
+    matrix_col = -1;
+    if (setting_obj.containsKey("matrix_col")) matrix_col = setting_obj["matrix_col"].as<signed int>();
+
+    led_num_length = setting_obj["led_num"].size();
+    key_matrix_length = setting_obj["key_matrix"].size();
+    if (led_num_length > 0 && key_matrix_length > 0) {
+        led_num = new int8_t[led_num_length];
+        for (i=0; i<led_num_length; i++) {
+            led_num[i] = setting_obj["led_num"][i].as<signed int>();
+        }
+        key_matrix = new int8_t[key_matrix_length];
+        for (i=0; i<key_matrix_length; i++) {
+            key_matrix[i] = setting_obj["key_matrix"][i].as<signed int>();
+        }
+    }
+
 }
 
 // デフォルトレイヤー番号設定
 void AzCommon::set_default_layer_no() {
-    // 設定されているデフォルトレイヤー取得
-    default_layer_no = setting_obj["default_layer"].as<signed int>();
     // キー4が押されていた時 デフォルトを1へ
     if (common_cls.input_key[4] && layers_exists(1)) default_layer_no = 1;
     // キー5が押されていた時 デフォルトを2へ
@@ -499,23 +727,25 @@ void AzCommon::set_default_layer_no() {
 }
 
 // キーボードタイプの番号を取得する
-void AzCommon::get_keyboard_type_int() {
-    String t = setting_obj["keyboard_type"].as<String>();
-    keyboard_type_int = 0;
+void AzCommon::get_keyboard_type_int(String t) {
     if (t.equals("az_macro")) {
         keyboard_type_int = 1;
     }
 }
 
 // ユニットのタイプ番号を取得する
-void AzCommon::get_option_type_int() {
-    option_type_int = 0;
-    if (!setting_obj.containsKey("option_set")) return;
-    if (!setting_obj["option_set"].containsKey("type")) return;
+void AzCommon::get_option_type_int(JsonObject setting_obj) {
     String t = setting_obj["option_set"]["type"].as<String>();
+    option_type_int = 0;
     if (t.equals("foot_m")) {
         // 踏みキー
         option_type_int = 1;
+        if (setting_obj["option_set"]["inversion"].as<signed int>()) {
+            foot_inversion = true;
+        } else {
+            foot_inversion = false;
+        }
+        
     } else if (t.equals("trackball_m")) {
         // トラックボール
         option_type_int = 2;
@@ -614,18 +844,27 @@ bool AzCommon::create_setting_json() {
 // キーの入力ピンの初期化
 void AzCommon::pin_setup() {
     
-  pinMode(P_DATA, OUTPUT);
-  pinMode(P_CLOCK, OUTPUT);
-  pinMode(P_RESET, OUTPUT);
+  // I2C初期化
+  if (Wire1.begin(26, 14)) {
+      Wire1.setClock(1700000);
+      M5.Lcd.printf("Wire1 begin ok\n");
+  } else {
+      M5.Lcd.printf("Wire1 begin ng\n");
+  }
 
-  digitalWrite(P_DATA, LOW);
-  digitalWrite(P_CLOCK, LOW);
-  digitalWrite(P_RESET, LOW);
-
-  pinMode(35, INPUT_PULLUP);
-  pinMode(13, INPUT_PULLUP);
-  pinMode(36, INPUT_PULLUP);
-  pinMode(19, INPUT_PULLUP);
+  // IOエキスパンダ初期化
+  int i, j;
+  for (i=0; i<4; i++) {
+      if (iomcp[i].begin_I2C(0x20 + i, &Wire1)) {
+          M5.Lcd.printf("begin_I2C %D ok\n", i);
+      } else {
+          M5.Lcd.printf("begin_I2C %D ng\n", i);
+          return;
+      }
+      for (j = 0; j < 16; j++) {
+          iomcp[i].pinMode(j, INPUT_PULLUP);
+      }
+  }
 
   key_input_length = 52;
   this->key_count_total = 0;
@@ -642,32 +881,24 @@ void AzCommon::pin_setup_sub_process() {
 
 // レイヤーが存在するか確認
 bool AzCommon::layers_exists(int layer_no) {
-    char lkey[16];
-    // レイヤーのキー名取得
-    sprintf(lkey, "layer_%D", layer_no);
-    // キーの設定があるか確認
-    if (!setting_obj["layers"].containsKey(lkey)) {
-      return false;
+    int i;
+    for (i=0; i<setting_length; i++) {
+        if (setting_press[i].layer == layer_no) return true;
     }
-    return true;
+    return false;
 }
 
 // 指定したキーの入力設定オブジェクトを取得する
-JsonObject AzCommon::get_key_setting(int layer_id, int key_num) {
-    char lkey[16];
-    char kkey[16];
-    // 今選択中のレイヤーのキー名取得
-    sprintf(lkey, "layer_%D", layer_id);
-    // キーのキー名取得
-    sprintf(kkey, "key_%D", key_num);
-    // キーの設定があるか確認
-    if (!setting_obj["layers"].containsKey(lkey) ||
-        !setting_obj["layers"][lkey]["keys"].containsKey(kkey)) {
-        // 設定が無ければ何もしない
-        JsonObject r;
-        return r;
+setting_key_press AzCommon::get_key_setting(int layer_id, int key_num) {
+    int i;
+    for (i=0; i<setting_length; i++) {
+        if (setting_press[i].layer == layer_id && setting_press[i].key_num == key_num) return setting_press[i];
     }
-    return setting_obj["layers"][lkey]["keys"][kkey];
+    setting_key_press r;
+    r.layer = -1;
+    r.key_num = -1;
+    r.action_type = -1;
+    return r;
 }
 
 
@@ -787,49 +1018,43 @@ void AzCommon::change_mode(int set_mode) {
 
 // 現在のキーの入力状態を取得
 void AzCommon::key_read(void) {
-    int i, j, n, s;
-    uint32_t io_data = (1<< P_DATA);
-    uint32_t io_clock = (1<< P_CLOCK);
-    uint32_t io_reset = (1<< P_RESET);
-    char input_buf[60];
+    unsigned long start_time;
+    unsigned long end_time;
+    int m[4];
+    int i, c;
+    bool idata[72];
     char convert_map[] = {
-      4, 0, 48, 44, 40, 36, 28, 24, 20, 16, 12, 8,
-      5, 1, 49, 45, 41, 37, 29, 25, 21, 17, 13, 9,
-      6, 2, 50, 46, 42, 38, 30, 26, 22, 18, 14, 10,
-      7, 3, 51, 47, 43, 39, 33, 34, 35, 31, 27, 23, 19, 15, 11
+      37, 25, 13, 1, 36, 24, 12, 0, // 0 - 7
+      2, 14, 26, 38, 3, 15, 27, 39, // 8 - 15
+      41, 29, 17, 5, 40, 28, 16, 4, // 16 - 23
+      42, 43, 44, // 24 - 26
+      -1, -1, -1, -1, -1, // 27 - 31
+      46, 31, 19, 7, 45, 30, 18, 6, // 32 - 39
+      -1, -1, -1, -1, -1, -1, -1, -1, // 40 - 47
+      48, 33, 21, 9, 47, 32, 20, 8, // 48 - 55
+      10, 22, 34, 49, 11, 23, 35, 50 // 56 - 63
       };
-  for (i=0; i<15; i++) {
-    // digitalWrite(P_RESET, LOW);
-    // digitalWrite(P_RESET, HIGH);
-    GPIO_OUT_CLR = io_reset;
-    GPIO_OUT_PUT = io_reset;
-    ets_delay_us(100);
-    for (j=0; j<15; j++) {
-      if (i == j) {
-        // digitalWrite(P_DATA, LOW);
-        GPIO_OUT_CLR = io_data;
-      } else {
-        // digitalWrite(P_DATA, HIGH);
-        GPIO_OUT_PUT = io_data;
-      }
-      // digitalWrite(P_CLOCK, HIGH);
-      // digitalWrite(P_CLOCK, LOW);
-      GPIO_OUT_PUT = io_clock;
-      GPIO_OUT_CLR = io_clock;
-      ets_delay_us(50);
-      
+    for (i=0; i<70; i++) idata[i] = false;
+    start_time = millis();
+    for (i=0; i<4; i++) m[i] = iomcp[i].readGPIOAB();
+    for (i=0; i<16; i++) {
+        c = 1 << i;
+        idata[i] = (!(m[0] & c));
+        idata[i + 16] = (!(m[1] & c));
+        idata[i + 32] = (!(m[2] & c));
+        idata[i + 48] = (!(m[3] & c));
     }
-    ets_delay_us(100);
-    n = i * 4;
-    if (digitalRead(35)) { input_buf[n] = 0; } else { input_buf[n] = 1; }
-    if (digitalRead(13)) { input_buf[n + 1] = 0; } else { input_buf[n + 1] = 1; }
-    if (digitalRead(36)) { input_buf[n + 2] = 0; } else { input_buf[n + 2] = 1; }
-    if (digitalRead(19)) { input_buf[n + 3] = 0; } else { input_buf[n + 3] = 1; }
-    ets_delay_us(100);
-  }
-  for (i=0; i<51; i++) {
-    input_key[i] = input_buf[convert_map[i]];
-  }
+    end_time = millis();
+    for (i=0; i<70; i++) {
+        if (convert_map[i] < 0) continue;
+        if (idata[i]) {
+            input_key[convert_map[i]] = 1;
+        } else {
+            input_key[convert_map[i]] = 0;
+        }
+    }
+    // M5.Lcd.printf("\n%D", end_time - start_time);
+
 
 }
 
@@ -837,7 +1062,7 @@ void AzCommon::key_read(void) {
 void AzCommon::key_read_sub_process(void) {
     if (option_type_int == 1) {
         // 踏みキー
-        if (setting_obj["option_set"]["inversion"].as<signed int>() && digitalRead(27) == 0) {
+        if (foot_inversion && digitalRead(27) == 0) {
             // ジャックが刺されている間はON/OFF を反転
             input_key[8] = ! input_key[8];
             input_key[9] = ! input_key[9];
@@ -1003,7 +1228,7 @@ void lv_setup() {
   static lv_anim_path_t path_overshoot;
   lv_anim_path_init(  &path_overshoot);
   lv_anim_path_set_cb(&path_overshoot, lv_anim_path_overshoot);
-  lv_obj_set_style_local_text_font(label,LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &myf20);
+  // lv_obj_set_style_local_text_font(label,LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &myf20);
 
   static lv_anim_path_t path_ease_out;
   lv_anim_path_init(  &path_ease_out);
@@ -1020,8 +1245,8 @@ void lv_setup() {
   /*Gum-like button*/
   static lv_style_t style_gum;
   lv_style_init(&style_gum);
-  lv_style_set_text_font(&style_gum, LV_STATE_DEFAULT, &myf20);
-  lv_style_set_text_font(&style_gum, LV_STATE_PRESSED, &myf20);
+  // lv_style_set_text_font(&style_gum, LV_STATE_DEFAULT, &myf20);
+  // lv_style_set_text_font(&style_gum, LV_STATE_PRESSED, &myf20);
   lv_style_set_transform_width(   &style_gum, LV_STATE_PRESSED,  10);
   lv_style_set_transform_height(  &style_gum, LV_STATE_PRESSED,  10);
   lv_style_set_value_letter_space(&style_gum, LV_STATE_PRESSED,   5);

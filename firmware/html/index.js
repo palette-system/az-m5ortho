@@ -244,15 +244,18 @@ mst.save_setting_json = function() {
     // 使っていない暗記ファイル削除
     mst.delete_ankey_file(function() {
         // JSON保存
-        api_path = "/upload_setting_json";
-        if (mst.end_type == 2) api_path = "/upload_setting_json_reload";
-        ajax_post(api_path, JSON.stringify(mst.setting_data), function(stat, res) {
+        var uint8obj = new TextEncoder().encode(JSON.stringify(mst.setting_data));
+        var blobobj = new Blob([uint8obj]);
+        mst.file_send("/file_save", "setting.json", blobobj, function(stat, res) {
             if (!stat) {
-                set_html("info_box", "ページを閉じて下さい");
-                mst.view_box(["info_box"]);
+                set_html("info_box", "保存失敗");
+                mst.view_layer(); // 設定画面を再度表示
                 return;
             }
-            set_html("info_box", "終了中..");
+            set_html("info_box", "保存成功");
+            setTimeout(function() {
+                mst.end_setting(0);
+            }, 1500);
         });
     });
 };

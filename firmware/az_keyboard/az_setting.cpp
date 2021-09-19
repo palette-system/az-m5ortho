@@ -187,22 +187,6 @@ bool handleUrl(String path) {
         }
         common_cls.change_mode(1); // 設定モードで再起動
 
-    } else if (path.indexOf("/upload_setting_json") == 0) {
-        // 受け取った設定を保存して設定終了
-        // POST じゃ無ければNG
-        if (server.method() != HTTP_POST) {
-            server.send(500,"text/plan", "not post request");
-            return true;
-        }
-        // テキストを受け取ってファイルに保存
-        String post_data = server.arg("plain");
-        r = common_cls.write_file(SETTING_JSON_PATH, post_data);
-        if (r == 0) {
-            server.send(500,"text/plan", "file write error");
-            return true;
-        }
-        common_cls.change_mode(0); // キーボードモードに切り替え
-
     } else if (path.indexOf("/init_setting_json") == 0) {
         // 設定の初期化
         common_cls.delete_all(); // 全てのファイルを削除
@@ -281,9 +265,6 @@ void start_wifi() {
     
     //無線LAN接続AP(アクセスポイント)モード
     WiFi.mode(WIFI_AP_STA);
-    String ap_pass = setting_obj["ap"]["pass"].as<String>();
-    char ap_pass_char[32];
-    ap_pass.toCharArray(ap_pass_char, 32);
     WiFi.softAP(eep_data.ap_ssid, ap_pass_char);
 
     // DNSサーバー起動

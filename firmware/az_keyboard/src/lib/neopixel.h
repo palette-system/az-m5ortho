@@ -65,7 +65,7 @@ class Neopixel
 		uint16_t  lotate_index; // グラデーションインデックス
 		Adafruit_NeoPixel *rgb_led; // RGB_LEDオブジェクト
 		Neopixel();   // コンストラクタ
-		void begin(short data_pin, short row_size, short col_size, int *select_layer); // LED制御初期化
+		void begin(short data_pin, short row_size, short col_size, int *select_layer, int8_t *led_num, int8_t *key_matrix); // LED制御初期化
 		void setting_load();
 		void setting_save();
 		void set_led_num(int8_t key, int8_t val);

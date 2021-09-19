@@ -6,6 +6,7 @@
 #include <lvgl.h>
 #include <Wire.h>
 #include <SPI.h>
+#include <Adafruit_MCP23X17.h>
 
 #include "FS.h"
 #include "SPIFFS.h"
@@ -101,6 +102,35 @@ struct SpiRamAllocator {
 using SpiRamJsonDocument = BasicJsonDocument<SpiRamAllocator>;
 
 
+// 通常キー入力
+struct setting_normal_input {
+    uint8_t key_length;
+    uint16_t *key;
+    short repeat_interval;
+};
+
+// マウス移動
+struct setting_mouse_move {
+    int16_t x;
+    int16_t y;
+    int16_t speed;
+};
+
+// キーを押した時の設定
+struct setting_key_press {
+    short layer; // どのレイヤーか
+    short key_num; // どのキーか
+    short action_type; // 入力するタイプ
+    short data_size; // データのサイズ
+    char *data; // 入力データ
+};
+
+// WIFI設定
+struct setting_wifi {
+    char *ssid;
+    char *pass;
+};
+
 // クラスの定義
 class AzCommon
 {
@@ -113,20 +143,20 @@ class AzCommon
         void get_domain(char *url, char *domain_name); // URLからドメイン名だけ取得
         String send_webhook_simple(char *url); // 単純なGETリクエストのWEBフック
         String send_webhook_post_file(char *url, char *file_path); // POSTでファイルの内容を送信する
-        String send_webhook(const JsonObject &prm); // httpかhttpsか判断してリクエストを送信する
+        String send_webhook(char *setting_data); // httpかhttpsか判断してリクエストを送信する
         String http_request(char *url, const JsonObject &prm); // httpリクエスト送信
         bool create_setting_json(); // デフォルトの設定json作成
         void load_setting_json(); // jsonデータロード
         void set_default_layer_no(); // デフォルトレイヤー設定
-        void get_keyboard_type_int(); // キーボードのタイプ番号を取得
-        void get_option_type_int(); // オプションタイプの番号を取得
+        void get_keyboard_type_int(String t); // キーボードのタイプ番号を取得
+        void get_option_type_int(JsonObject setting_obj); // オプションタイプの番号を取得
         int read_file(char *file_path, String &read_data); // ファイルからデータを読み出す
         int write_file(char *file_path, String &write_data); // ファイルにデータを保存する
         int remove_file(char *file_path); // ファイルを削除する
         void pin_setup(); // キーの入力ピンの初期化
         void pin_setup_sub_process(); // 入力ピン初期化のキーボード別の処理
         bool layers_exists(int layer_no); // レイヤーが存在するか確認
-        JsonObject get_key_setting(int layer_id, int key_num); // 指定したキーの入力設定を取得する
+        setting_key_press get_key_setting(int layer_id, int key_num); // 指定したキーの入力設定を取得する
         void load_data(); // EEPROMからデータをロードする
         void save_data(); // EEPROMに保存する
         void load_boot_count(); // 起動回数を取得してカウントアップする
@@ -194,6 +224,9 @@ extern int key_input_length;
 // キーボードタイプの番号
 extern int keyboard_type_int;
 
+// キーボードの言語(日本語=0/ US=1 / 日本語(US記号) = 2)
+extern uint8_t keyboard_language;
+
 // オプションタイプの番号
 extern int option_type_int;
 
@@ -202,6 +235,12 @@ extern uint8_t trackball_direction;
 
 // トラックボールのカーソル移動速度
 extern uint8_t trackball_speed;
+
+// 踏みキーの反転フラグ
+extern bool foot_inversion;
+
+// オープニングムービー再生フラグ
+extern bool op_movie_flag;
 
 // タップした位置
 extern short start_touch_x;
@@ -249,8 +288,30 @@ extern JsonObject setting_obj;
 // バッテリーオブジェクト
 extern AXP192 power;
 
+// キーが押された時の設定
+extern uint16_t setting_length;
+extern setting_key_press *setting_press;
 
+// wifi設定
+extern uint8_t wifi_data_length;
+extern setting_wifi *wifi_data;
 
+// アクセスポイントパスワード
+extern char *ap_pass_char;
+
+// RGBLED
+extern int8_t rgb_pin;
+extern int8_t matrix_row;
+extern int8_t matrix_col;
+extern int8_t *led_num;
+extern int8_t *key_matrix;
+extern uint8_t led_num_length;
+extern uint8_t key_matrix_length;
+
+// I/Oエキスパンダ用
+extern Adafruit_MCP23X17 iomcp[4];
+
+// LVGL用
 extern TFT_eSPI lvtft;
 extern lv_disp_buf_t disp_buf;
 extern lv_color_t lvbuf[LV_HOR_RES_MAX * 10];
@@ -261,5 +322,6 @@ bool my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data);
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
 void event_handler(lv_obj_t * obj, lv_event_t event);
 void lv_setup();
+
 
 #endif

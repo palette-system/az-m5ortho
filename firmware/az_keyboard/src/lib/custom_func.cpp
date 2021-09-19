@@ -17,7 +17,7 @@ void CustomFunc::loop()
 };
 
 // キーが押された時
-void CustomFunc::key_press(int key_num, const JsonObject &key_set)
+void CustomFunc::key_press(int key_num, const setting_key_press &key_data)
 {
   // key_num : キーID(0～7)
   // key_set : キーを押した時に設定されている情報

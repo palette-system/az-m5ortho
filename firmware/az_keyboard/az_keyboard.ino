@@ -37,24 +37,8 @@ void setup() {
     disp = new Display();
     disp->begin(option_type_int);
     // RGB_LEDクラス初期化
-    if (setting_obj.containsKey("rgb_pin") &&
-            setting_obj.containsKey("matrix_row") &&
-            setting_obj.containsKey("matrix_col")) {
-        rgb_led_cls.begin(
-            setting_obj["rgb_pin"].as<signed int>(),
-            setting_obj["matrix_row"].as<signed int>(),
-            setting_obj["matrix_col"].as<signed int>(),
-            &select_layer_no
-        );
-        s = setting_obj["led_num"].size();
-        for (i=0; i<s; i++) {
-            rgb_led_cls.set_led_num(i, setting_obj["led_num"][i].as<signed int>());
-        }
-        s = setting_obj["key_matrix"].size();
-        for (i=0; i<s; i++) {
-            rgb_led_cls.set_key_matrix(i, setting_obj["key_matrix"][i].as<signed int>());
-        }
-        
+    if (rgb_pin > 0 && matrix_row > 0 && matrix_col > 0) {
+        rgb_led_cls.begin( rgb_pin, matrix_row, matrix_col, &select_layer_no, led_num, key_matrix);
     }
     // キーの入力ピンの初期化
     common_cls.pin_setup();
@@ -104,7 +88,7 @@ void setup() {
 
     } else {
         ESP_LOGD(LOG_TAG, "キーボードモード起動\n");
-        if (common_cls.on_tft_unit() && setting_obj["option_set"]["op_movie"].as<signed int>()) {
+        if (common_cls.on_tft_unit() && op_movie_flag) {
             disp->open_movie();
         }
         // キーボードとして起動

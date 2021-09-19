@@ -97,8 +97,8 @@ void Ankey::input_end() {
 	// 入力状態をリセット
 	this->_azkb->press_data_reset();
 	// 記憶データをファイルに出力
-	JsonObject key_set = common_cls.get_key_setting(this->ankey_layer_id, this->ankey_key_num); // 暗記キーの設定情報取得
-	String fpath = "/" + key_set["press"]["ankey_file"].as<String>();
+	setting_key_press key_set = common_cls.get_key_setting(this->ankey_layer_id, this->ankey_key_num); // 暗記キーの設定情報取得
+	String fpath = "/" + String(key_set.data);
 	File fp = SPIFFS.open(fpath, "w");
 	if (!fp) {
 		// ファイル書込み失敗
@@ -120,8 +120,8 @@ void Ankey::input_end() {
 // 暗記したデータのキー入力開始
 void Ankey::output_start() {
 	// 記憶データをファイルから読み込む
-	JsonObject key_set = common_cls.get_key_setting(this->ankey_layer_id, this->ankey_key_num); // 暗記キーの設定情報取得
-	String fpath = "/" + key_set["press"]["ankey_file"].as<String>();
+	setting_key_press key_set = common_cls.get_key_setting(this->ankey_layer_id, this->ankey_key_num); // 暗記キーの設定情報取得
+	String fpath = "/" + String(key_set.data);
 	File fp = SPIFFS.open(fpath, "r");
 	if (!fp) {
 		// ファイル読み込み失敗
