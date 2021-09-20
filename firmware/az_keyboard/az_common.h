@@ -300,7 +300,10 @@ extern setting_wifi *wifi_data;
 extern char *ap_pass_char;
 
 // マウスパッドステータス
-extern char mouse_pad_status;
+extern int8_t mouse_pad_status;
+
+// マウスパッド操作方法設定
+extern int8_t mouse_pad_setting;
 
 // RGBLED
 extern int8_t rgb_pin;

@@ -33,7 +33,10 @@ int status_led_bit = 0;
 int status_led_mode;
 
 // マウスパッドステータス
-char mouse_pad_status;
+int8_t mouse_pad_status;
+
+// マウスパッド操作方法設定
+int8_t mouse_pad_setting;
 
 // 液晶表示用オブジェクト
 Display *disp;
@@ -241,6 +244,8 @@ void AzCommon::common_start() {
 
     // マウスパッドステータス
     mouse_pad_status = 0;
+    // マウスパッド操作設定ステータス
+    mouse_pad_setting = 0;
 }
 
 

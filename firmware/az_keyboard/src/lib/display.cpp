@@ -8,11 +8,13 @@
 #include "../image/wificonn2.h"
 
 
+void view_mouse_page(); // マウスパッド画面表示
+void view_setting_mousepad(lv_obj_t * obj, lv_event_t event); // マウスパッド設定画面表示
 
 //=====================================================================
 /*Read the touchpad*/
 bool my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data){
-	if (mouse_pad_status > 0) {
+	if (mouse_pad_status >= 0) {
 		data->state = LV_INDEV_STATE_REL;
 		return false;
 	}
@@ -41,10 +43,10 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
   lv_disp_flush_ready(disp);
 }
 //=====================================================================
-void event_handler(lv_obj_t * obj, lv_event_t event) {
-    // M5.Lcd.print(" %S", event);
+void close_setting(lv_obj_t * obj, lv_event_t event) {
     // イベントについて
     // https://docs.lvgl.io/master/overview/event.html
+	/*
     if(event == LV_EVENT_CLICKED) { // クリック
         M5.Lcd.print(" c\n");
     }
@@ -65,6 +67,11 @@ void event_handler(lv_obj_t * obj, lv_event_t event) {
     else if(event == LV_EVENT_VALUE_CHANGED) { // 変更された時
         M5.Lcd.print("LV_EVENT_VALUE_CHANGED!\n");
     }
+	*/
+	if (event == LV_EVENT_CLICKED) { // クリック
+		// マウスパッド画面表示
+        view_mouse_page();
+	}
 }
 
 void lv_setup() {
@@ -113,64 +120,99 @@ void lv_setup() {
 
 }
 
-void Display::view_setting_menu() {
-  //-------------------------------------------------------------------
-  lv_obj_t * win = lv_win_create(lv_scr_act(), NULL);
-  lv_win_set_title(win, "設定メニュー");                        /*Set the title*/
+void view_setting_menu_fnc() {
+	// 画面上のオブジェクト全て削除
+	lv_obj_clean(lv_scr_act());
 
+	//-------------------------------------------------------------------
+    lv_obj_t * win = lv_win_create(lv_scr_act(), NULL);
+    lv_win_set_title(win, "設定メニュー");                        /*Set the title*/
     /*Add control button to the header*/
-    lv_obj_t * close_btn = lv_win_add_btn(win, LV_SYMBOL_CLOSE);           /*Add close button and use built-in close action*/
+    // lv_obj_t * close_btn = lv_win_add_btn(win, LV_SYMBOL_CLOSE);           /*Add close button and use built-in close action*/
     // lv_obj_set_event_cb(close_btn, lv_win_close_event_cb);
     // lv_win_add_btn(win, LV_SYMBOL_SETTINGS);        /*Add a setup button*/
 
     /*Add some dummy content*/
-    lv_obj_t * txt = lv_label_create(win, NULL);
-    lv_label_set_text(txt, "選んで下さい");
-  lv_obj_align(txt, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
+    // lv_obj_t * txt = lv_label_create(win, NULL);
+    // lv_label_set_text(txt, "選んで下さい");
+    // lv_obj_align(txt, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
     
   
   lv_obj_t * btn1 = lv_btn_create(win, NULL);
   lv_obj_set_size(btn1, 200, 70);
-  lv_obj_align(btn1, NULL, LV_ALIGN_IN_TOP_MID, 0, 90);
-  lv_obj_set_event_cb(btn1, event_handler);
-  lv_obj_set_style_local_value_str(btn1, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "btn ボタン１");
+  lv_obj_align(btn1, NULL, LV_ALIGN_IN_TOP_MID, 0, 20);
+  lv_obj_set_event_cb(btn1, view_setting_mousepad);
+  lv_obj_set_style_local_value_str(btn1, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "マウスパッド設定");
   
   lv_obj_t * btn2 = lv_btn_create(win, NULL);
   lv_obj_set_size(btn2, 200, 70);
-  lv_obj_align(btn2, NULL, LV_ALIGN_IN_TOP_MID, 0, 180);
-  // lv_obj_set_event_cb(btn2, event_handler);
-  lv_obj_set_style_local_value_str(btn2, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "btn ボタン2");
-
-  lv_obj_t * btn3 = lv_btn_create(win, NULL);
-  lv_obj_set_size(btn3, 200, 70);
-  lv_obj_align(btn3, NULL, LV_ALIGN_IN_TOP_MID, 0, 270);
-  // lv_obj_set_event_cb(btn3, event_handler);
-  lv_obj_set_style_local_value_str(btn3, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "btn ボタン3");
-
-  lv_obj_t * btn4 = lv_btn_create(win, NULL);
-  lv_obj_set_size(btn4, 200, 70);
-  lv_obj_align(btn4, NULL, LV_ALIGN_IN_TOP_MID, 0, 360);
-  // lv_obj_set_event_cb(btn4, event_handler);
-  lv_obj_set_style_local_value_str(btn4, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "btn ボタン4");
-
-  lv_obj_t * btn5 = lv_btn_create(win, NULL);
-  lv_obj_set_size(btn5, 200, 70);
-  lv_obj_align(btn5, NULL, LV_ALIGN_IN_TOP_MID, 0, 450);
-  // lv_obj_set_event_cb(btn5, event_handler);
-  lv_obj_set_style_local_value_str(btn5, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "btn ボタン5");
-
-  lv_obj_t * btn6 = lv_btn_create(win, NULL);
-  lv_obj_set_size(btn6, 200, 70);
-  lv_obj_align(btn6, NULL, LV_ALIGN_IN_TOP_MID, 0, 540);
-  // lv_obj_set_event_cb(btn6, event_handler);
-  lv_obj_set_style_local_value_str(btn6, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "btn ボタン6");
+  lv_obj_align(btn2, NULL, LV_ALIGN_IN_TOP_MID, 0, 130);
+  lv_obj_set_event_cb(btn2, close_setting);
+  lv_obj_set_style_local_value_str(btn2, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "閉じる");
 	
-	mouse_pad_status = 0;
+	// マウスパッド操作停止
+	mouse_pad_status = -1;
 }
 
-void view_mouse_page() {
+// マウスパッド設定画面終了
+void view_setting_mousepad_close(lv_obj_t * obj, lv_event_t event) {
+	// クリック以外のイベントは無視
+	if (event != LV_EVENT_CLICKED) return;
+	// 設定メニュー表示
+	view_setting_menu_fnc();
+}
+
+
+// マウス操作設定セレクトが変更された
+void change_mousepad_type(lv_obj_t * obj, lv_event_t event) {
+    if(event == LV_EVENT_VALUE_CHANGED) {
+        mouse_pad_setting = lv_dropdown_get_selected(obj);
+    }
+}
+
+
+// マウスパッド設定画面表示
+void view_setting_mousepad(lv_obj_t * obj, lv_event_t event) {
+	// クリック以外のイベントは無視
+	if (event != LV_EVENT_CLICKED) return;
+
+	// 画面上のオブジェクト全て削除
 	lv_obj_clean(lv_scr_act());
-	mouse_pad_status = 2;
+
+	// window作成
+    lv_obj_t * win = lv_win_create(lv_scr_act(), NULL);
+    lv_win_set_title(win, "マウスパッド設定");
+
+	// テキスト
+    lv_obj_t * txt = lv_label_create(win, NULL);
+    lv_label_set_text(txt, "操作方法");
+    lv_obj_align(txt, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
+
+	// セレクトメニュー表示
+	lv_obj_t * ddlist = lv_dropdown_create(win, NULL);
+	lv_dropdown_set_options(ddlist, "なし\nマウスパッド\nジョイスティック");
+	lv_obj_set_size(ddlist, 200, 34);
+	lv_dropdown_set_selected(ddlist, mouse_pad_setting);
+	lv_dropdown_set_symbol(ddlist, "v");
+	lv_obj_align(ddlist, NULL, LV_ALIGN_IN_TOP_MID, 0, 60);
+	lv_obj_set_event_cb(ddlist, change_mousepad_type);
+
+	// 閉じるボタン
+	lv_obj_t * btn1 = lv_btn_create(win, NULL);
+	lv_obj_set_size(btn1, 200, 70);
+	lv_obj_align(btn1, NULL, LV_ALIGN_IN_TOP_MID, 0, 150);
+	lv_obj_set_event_cb(btn1, view_setting_mousepad_close);
+	lv_obj_set_style_local_value_str(btn1, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "閉じる");
+}
+
+
+// マウスパッド操作画面
+void view_mouse_page() {
+	// 画面上のオブジェクト全て削除
+	lv_obj_clean(lv_scr_act());
+	
+	// マウスパッド操作
+	mouse_pad_status = mouse_pad_setting;
 }
 
 
@@ -178,7 +220,6 @@ void view_mouse_page() {
 // コンストラクタ
 Display::Display() {
 }
-
 
 // 液晶制御初期化
 void Display::begin(int option_type) {
@@ -193,6 +234,10 @@ void Display::begin(int option_type) {
 	this->_last_view_info = 255;
 	lv_setup();
 	view_mouse_page();
+}
+
+void Display::view_setting_menu() {
+	view_setting_menu_fnc();
 }
 
 // 画面いっぱい黒い画面

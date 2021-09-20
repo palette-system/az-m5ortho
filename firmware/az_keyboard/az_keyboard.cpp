@@ -79,7 +79,7 @@ void AzKeyboard::start_keyboard() {
     my_function.begin();
 
     // 液晶は待ち受け画像
-    disp->view_standby_image();
+    // disp->view_standby_image();
   
 }
 
@@ -609,7 +609,7 @@ void AzKeyboard::mouse_loop_joy() {
             last_touch_index++;
             if (touch_send_count == 0 && last_touch_index > 100) {
                 M5.Axp.SetLDOEnable(3, true);
-                delay(150);
+                delay(100);
                 M5.Axp.SetLDOEnable(3, false);
                 while (M5.Touch.ispressed()) delay(100);
                 disp->view_setting_menu();
@@ -654,6 +654,15 @@ void AzKeyboard::mouse_loop_pad() {
             start_touch_x = x;
             start_touch_y = y;
             last_touch_index++;
+            if (touch_send_count == 0 && last_touch_index > 100) {
+                M5.Axp.SetLDOEnable(3, true);
+                delay(100);
+                M5.Axp.SetLDOEnable(3, false);
+                while (M5.Touch.ispressed()) delay(100);
+                disp->view_setting_menu();
+                last_touch_index = -1;
+                return;
+            }
         }
     } else {
         if (last_touch_index >= 0 && last_touch_index < 40&& touch_send_count == 0 && !bleKeyboard.mouse_press_check(1)
@@ -662,6 +671,46 @@ void AzKeyboard::mouse_loop_pad() {
             delay(50);
             bleKeyboard.mouse_release(1);
         }
+        last_touch_index = -1;
+    }
+}
+
+// マウスパッド操作なし(長押しで設定画面に移動するのだけ実装)
+void AzKeyboard::mouse_loop_none() {
+    if(M5.Touch.ispressed()) {
+        int x, y, send_x, send_y;
+        TouchPoint_t tp;
+        if (last_touch_index < 0) {
+          last_touch_index = 0;
+          touch_send_count = 0;
+          touch_send_index = 0;
+        }
+        tp = M5.Touch.getPressPoint();
+        x = 240 - tp.y;
+        y = tp.x;
+        if (x > 20 && x < 220 && y > 20 && y < 300) {
+            send_x = ( x - start_touch_x);
+            send_y = (y - start_touch_y);
+            if (last_touch_index == 0) {
+                start_touch_x = x;
+                start_touch_y = y;
+            } else if (send_x != 0 || send_y != 0) {
+                touch_send_count++;
+            }
+            start_touch_x = x;
+            start_touch_y = y;
+            last_touch_index++;
+            if (touch_send_count == 0 && last_touch_index > 100) {
+                M5.Axp.SetLDOEnable(3, true);
+                delay(100);
+                M5.Axp.SetLDOEnable(3, false);
+                while (M5.Touch.ispressed()) delay(100);
+                disp->view_setting_menu();
+                last_touch_index = -1;
+                return;
+            }
+        }
+    } else {
         last_touch_index = -1;
     }
 }
@@ -697,10 +746,12 @@ void AzKeyboard::loop_exec(void) {
     common_cls.key_old_copy();
 
     // タッチパネルマウス操作
-    if (mouse_pad_status == 1) {
+    if (mouse_pad_status == 1) { // マウスパッド操作の時
         mouse_loop_pad();
-    } else if (mouse_pad_status == 2) {
+    } else if (mouse_pad_status == 2) { // ジョイスティック操作の時
         mouse_loop_joy();
+    } else if (mouse_pad_setting == 0 && mouse_pad_status == 0) { // 操作なし設定で操作なしの時
+        mouse_loop_none();
     }
 
     // lvgl

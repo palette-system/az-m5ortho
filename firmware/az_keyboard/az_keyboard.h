@@ -27,6 +27,7 @@ class AzKeyboard
         void move_mouse_loop(); // マウス移動処理
         void mouse_loop_joy(); // マウスジョイスティック動作
         void mouse_loop_pad(); // マウスタッチパッド動作
+        void mouse_loop_none(); // マウス操作なし(長押しで設定画面に移動する所だけ実装)
         void press_data_clear(); // キーを押したままリストをクリア
     
     private:
