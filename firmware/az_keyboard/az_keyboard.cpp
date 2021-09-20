@@ -607,6 +607,15 @@ void AzKeyboard::mouse_loop_joy() {
             last_touch_x = x;
             last_touch_y = y;
             last_touch_index++;
+            if (touch_send_count == 0 && last_touch_index > 100) {
+                M5.Axp.SetLDOEnable(3, true);
+                delay(150);
+                M5.Axp.SetLDOEnable(3, false);
+                while (M5.Touch.ispressed()) delay(100);
+                disp->view_setting_menu();
+                last_touch_index = -1;
+                return;
+            }
         }
     } else {
         if (last_touch_index >= 0 && last_touch_index < 40&& touch_send_count == 0 && !bleKeyboard.mouse_press_check(1)
@@ -678,10 +687,6 @@ void AzKeyboard::loop_exec(void) {
     // キー入力クリア処理
     press_data_clear();
 
-    // タッチパネルマウス操作
-    // mouse_loop_pad();
-    // mouse_loop_joy();
-
     // 打鍵数定期処理(自動保存など)
     dakeycls.loop_exec();
 
@@ -690,12 +695,16 @@ void AzKeyboard::loop_exec(void) {
 
     // 現在のキーの状態を前回部分にコピー
     common_cls.key_old_copy();
-    // M5.Lcd.setCursor(0, 0);
-    // M5.Lcd.printf("m %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT));
-    // M5.Lcd.printf("m %D %D\n", ESP.getHeapSize(), ESP.getFreeHeap());
+
+    // タッチパネルマウス操作
+    if (mouse_pad_status == 1) {
+        mouse_loop_pad();
+    } else if (mouse_pad_status == 2) {
+        mouse_loop_joy();
+    }
 
     // lvgl
-    lv_task_handler();
+    disp->loop_exec();
     
     delay(5);
 

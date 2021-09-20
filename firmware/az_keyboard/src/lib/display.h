@@ -3,6 +3,7 @@
 
 
 #include "Arduino.h"
+#include <lvgl.h>
 
 
 // サーモ表示用のボタンの位置
@@ -33,9 +34,6 @@ const uint16_t thermo_color[128] PROGMEM = {
 	0xF807, 0xF806, 0xF805, 0xF804, 0xF803, 0xF802, 0xF801, 0xF800
 };
 
-
-
-
 #define  DISP_TYPE_STANDBY  0
 #define  DISP_TYPE_SETTING  1
 #define  DISP_TYPE_SAVENOW  2
@@ -45,6 +43,14 @@ const uint16_t thermo_color[128] PROGMEM = {
 #define  DISP_TYPE_ANKINPT  6
 #define  DISP_TYPE_DKTHERM  7
 #define  DISP_TYPE_DKQRCOD  8
+
+
+// LVGL用
+bool my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data);
+void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
+void event_handler(lv_obj_t * obj, lv_event_t event);
+void lv_setup();
+
 
 // クラスの定義
 class Display
@@ -97,6 +103,7 @@ class Display
 		void view_setting_init_comp(); // 設定の初期化が完了しました画面表示
 		void view_error_wifi_conn(); // Wifi接続して下さいエラー表示
 		void open_movie(); // 起動ムービー
+		void view_setting_menu(); // 設定メニュー表示
 		void loop_exec(); // 定期処理
 };
 

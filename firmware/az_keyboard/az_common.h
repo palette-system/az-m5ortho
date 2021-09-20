@@ -299,6 +299,9 @@ extern setting_wifi *wifi_data;
 // アクセスポイントパスワード
 extern char *ap_pass_char;
 
+// マウスパッドステータス
+extern char mouse_pad_status;
+
 // RGBLED
 extern int8_t rgb_pin;
 extern int8_t matrix_row;
@@ -318,10 +321,6 @@ extern lv_color_t lvbuf[LV_HOR_RES_MAX * 10];
 extern uint32_t frame;
 extern uint32_t startTime;
 
-bool my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data);
-void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
-void event_handler(lv_obj_t * obj, lv_event_t event);
-void lv_setup();
 
 
 #endif

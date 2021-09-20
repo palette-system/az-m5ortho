@@ -9,6 +9,170 @@
 
 
 
+//=====================================================================
+/*Read the touchpad*/
+bool my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data){
+	if (mouse_pad_status > 0) {
+		data->state = LV_INDEV_STATE_REL;
+		return false;
+	}
+	TouchPoint_t pos = M5.Touch.getPressPoint();
+  bool touched = ( pos.x == -1 ) ? false : true;
+  if(!touched) {
+    data->state = LV_INDEV_STATE_REL;
+  } else {
+    data->state = LV_INDEV_STATE_PR; 
+    /*Set the coordinates*/
+    data->point.x = 240 - pos.y;
+    data->point.y = pos.x;
+  }
+  return false; 
+//Return `false` because we are not buffering and no more data to read
+}
+//=====================================================================
+/* Display flushing */
+void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p){
+  uint32_t w = (area->x2 - area->x1 + 1);
+  uint32_t h = (area->y2 - area->y1 + 1);
+  lvtft.startWrite();
+  lvtft.setAddrWindow(area->x1, area->y1, w, h);
+  lvtft.pushColors(&color_p->full, w * h, true);
+  lvtft.endWrite();
+  lv_disp_flush_ready(disp);
+}
+//=====================================================================
+void event_handler(lv_obj_t * obj, lv_event_t event) {
+    // M5.Lcd.print(" %S", event);
+    // イベントについて
+    // https://docs.lvgl.io/master/overview/event.html
+    if(event == LV_EVENT_CLICKED) { // クリック
+        M5.Lcd.print(" c\n");
+    }
+    else if (event == LV_EVENT_PRESSED) { // 押された時
+        M5.Lcd.print(" p\n");
+    }
+    else if (event == LV_EVENT_RELEASED) { // 離された時
+        // M5.Lcd.print("LV_EVENT_RELEASED\n");
+        // lv_obj_set_hidden(obj, true);
+        // M5.Lcd.printf("m %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT));
+        lv_obj_clean(lv_scr_act());
+        mouse_pad_status = 2;
+        M5.Lcd.printf("m %D %D\n", ESP.getHeapSize(), ESP.getFreeHeap());
+    }
+    else if (event == LV_EVENT_LONG_PRESSED) { // 長押し
+        M5.Lcd.print(" n\n");
+    }
+    else if(event == LV_EVENT_VALUE_CHANGED) { // 変更された時
+        M5.Lcd.print("LV_EVENT_VALUE_CHANGED!\n");
+    }
+}
+
+void lv_setup() {
+  lvtft.begin();
+  lvtft.setRotation(0);
+	/*
+  M5.Axp.SetLcdVoltage(2800);
+  M5.Axp.SetLcdVoltage(3300);
+  M5.Axp.SetBusPowerMode(0);
+  M5.Axp.SetCHGCurrent(AXP192::kCHG_190mA);
+  M5.Axp.SetLDOEnable(3, true);
+  delay(150);
+  M5.Axp.SetLDOEnable(3, false);
+  M5.Axp.SetLed(1);
+  delay(100);
+  M5.Axp.SetLed(0);
+  M5.Axp.SetLDOVoltage(3, 3300);
+  M5.Axp.SetLed(1);
+  */
+  // M5.Lcd.printf("m %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT));
+  // return;
+  //-------------------------------------------------------------------
+  lv_disp_buf_init(&disp_buf, lvbuf, NULL, LV_HOR_RES_MAX * 10);
+  lv_init();
+  startTime = millis();
+  
+  //-------------------------------------------------------------------
+  /*Initialize the display*/
+  lv_disp_drv_t disp_drv;
+  lv_disp_drv_init(&disp_drv);
+  disp_drv.hor_res  = 240;
+  disp_drv.ver_res  = 320;
+  disp_drv.flush_cb = my_disp_flush;
+  disp_drv.buffer   = &disp_buf;
+  lv_disp_drv_register(&disp_drv);
+  
+  //-------------------------------------------------------------------
+  /*Initialize the (dummy) input device driver*/
+  lv_indev_drv_t indev_drv;
+  lv_indev_drv_init(&indev_drv);
+  indev_drv.type = LV_INDEV_TYPE_POINTER;
+  indev_drv.read_cb = my_touchpad_read;
+  lv_indev_drv_register(&indev_drv);
+  
+
+
+}
+
+void Display::view_setting_menu() {
+  //-------------------------------------------------------------------
+  lv_obj_t * win = lv_win_create(lv_scr_act(), NULL);
+  lv_win_set_title(win, "設定メニュー");                        /*Set the title*/
+
+    /*Add control button to the header*/
+    lv_obj_t * close_btn = lv_win_add_btn(win, LV_SYMBOL_CLOSE);           /*Add close button and use built-in close action*/
+    // lv_obj_set_event_cb(close_btn, lv_win_close_event_cb);
+    // lv_win_add_btn(win, LV_SYMBOL_SETTINGS);        /*Add a setup button*/
+
+    /*Add some dummy content*/
+    lv_obj_t * txt = lv_label_create(win, NULL);
+    lv_label_set_text(txt, "選んで下さい");
+  lv_obj_align(txt, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
+    
+  
+  lv_obj_t * btn1 = lv_btn_create(win, NULL);
+  lv_obj_set_size(btn1, 200, 70);
+  lv_obj_align(btn1, NULL, LV_ALIGN_IN_TOP_MID, 0, 90);
+  lv_obj_set_event_cb(btn1, event_handler);
+  lv_obj_set_style_local_value_str(btn1, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "btn ボタン１");
+  
+  lv_obj_t * btn2 = lv_btn_create(win, NULL);
+  lv_obj_set_size(btn2, 200, 70);
+  lv_obj_align(btn2, NULL, LV_ALIGN_IN_TOP_MID, 0, 180);
+  // lv_obj_set_event_cb(btn2, event_handler);
+  lv_obj_set_style_local_value_str(btn2, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "btn ボタン2");
+
+  lv_obj_t * btn3 = lv_btn_create(win, NULL);
+  lv_obj_set_size(btn3, 200, 70);
+  lv_obj_align(btn3, NULL, LV_ALIGN_IN_TOP_MID, 0, 270);
+  // lv_obj_set_event_cb(btn3, event_handler);
+  lv_obj_set_style_local_value_str(btn3, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "btn ボタン3");
+
+  lv_obj_t * btn4 = lv_btn_create(win, NULL);
+  lv_obj_set_size(btn4, 200, 70);
+  lv_obj_align(btn4, NULL, LV_ALIGN_IN_TOP_MID, 0, 360);
+  // lv_obj_set_event_cb(btn4, event_handler);
+  lv_obj_set_style_local_value_str(btn4, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "btn ボタン4");
+
+  lv_obj_t * btn5 = lv_btn_create(win, NULL);
+  lv_obj_set_size(btn5, 200, 70);
+  lv_obj_align(btn5, NULL, LV_ALIGN_IN_TOP_MID, 0, 450);
+  // lv_obj_set_event_cb(btn5, event_handler);
+  lv_obj_set_style_local_value_str(btn5, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "btn ボタン5");
+
+  lv_obj_t * btn6 = lv_btn_create(win, NULL);
+  lv_obj_set_size(btn6, 200, 70);
+  lv_obj_align(btn6, NULL, LV_ALIGN_IN_TOP_MID, 0, 540);
+  // lv_obj_set_event_cb(btn6, event_handler);
+  lv_obj_set_style_local_value_str(btn6, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "btn ボタン6");
+	
+	mouse_pad_status = 0;
+}
+
+void view_mouse_page() {
+	lv_obj_clean(lv_scr_act());
+	mouse_pad_status = 2;
+}
+
 
 
 // コンストラクタ
@@ -27,8 +191,8 @@ void Display::begin(int option_type) {
 	this->_qr_flag = 0;
 	this->_last_view_type = 255;
 	this->_last_view_info = 255;
-    M5.Lcd.setRotation(DISPLAY_ROTATION); // 画面の向きを横向きに
-    M5.Lcd.fillScreen(TFT_BLACK);
+	lv_setup();
+	view_mouse_page();
 }
 
 // 画面いっぱい黒い画面
@@ -199,93 +363,7 @@ void Display::view_dakey_save_comp() {
 
 // 定期処理
 void Display::loop_exec() {
-    unsigned long n;
-    n = millis();
-    // this->_tft->fillRect(0, 0,  240, 50, BLACK);
-    // this->_tft->setCursor(4, 4);
-    // this->_tft->setTextSize(2);
-    // this->_tft->printf("%D / %D / %D\n", getXtalFrequencyMhz(), getCpuFrequencyMhz(), getApbFrequency());
-    // this->_tft->printf("%D / %D\n", ESP.getHeapSize(), ESP.getFreeHeap());
-    // this->_tft->printf("%D / %D\n", ESP.getPsramSize(), ESP.getFreePsram());
-    // this->_tft->printf("%D / %D\n", ESP.getFlashChipSize(), ESP.getFlashChipSpeed());
-	// 待ちIndexがあれば待ち時間終わるまで画面の変更なし
-	// if (this->_wait_index && rgb_led_cls.setting_change == 0) {
-	// 	this->_wait_index--;
-	// 	return;
-	// }
-	if (this->_wait_index) this->_wait_index--;
-	if (this->_info_index) this->_info_index--;
-	// 最後に表示したタイプとこれから表示しようとしている物が変わったら、最後に表示したタイプをbackに保持しておく
-	if (this->view_type != this->_last_view_type) {
-		this->_back_view_type = this->_last_view_type;
-	}
-	// 各表示処理
-	if (rgb_led_cls.setting_change == 1) {
-		this->view_led_stat();  // LEDステータス設定変更があった
-
-	} else if (rgb_led_cls.setting_change == 2) {
-		this->view_led_bright();  // LED明るさ設定変更があった
-	
-	} else if (rgb_led_cls.setting_change == 3) {
-		this->view_led_color();  // LED色設定変更があった
-	
-	} else if (rgb_led_cls.setting_change == 4) {
-		this->view_led_shine();  // LED光らせ方設定変更があった
-
-	} else if (this->view_type == DISP_TYPE_DKQRCOD) {
-		// 打鍵QRコード
-		this->view_dakagi_qr();
-		// info表示を終わる時にQRコードを表示しなおしたいので表示している内容を何もなしにする
-		if (this->_wait_index == 1) this->_last_view_type = 255;
-
-	} else if (this->view_type == DISP_TYPE_DKTHERM) {
-		// 打鍵サーモ(最終表示がサーモでもまた実行する)
-		this->view_dakagi_thermo();
-		// 打鍵表示
-		if (this->_wait_index == 0) this->view_dakagi();
-
-	} else if (this->view_type == DISP_TYPE_STANDBY) {
-		// 打鍵表示があるから最終表示が待ち受けでもまた実行する
-		// 待ち受け画像
-		this->view_standby_image();
-		// 打鍵表示
-		if (this->_wait_index == 0) {
-			if (this->dakagi_last_view != common_cls.key_count_total && common_cls.key_count_total != 0) {
-				// 打鍵数が増えたら打鍵数表示
-				this->view_dakagi();
-				this->_info_index = 150;
-			} else if (this->_info_index == 1) {
-				// info表示を終わる時に待ち受け画像を表示しなおしたいので表示してる内容を何もなしにする
-				this->_info_spot = 1;
-				this->_last_view_type = 255;
-			}
-		}
-
-	} else if (this->view_type == this->_last_view_type) {
-		// 最後に表示した内容と一緒であれば何もしない
-
-	} else if (this->view_type == DISP_TYPE_SETTING) {
-		// 設定画面
-		this->view_setting_mode();
-
-	} else if (this->view_type == DISP_TYPE_SAVENOW) {
-		// 保存中画面
-		this->view_save();
-
-	} else if (this->view_type == DISP_TYPE_WIFICNN) {
-		// Wifi接続中
-		this->view_wifi_conn();
-
-	} else if (this->view_type == DISP_TYPE_WEBFOOK) {
-		// WEBフック中
-		this->view_webhook();
-
-	} else if (this->view_type == DISP_TYPE_ANKYNOW) {
-		// 暗記中画面
-		this->view_ankey_now();
-
-
-	}
+	lv_task_handler();
 	
 }
 
