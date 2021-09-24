@@ -31,6 +31,8 @@ File upfp;
 // キーが押されたか
 int last_key_down = -1;
 
+
+
 // IP アドレスデータを表示用の文字列にする
 String toStringIp(IPAddress ip) {
     String res = "";
@@ -421,6 +423,8 @@ void AzSetting::loop_exec() {
     key_action_exec();
     // 現在のキーの状態を前回部分にコピー
     common_cls.key_old_copy();
+    // lvgl
+    disp->loop_exec();
     delay(10);
   }
 }

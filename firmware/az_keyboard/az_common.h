@@ -41,13 +41,16 @@
 #define FIRMWARE_VERSION   "000027"
 
 // EEPROMに保存しているデータのバージョン文字列
-#define EEP_DATA_VERSION    "AZM013"
+#define EEP_DATA_VERSION    "AZM014"
 
 // JSON のファイルパス
 #define SETTING_JSON_PATH "/setting.json"
 
 // 起動回数を保存するファイルのパス
 #define  BOOT_COUNT_PATH  "/boot_count"
+
+// システム情報を保存するファイルのパス
+#define  SYSTEM_FILE_PATH  "/sys_data"
 
 // 打鍵数を自動保存するかどうかの設定を保存するファイルパス
 #define  KEY_COUNT_AUTO_SAVE_PATH  "/key_count_auto_save"
@@ -81,7 +84,7 @@ struct press_mouse_data {
 // EEPROMに保存するデータ
 struct mrom_data_set {
     char check[10];
-    char text[128];
+    char keyboard_type[16];
     char ap_ssid[32];
     int boot_mode; // 起動モード 0=キーボード / 1=設定モード
     char uid[12];
@@ -269,7 +272,6 @@ extern press_mouse_data press_mouse_list[PRESS_MOUSE_MAX];
 // オールクリア送信フラグ
 extern int press_key_all_clear;
 
-
 // EEPROMデータリンク
 extern mrom_data_set eep_data;
 
@@ -291,6 +293,13 @@ extern AXP192 power;
 // キーが押された時の設定
 extern uint16_t setting_length;
 extern setting_key_press *setting_press;
+
+// リスタート用のフラグ
+extern int8_t restart_flag;
+extern int8_t restart_index;
+
+// 設定メニューを表示しているかどうか
+extern bool menu_mode_flag;
 
 // wifi設定
 extern uint8_t wifi_data_length;
@@ -321,8 +330,7 @@ extern Adafruit_MCP23X17 iomcp[4];
 extern TFT_eSPI lvtft;
 extern lv_disp_buf_t disp_buf;
 extern lv_color_t lvbuf[LV_HOR_RES_MAX * 10];
-extern uint32_t frame;
-extern uint32_t startTime;
+extern int8_t lvgl_loop_index;
 
 
 

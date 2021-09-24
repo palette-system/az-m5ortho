@@ -103,6 +103,13 @@ press_key_data press_key_list[PRESS_KEY_MAX];
 // 押している最中のマウス移動
 press_mouse_data press_mouse_list[PRESS_MOUSE_MAX];
 
+// リスタート用のフラグ
+int8_t restart_flag;
+int8_t restart_index;
+
+// 設定メニューを表示しているかどうか
+bool menu_mode_flag;
+
 // オールクリア送信フラグ
 int press_key_all_clear;
 
@@ -135,8 +142,7 @@ Adafruit_MCP23X17 iomcp[4];
 TFT_eSPI lvtft = TFT_eSPI();
 lv_disp_buf_t disp_buf;
 lv_color_t lvbuf[LV_HOR_RES_MAX * 10];
-uint32_t frame;
-uint32_t startTime;
+int8_t lvgl_loop_index;
 
 // ステータス用LED点滅
 void IRAM_ATTR status_led_write() {
@@ -239,13 +245,17 @@ void AzCommon::common_start() {
     last_touch_x = -1;
     last_touch_y = -1;
 
-    frame = 0;
-    startTime = 0;
-
     // マウスパッドステータス
     mouse_pad_status = 0;
     // マウスパッド操作設定ステータス
     mouse_pad_setting = 0;
+    // リスタートフラグ
+    restart_flag = -1;
+    restart_index = -1;
+    // メニューを表示しているかどうか
+    menu_mode_flag = false;
+    // LVGL表示インデックス
+    lvgl_loop_index = 0;
 }
 
 
@@ -913,47 +923,51 @@ setting_key_press AzCommon::get_key_setting(int layer_id, int key_num) {
 
 //データをEEPROMから読み込む。保存データが無い場合デフォルトにする。
 void AzCommon::load_data() {
-    // EEPROM初期化
-    EEPROM.begin(EEPROM_BUF_SIZE);
-    ESP_LOGD(LOG_TAG, "eeprom size: %D", EEPROM.length());
-    ESP_LOGD(LOG_TAG, "eeprom load\r\n");
-    EEPROM.get<mrom_data_set>(0, eep_data);
-    ESP_LOGD(LOG_TAG, "eeprom check: %S", eep_data.check);
-    if (strcmp(eep_data.check, EEP_DATA_VERSION)) { //バージョンをチェック
-        ESP_LOGD(LOG_TAG, "eeprom set default\r\n");
-        //保存データが無い場合デフォルトを設定
-        // 起動モード
-        eep_data.boot_mode = 0;
-        // データチェック文字列
-        strcpy(eep_data.check, EEP_DATA_VERSION);
-        // WIFIアクセスポイントの名前
-        char b[16];
-        getRandomNumbers(4, b);
-        sprintf(eep_data.ap_ssid, "%S-%S", WIFI_AP_SSI_NAME, b);
-        // ユニークID
-        getRandomNumbers(10, eep_data.uid);
-        // 受け渡し用テキスト
-        strcpy(eep_data.text, "");
-        // 設定JSONも作り直す
-        // M5.Lcd.printf("create_setting_json\n");
-        create_setting_json();
-        // キーボードモードで再起動(ここでeep_dataも保存される)
-        change_mode(0);
+    // デフォルト値セット
+    // 起動モード
+    eep_data.boot_mode = 0;
+    // データチェック文字列
+    strcpy(eep_data.check, EEP_DATA_VERSION);
+    // WIFIアクセスポイントの名前
+    char b[16];
+    getRandomNumbers(4, b);
+    sprintf(eep_data.ap_ssid, "%S-%S", WIFI_AP_SSI_NAME, b);
+    // ユニークID
+    getRandomNumbers(10, eep_data.uid);
+    // キーボードの種類
+    strcpy(eep_data.keyboard_type, "");
+    File fp;
+    if (!SPIFFS.exists(SYSTEM_FILE_PATH)) {
+        // ファイルが無い場合デフォルト値でファイルを作成
+        save_data();
+        return;
     }
+    // ファイルがあればデータ読み込み
+    fp = SPIFFS.open(SYSTEM_FILE_PATH, "r");
+    if(!fp){
+        ESP_LOGD(LOG_TAG, "file open error\n");
+        return;
+    }
+    if (fp.available()) {
+        fp.read((uint8_t *)&eep_data, sizeof(mrom_data_set));
+    }
+    fp.close();
 }
 
 
 // データをEEPROMに書き込む
 void AzCommon::save_data() {
     //EEPROMに設定を保存する。
+    File fp;
     strcpy(eep_data.check, EEP_DATA_VERSION);
     ESP_LOGD(LOG_TAG, "save eeprom boot mode: %D", eep_data.boot_mode);
     ESP_LOGD(LOG_TAG, "save eeprom check sum: %S", eep_data.check);
-    ESP_LOGD(LOG_TAG, "text: %S", eep_data.text);
+    ESP_LOGD(LOG_TAG, "keyboard_type: %S", eep_data.keyboard_type);
     ESP_LOGD(LOG_TAG, "data sizeof: %D", sizeof(mrom_data_set));
-    EEPROM.put<mrom_data_set>(0, eep_data);
-    delay(200);
-    EEPROM.commit(); //大事
+    // ファイルに書き込み
+    fp = SPIFFS.open(SYSTEM_FILE_PATH, "w");
+    fp.write((uint8_t *)&eep_data, sizeof(mrom_data_set));
+    fp.close();
     delay(200);
     ESP_LOGD(LOG_TAG, "save complete\r\n");
 }

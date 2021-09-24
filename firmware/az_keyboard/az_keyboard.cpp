@@ -754,9 +754,24 @@ void AzKeyboard::loop_exec(void) {
         mouse_loop_none();
     }
 
-    // lvgl
-    disp->loop_exec();
-    
+    // メニュー表示中はLVGLのみ実行
+    while (menu_mode_flag) {
+        disp->loop_exec();
+    }
+
+    // 表示インデックスがある時だけLVGL処理をする
+    if (lvgl_loop_index > 0) {
+        disp->loop_exec();
+        lvgl_loop_index--;
+    }
+
+    // 3回ループ処理をしてからリスタート(ボタンを押してスグリスタートだと画面が固まったように見えるから)
+    if (restart_flag >= 0) {
+        restart_index++;
+        if (restart_index > 3) {
+            common_cls.change_mode(restart_flag);
+        }
+    }
     delay(5);
 
   }

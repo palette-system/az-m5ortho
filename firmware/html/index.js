@@ -367,6 +367,37 @@ mst.get_key_char = function(key_code, key_name) {
     return "";
 };
 
+// レイヤー名変更画面表示
+mst.rename_layer = function() {
+    var s = "";
+    st = "font-size: 30px; width: 520px; border: 3px solid black;";
+    s += "<b style='font-size: 30px;'>レイヤー名変更</b><br><br><br><br>";
+    s += "<input type='text' id='rename_layer_text' style='"+st+"' value='" +  mst.get_layer_name(mst.edit_layer) + "'>";
+    s += "<br><br><br><br><br><br>";
+    s += "<center><div id='rename_layer_btn_box'>";
+    s += "<a href='#' class='button' onClick='javascript:mst.rename_layer_btn_click(1);return false;'>決定</a>　　";
+    s += "<a href='#' class='button' onClick='javascript:mst.rename_layer_btn_click(0);return false;'>キャンセル</a>";
+    s += "</div></center>";
+    set_html("setting_box", s);
+    set_html("info_box", "");
+    mst.view_box(["info_box", "setting_box"]);
+};
+
+// レイヤー名変更決定ボタンクリック
+mst.rename_layer_btn_click = function(type_id) {
+    if (type_id) {
+        // 決定ならばレイヤー名更新
+        var set_name = $("rename_layer_text").value;
+        if (set_name.length > 12) {
+            set_html("info_box", "レイヤー名が長すぎます");
+            return;
+        }
+        mst.set_layer_name(mst.edit_layer, set_name);
+        
+    }
+    mst.view_layer();
+};
+
 // レイヤー枠表示
 mst.view_layer = function() {
     var s = "";
@@ -374,10 +405,11 @@ mst.view_layer = function() {
     s += "<div style='display: inline-block;'>";
     s += "<div id='layer_menu'>";
     s += "<a href='#' class='update_button' onClick='javascript:mst.select_layer(); return false;'>▼</a>　";
+    s += "<a href='#' class='update_button' onClick='javascript:mst.rename_layer(); return false;'>名前変更</a>　";
     if (mst.edit_layer > 0) {
-        s += "<a href='#' class='update_button' onClick='javascript:mst.delete_layer(); return false;'>×</a>　";
+        s += "<a href='#' class='update_button' onClick='javascript:mst.delete_layer(); return false;'>削除</a>　";
     }
-    s += "<a href='#' class='update_button' onClick='javascript:mst.add_layer(); return false;'>＋</a>　";
+    s += "<a href='#' class='update_button' onClick='javascript:mst.add_layer(); return false;'>追加</a>　";
     s += "</div>";
     s += "</div>";
     set_html("layer_box", s);
@@ -634,6 +666,12 @@ mst.get_layer_list = function() {
 mst.get_layer_name = function(layer_no) {
     if (!mst.setting_data.layers["layer_" + layer_no]) return "";
     return mst.setting_data.layers["layer_" + layer_no].name;
+};
+
+// レイヤー番号のレイヤー名を変更
+mst.set_layer_name = function(layer_no, layer_name) {
+    if (!mst.setting_data.layers["layer_" + layer_no]) return;
+    mst.setting_data.layers["layer_" + layer_no].name = layer_name;
 };
 
 // 入力タイプ選択(データが無い場合はここでデフォルトのデータを入れる)
