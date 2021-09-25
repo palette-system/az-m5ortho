@@ -11,6 +11,7 @@ setting_wifi *wifi_data;
 char *ap_pass_char;
 // RGBLED
 int8_t rgb_pin;
+int16_t rgb_len;
 int8_t matrix_row;
 int8_t matrix_col;
 int8_t *led_num;
@@ -675,6 +676,8 @@ void AzCommon::load_setting_json() {
     // RGBLED設定の取得
     rgb_pin = -1;
     if (setting_obj.containsKey("rgb_pin")) rgb_pin = setting_obj["rgb_pin"].as<signed int>();
+    rgb_len = -1;
+    if (setting_obj.containsKey("rgb_len")) rgb_len = setting_obj["rgb_len"].as<signed int>();
     matrix_row = -1;
     if (setting_obj.containsKey("matrix_row")) matrix_row = setting_obj["matrix_row"].as<signed int>();
     matrix_col = -1;
@@ -845,7 +848,6 @@ void AzCommon::pin_setup() {
           iomcp[i].pinMode(j, INPUT_PULLUP);
       }
   }
-  delay(3000);
 
   key_input_length = 52;
   this->key_count_total = 0;

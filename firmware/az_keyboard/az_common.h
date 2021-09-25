@@ -11,7 +11,7 @@
 #include "FS.h"
 #include "SPIFFS.h"
 
-#include <EEPROM.h>
+
 #include <ArduinoJson.h>
 #include <WiFi.h>
 #include <WiFiMulti.h>
@@ -335,6 +335,7 @@ extern int8_t mouse_pad_setting;
 
 // RGBLED
 extern int8_t rgb_pin;
+extern int16_t rgb_len;
 extern int8_t matrix_row;
 extern int8_t matrix_col;
 extern int8_t *led_num;

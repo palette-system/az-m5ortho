@@ -33,12 +33,6 @@ void AzKeyboard::start_keyboard() {
     // ステータスLED wifi接続中
     status_led_mode = 4;
 
-    // メモリ空けるためファイルシステム終了
-    // SPIFFS.end();
-
-    // EEPROMも終了
-    EEPROM.end();
-
     // Wifi 接続
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
     common_cls.wifi_connect();
@@ -608,11 +602,12 @@ void AzKeyboard::mouse_loop_joy() {
             last_touch_x = x;
             last_touch_y = y;
             last_touch_index++;
-            if (touch_send_count == 0 && last_touch_index > 100) {
+            if (touch_send_count == 0 && last_touch_index > 70) {
                 M5.Axp.SetLDOEnable(3, true);
                 delay(100);
                 M5.Axp.SetLDOEnable(3, false);
                 while (M5.Touch.ispressed()) delay(100);
+                press_data_reset();
                 disp->view_setting_menu();
                 last_touch_index = -1;
                 return;
@@ -655,11 +650,12 @@ void AzKeyboard::mouse_loop_pad() {
             start_touch_x = x;
             start_touch_y = y;
             last_touch_index++;
-            if (touch_send_count == 0 && last_touch_index > 100) {
+            if (touch_send_count == 0 && last_touch_index > 70) {
                 M5.Axp.SetLDOEnable(3, true);
                 delay(100);
                 M5.Axp.SetLDOEnable(3, false);
                 while (M5.Touch.ispressed()) delay(100);
+                press_data_reset();
                 disp->view_setting_menu();
                 last_touch_index = -1;
                 return;
@@ -701,11 +697,12 @@ void AzKeyboard::mouse_loop_none() {
             start_touch_x = x;
             start_touch_y = y;
             last_touch_index++;
-            if (touch_send_count == 0 && last_touch_index > 100) {
+            if (touch_send_count == 0 && last_touch_index > 70) {
                 M5.Axp.SetLDOEnable(3, true);
                 delay(100);
                 M5.Axp.SetLDOEnable(3, false);
                 while (M5.Touch.ispressed()) delay(100);
+                press_data_reset();
                 disp->view_setting_menu();
                 last_touch_index = -1;
                 return;
@@ -758,6 +755,8 @@ void AzKeyboard::loop_exec(void) {
     // メニュー表示中はLVGLのみ実行
     while (menu_mode_flag) {
         disp->loop_exec();
+        // RGB_LEDを制御する定期処理
+        rgb_led_cls.rgb_led_loop_exec();
     }
 
     // 表示インデックスがある時だけLVGL処理をする
@@ -769,7 +768,7 @@ void AzKeyboard::loop_exec(void) {
     // リスタート用ループ処理
     common_cls.restart_loop();
 
-    delay(5);
+    delay(10);
 
   }
 }

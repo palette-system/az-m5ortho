@@ -39,8 +39,9 @@ void setup() {
     // 設定jsonの読み込み
     common_cls.load_setting_json();
     // RGB_LEDクラス初期化
-    if (rgb_pin > 0 && matrix_row > 0 && matrix_col > 0) {
-        rgb_led_cls.begin( rgb_pin, matrix_row, matrix_col, &select_layer_no, led_num, key_matrix);
+    if (rgb_pin > 0 && rgb_len > 0 && matrix_row > 0 && matrix_col > 0) {
+        M5.Lcd.printf("RGB_LED: pin=%D len=%D row=%D col=%D\n", rgb_pin, rgb_len, matrix_row, matrix_col);
+        rgb_led_cls.begin( rgb_pin, rgb_len, matrix_row, matrix_col, &select_layer_no, led_num, key_matrix);
     }
     // キーの入力ピンの初期化
     common_cls.pin_setup();

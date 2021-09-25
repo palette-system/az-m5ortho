@@ -2,11 +2,11 @@
 #include "display.h"
 
 #include "../../az_common.h"
-#include "../image/gimp_image.h"
-#include "../image/tanoshii.h"
-#include "../image/wificonn1.h"
-#include "../image/wificonn2.h"
 
+// フォント
+// http://www.fontna.com/blog/1226/
+// LogoTypeGothic ロゴたいぷゴシック 07LogoTypeGothic7.ttf
+// コンバーター： https://lvgl.io/tools/fontconverter
 
 LV_IMG_DECLARE(setting_img);
 
@@ -14,10 +14,12 @@ LV_IMG_DECLARE(setting_img);
 lv_obj_t * lv_list_obj;
 // ドロップダウンオブジェクト
 lv_obj_t * lv_drop_down_obj;
+lv_obj_t * lv_drop_down_obj_2;
 
 
 void view_mouse_page(); // マウスパッド画面表示
 void view_setting_mousepad(lv_obj_t * obj, lv_event_t event); // マウスパッド設定画面表示
+void view_setting_led(lv_obj_t * obj, lv_event_t event); // バックライト設定画面表示
 void view_setting_menu_fnc(); // 設定メニュー表示
 
 
@@ -253,12 +255,14 @@ void view_setting_menu_fnc() {
 	
 	
 	lv_obj_t * btn;
-    btn = lv_list_add_btn(lv_list_obj, NULL, "マウス操作");
-    lv_obj_set_event_cb(btn, view_setting_mousepad);
-    btn = lv_list_add_btn(lv_list_obj, NULL, "設定モードで再起動");
-    lv_obj_set_event_cb(btn, reboot_setting_mode_alert);
     btn = lv_list_add_btn(lv_list_obj, NULL, "キーボード選択");
     lv_obj_set_event_cb(btn, view_keyboard_select_event);
+    btn = lv_list_add_btn(lv_list_obj, NULL, "マウス操作");
+    lv_obj_set_event_cb(btn, view_setting_mousepad);
+    btn = lv_list_add_btn(lv_list_obj, NULL, "バックライト設定");
+    lv_obj_set_event_cb(btn, view_setting_led);
+    btn = lv_list_add_btn(lv_list_obj, NULL, "設定モードで再起動");
+    lv_obj_set_event_cb(btn, reboot_setting_mode_alert);
     btn = lv_list_add_btn(lv_list_obj, "×", "閉じる");
     lv_obj_set_event_cb(btn, close_setting);
 
@@ -269,7 +273,7 @@ void view_setting_menu_fnc() {
 }
 
 // マウスパッド設定画面終了
-void view_setting_mousepad_close(lv_obj_t * obj, lv_event_t event) {
+void view_setting_menu_ev(lv_obj_t * obj, lv_event_t event) {
 	// クリック以外のイベントは無視
 	if (event != LV_EVENT_CLICKED) return;
 	// 設定メニュー表示
@@ -315,8 +319,111 @@ void view_setting_mousepad(lv_obj_t * obj, lv_event_t event) {
 	lv_obj_t * btn1 = lv_btn_create(win, NULL);
 	lv_obj_set_size(btn1, 150, 50);
 	lv_obj_align(btn1, NULL, LV_ALIGN_IN_TOP_MID, 0, 150);
-	lv_obj_set_event_cb(btn1, view_setting_mousepad_close);
+	lv_obj_set_event_cb(btn1, view_setting_menu_ev);
 	lv_obj_set_style_local_value_str(btn1, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "閉じる");
+}
+
+// バックライトON/OFF
+void led_enable_set(lv_obj_t * obj, lv_event_t event)
+{
+    if(event == LV_EVENT_VALUE_CHANGED) {
+    	if (lv_switch_get_state(obj)) {
+    		rgb_led_cls.set_status(1);
+    	} else {
+    		rgb_led_cls.set_status(0);
+    	}
+    }
+}
+
+// バックライト明るさアップ
+void led_bright_ev(lv_obj_t * obj, lv_event_t event) {
+	if(event == LV_EVENT_VALUE_CHANGED) {
+		rgb_led_cls.set_bright(lv_slider_get_value(obj));
+	}
+}
+
+
+// 光り方変更
+void led_shine_type(lv_obj_t * obj, lv_event_t event) {
+    if(event == LV_EVENT_VALUE_CHANGED) {
+    	rgb_led_cls.set_shine_type(lv_dropdown_get_selected(obj));
+    }
+}
+
+// 色変更
+void led_color_type(lv_obj_t * obj, lv_event_t event) {
+    if(event == LV_EVENT_VALUE_CHANGED) {
+    	rgb_led_cls.set_color_type(lv_dropdown_get_selected(obj));
+    }
+}
+
+
+// バックライト設定画面表示
+void view_setting_led(lv_obj_t * obj, lv_event_t event) {
+	// クリック以外のイベントは無視
+	if (event != LV_EVENT_CLICKED) return;
+
+	// 画面上のオブジェクト全て削除
+	lv_obj_clean(lv_scr_act());
+	// window作成
+    lv_obj_t * win = lv_win_create(lv_scr_act(), NULL);
+    lv_win_set_title(win, "バックライト設定");
+
+	// テキスト
+    lv_obj_t * txt = lv_label_create(win, NULL);
+    lv_label_set_text(txt, "ON/OFF");
+    lv_obj_align(txt, NULL, LV_ALIGN_IN_TOP_MID, -50, 40);
+
+	// ON/OFF のスイッチ
+    lv_obj_t * sw;
+    sw = lv_switch_create(win, NULL);
+    lv_obj_set_event_cb(sw, led_enable_set);
+	lv_obj_set_size(sw, 70, 40);
+	if (rgb_led_cls._setting.status) {
+		lv_switch_on(sw, LV_ANIM_OFF);
+	} else {
+		lv_switch_off(sw, LV_ANIM_OFF);
+	}
+    lv_obj_align(sw, NULL, LV_ALIGN_IN_TOP_MID, 30, 30);
+
+	// 明るさ
+    lv_obj_t * txt2 = lv_label_create(win, NULL);
+    lv_label_set_text(txt2, "明るさ");
+    lv_obj_align(txt2, NULL, LV_ALIGN_IN_TOP_MID, -80, 100);
+
+	// 明るさ調節のスライダー
+	lv_obj_t * slider = lv_slider_create(win, NULL);
+	lv_obj_set_size(slider, 150, 10);
+	lv_obj_align(slider, NULL, LV_ALIGN_IN_TOP_MID, 0, 140);
+	lv_obj_set_event_cb(slider, led_bright_ev);
+	lv_slider_set_range(slider, 0, 15);
+	lv_slider_set_value(slider, rgb_led_cls._setting.bright, LV_ANIM_OFF);
+
+	// 光らせ方メニュー
+	lv_drop_down_obj = lv_dropdown_create(win, NULL);
+	lv_dropdown_set_options(lv_drop_down_obj, "常に点灯\n押したら点灯\n周りに広がる\nグラデーション");
+	lv_obj_set_size(lv_drop_down_obj, 200, 34);
+	lv_dropdown_set_selected(lv_drop_down_obj, rgb_led_cls._setting.shine_type);
+	lv_dropdown_set_symbol(lv_drop_down_obj, "▼");
+	lv_obj_align(lv_drop_down_obj, NULL, LV_ALIGN_IN_TOP_MID, 0, 200);
+	lv_obj_set_event_cb(lv_drop_down_obj, led_shine_type);
+
+	// 色メニュー
+	lv_drop_down_obj_2 = lv_dropdown_create(win, NULL);
+	lv_dropdown_set_options(lv_drop_down_obj_2, "ホワイト\nレッド\nグリーン\nブルー\nスカイブルー\nイエロー");
+	lv_obj_set_size(lv_drop_down_obj_2, 200, 34);
+	lv_dropdown_set_selected(lv_drop_down_obj_2, rgb_led_cls._setting.color_type);
+	lv_dropdown_set_symbol(lv_drop_down_obj_2, "▼");
+	lv_obj_align(lv_drop_down_obj_2, NULL, LV_ALIGN_IN_TOP_MID, 0, 270);
+	lv_obj_set_event_cb(lv_drop_down_obj_2, led_color_type);
+
+	// 閉じるボタン
+	lv_obj_t * btn5 = lv_btn_create(win, NULL);
+	lv_obj_set_size(btn5, 150, 50);
+	lv_obj_align(btn5, NULL, LV_ALIGN_IN_TOP_MID, 0, 340);
+	lv_obj_set_event_cb(btn5, view_setting_menu_ev);
+	lv_obj_set_style_local_value_str(btn5, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "閉じる");
+	
 }
 
 
@@ -537,7 +644,21 @@ void Display::view_dakey_save_comp() {
 
 // 定期処理
 void Display::loop_exec() {
+	// LVGL表示処理
 	lv_task_handler();
-	
+	// キー入力判定だけする(ボタンが押したらLED光るをやるため)
+	common_cls.key_read(); // 現在のキーの状態を取得
+	int i;
+	for (i=0; i<key_input_length; i++) {
+		if (common_cls.input_key_last[i] == common_cls.input_key[i]) continue;
+		if (common_cls.input_key[i]) {
+			// キーが押された
+			rgb_led_cls.set_led_buf(i, 1); // LED に押したよを送る
+		} else {
+			// キーは離された
+			rgb_led_cls.set_led_buf(i, 0); // LED に離したよを送る
+		}
+	}
+	common_cls.key_old_copy(); // 現在のキーの状態を前回部分にコピー
 }
 

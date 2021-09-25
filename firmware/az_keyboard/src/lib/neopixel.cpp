@@ -13,10 +13,10 @@ Neopixel::Neopixel() {
 
 
 // LED制御初期化
-void Neopixel::begin(short data_pin, short row_size, short col_size, int *select_layer, int8_t *led_num, int8_t *key_matrix) {
+void Neopixel::begin(short data_pin, short led_length, short row_size, short col_size, int *select_layer, int8_t *led_num, int8_t *key_matrix) {
 	int i;
 	this->_data_pin = data_pin;
-	this->_led_length = (row_size * col_size);
+	this->_led_length = led_length;
 	this->_row_size = row_size;
 	this->_col_size = col_size;
 	this->_select_layer_no = select_layer;
@@ -34,11 +34,8 @@ void Neopixel::begin(short data_pin, short row_size, short col_size, int *select
     this->select_key_cler();
     // RGB_LEDピン用の初期化
     if (this->_data_pin >= 0 && this->_led_length > 0) {
-        this->rgb_led = new Adafruit_NeoPixel(this->_led_length, this->_data_pin, NEO_GRB + NEO_KHZ400);
-        for (i=0; i<this->_led_length; i++) {
-            this->rgb_led->setPixelColor(i, this->rgb_led->Color(0, 0, 0));
-        }
-    	this->rgb_led->show();
+        this->rgb_led = new Adafruit_NeoPixel(this->_led_length, this->_data_pin, NEO_GRB + NEO_KHZ800);
+    	hide_all();
     }
 }
 
@@ -134,6 +131,57 @@ void Neopixel::setting_shine_type() {
 		this->_setting.shine_type++;
 	} else {
 		this->_setting.shine_type = 0;
+	}
+	this->hide_all(); // 一旦すべて消す
+	this->setting_save(); // 設定を保存
+	this->setting_change = 4;
+}
+
+
+// ON/OFFを設定する
+void Neopixel::set_status(int stat) {
+	// 設定が変わらなければ何もしない
+	if (this->_setting.status == stat) return;
+	if (stat == 0) this->_hide_flag = 1; // 消灯フラグ ON
+	this->_setting.status = stat;
+	this->setting_save(); // 設定を保存
+	this->setting_change = 1;
+}
+
+// 明るさを設定する
+void Neopixel::set_bright(int bright) {
+	if (bright < 0) {
+		this->_setting.bright = 0;
+	} else if (bright > NEO_BRIGHT_MAX) {
+		this->_setting.bright = NEO_BRIGHT_MAX;
+	} else {
+		this->_setting.bright = bright;
+	}
+	this->setting_save(); // 設定を保存
+	this->setting_change = 2;
+}
+
+// LEDの色を設定する
+void Neopixel::set_color_type(int color_type) {
+	if (color_type > 5) {
+		this->_setting.color_type = 5;
+	} else if (color_type < 0 ){
+		this->_setting.color_type = 0;
+	} else {
+		this->_setting.color_type = color_type;
+	}
+	this->setting_save(); // 設定を保存
+	this->setting_change = 3;
+}
+
+// 光り方を設定する
+void Neopixel::set_shine_type(int shine_type) {
+	if (shine_type > 3) {
+		this->_setting.shine_type = 3;
+	} else if (shine_type < 0) {
+		this->_setting.shine_type = 0;
+	} else {
+		this->_setting.shine_type = shine_type;
 	}
 	this->hide_all(); // 一旦すべて消す
 	this->setting_save(); // 設定を保存

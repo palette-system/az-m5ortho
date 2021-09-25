@@ -40,8 +40,8 @@ const char neo_color_list[6][3] PROGMEM = {
 	{128, 0, 0},
 	{0, 128, 0},
 	{0, 0, 128},
-	{128, 128, 0},
-	{0, 128, 128}
+	{0, 128, 128},
+	{128, 128, 0}
 };
 
 
@@ -65,7 +65,7 @@ class Neopixel
 		uint16_t  lotate_index; // グラデーションインデックス
 		Adafruit_NeoPixel *rgb_led; // RGB_LEDオブジェクト
 		Neopixel();   // コンストラクタ
-		void begin(short data_pin, short row_size, short col_size, int *select_layer, int8_t *led_num, int8_t *key_matrix); // LED制御初期化
+		void begin(short data_pin, short led_length, short row_size, short col_size, int *select_layer, int8_t *led_num, int8_t *key_matrix); // LED制御初期化
 		void setting_load();
 		void setting_save();
 		void set_led_num(int8_t key, int8_t val);
@@ -76,6 +76,10 @@ class Neopixel
 		void setting_bright_down();  // LEDの明るさダウン
 		void setting_color_type();  // LEDの色変更
 		void setting_shine_type();  // LEDの光らせ方変更
+		void set_status(int stat); // ON/OFFを設定する
+		void set_bright(int bright); // 明るさを設定する
+		void set_color_type(int color_type); // 色を設定する
+		void set_shine_type(int shine_type); // 光り方を設定する
 		uint32_t get_setting_color(); // 現在設定されている色と明るさのカラーを取得
 		uint32_t get_lotate_color(uint8_t i); // 0 - 255 に該当する色を取得
 		void select_key_cler();
