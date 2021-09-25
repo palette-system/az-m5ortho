@@ -13,10 +13,8 @@ static DescriptorCallbacks dscCallbacks;
 static CharacteristicCallbacks chrCallbacks;
 
 // コンストラクタ
-BleKeyboardJIS::BleKeyboardJIS(std::string deviceName, std::string deviceManufacturer)
+BleKeyboardJIS::BleKeyboardJIS(void)
 {
-  this->deviceName = deviceName;
-  this->deviceManufacturer = deviceManufacturer;
   this->_MouseButtons = 0x00;
   this->batteryLevel = 100;
   this->connectionStatus = new BleConnectionStatus();
@@ -43,8 +41,10 @@ void BleKeyboardJIS::set_report_map(uint8_t * report_map, unsigned short report_
 };
 
 // BLEキーボードとして処理開始
-void BleKeyboardJIS::begin(void)
+void BleKeyboardJIS::begin(std::string deviceName, std::string deviceManufacturer)
 {
+  this->deviceName = deviceName;
+  this->deviceManufacturer = deviceManufacturer;
   xTaskCreate(this->taskServer, "server", 20000, (void *)this, 5, NULL); // BLE HID 開始処理
 };
 

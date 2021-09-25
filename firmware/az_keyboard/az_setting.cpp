@@ -96,7 +96,7 @@ bool handleUrl(String path) {
 
     } else if (path.indexOf("/firmware_version") == 0) {
         // ファームウェアのバージョン教えて
-        sprintf(scmd, "{\"v\": \"%S\", \"t\": %D, \"d\": %D}", FIRMWARE_VERSION, AZESP32_TYPE, DISPLAY_ROTATION);
+        sprintf(scmd, "{\"v\": \"%S\", \"d\": %D}", FIRMWARE_VERSION, DISPLAY_ROTATION);
         server.send(200,"text/html", scmd);
         return true;
 

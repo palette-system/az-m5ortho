@@ -7,8 +7,9 @@
 #include "src/lib/dakey.h"
 #include "src/lib/paw3204.h"
 
+
 // BLEキーボードクラス
-BleKeyboardJIS bleKeyboard(BLUETOOTH_SEARCH_NAME);
+BleKeyboardJIS bleKeyboard = BleKeyboardJIS();
 
 // 拡張関数クラス
 CustomFunc my_function = CustomFunc();
@@ -45,7 +46,7 @@ void AzKeyboard::start_keyboard() {
     
     // bluetoothキーボード開始
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
-    bleKeyboard.begin();
+    bleKeyboard.begin(keyboard_name_str);
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
     
     // キーボードの言語を指定(日本語=0/ US=1 / 日本語(US記号) = 2)
@@ -765,13 +766,9 @@ void AzKeyboard::loop_exec(void) {
         lvgl_loop_index--;
     }
 
-    // 3回ループ処理をしてからリスタート(ボタンを押してスグリスタートだと画面が固まったように見えるから)
-    if (restart_flag >= 0) {
-        restart_index++;
-        if (restart_index > 3) {
-            common_cls.change_mode(restart_flag);
-        }
-    }
+    // リスタート用ループ処理
+    common_cls.restart_loop();
+
     delay(5);
 
   }

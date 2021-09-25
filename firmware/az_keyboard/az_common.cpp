@@ -19,13 +19,6 @@ uint8_t led_num_length;
 uint8_t key_matrix_length;
 
 
-#define GPIO_OUT       *(volatile uint32_t *)0x3FF44004
-#define GPIO_OUT_PUT       *(volatile uint32_t *)0x3FF44008
-#define GPIO_OUT_CLR       *(volatile uint32_t *)0x3FF4400C
-
-// ステータス表示用ピン番号
-int status_pin = -1;
-
 // ステータスLED今0-9
 int status_led_bit = 0;
 
@@ -61,6 +54,9 @@ int key_input_length;
 
 // キーボードタイプの番号
 int keyboard_type_int;
+
+// キーボードの名前
+const char *keyboard_name_str;
 
 // キーボードの言語(日本語=0/ US=1 / 日本語(US記号) = 2)
 uint8_t keyboard_language;
@@ -123,20 +119,18 @@ uint32_t boot_count;
 uint8_t key_count_auto_save;
 
 // 入力用ピン情報
-short col_len;
-short row_len;
 short direct_len;
 short touch_len;
-short *col_list;
-short *row_list;
 short *direct_list;
 short *touch_list;
+short ioxp_len;
+short *ioxp_list;
 
 // バッテリーオブジェクト
 AXP192 power;
 
 // I/Oエキスパンダ用
-Adafruit_MCP23X17 iomcp[4];
+Adafruit_MCP23X17 *iomcp;
 
 // LVGL用
 TFT_eSPI lvtft = TFT_eSPI();
@@ -144,43 +138,6 @@ lv_disp_buf_t disp_buf;
 lv_color_t lvbuf[LV_HOR_RES_MAX * 10];
 int8_t lvgl_loop_index;
 
-// ステータス用LED点滅
-void IRAM_ATTR status_led_write() {
-    int set_bit;
-    status_led_bit++;
-    if (status_led_bit >= 20) status_led_bit = 0;
-    if (status_led_mode == 0) {
-        set_bit = 0; // 消灯
-
-    } else if (status_led_mode == 1) {
-        set_bit = 1; // 点灯
-      
-    } else if (status_led_mode == 2) {
-        // 設定モード
-        if (status_led_bit < 5 || (status_led_bit >= 10 && status_led_bit < 15)) {
-            set_bit = 1;
-        } else {
-            set_bit = 0;
-        }
-      
-    } else if (status_led_mode == 3) {
-        // ファームウェア更新中
-        if (status_led_bit % 2) {
-            set_bit = 1;
-        } else {
-            set_bit = 0;
-        }
-
-    } else if (status_led_mode == 4) {
-        // wifi接続中
-        if (status_led_bit == 0 || status_led_bit == 2 || status_led_bit == 10 || status_led_bit == 12) {
-            set_bit = 1;
-        } else {
-            set_bit = 0;
-        }
-    }
-    if (status_pin >= 0) digitalWrite(status_pin, set_bit);
-}
 
 // ランダムな文字生成(1文字)
 char getRandomCharLower(void) {
@@ -258,14 +215,17 @@ void AzCommon::common_start() {
     lvgl_loop_index = 0;
 }
 
-
-// ステータスLEDチカ用タイマー登録
-void AzCommon::set_status_led_timer() {
-    timer = timerBegin(0, 80, true); //timer=1us
-    timerAttachInterrupt(timer, &status_led_write, true);
-    timerAlarmWrite(timer, 100000, true); // 100ms
-    timerAlarmEnable(timer);
+// リスタート用ループ処理
+void AzCommon::restart_loop() {
+    // 3回ループ処理をしてからリスタート(ボタンを押してスグリスタートだと画面が固まったように見えるから)
+    if (restart_flag >= 0) {
+        restart_index++;
+        if (restart_index > 3) {
+            common_cls.change_mode(restart_flag);
+        }
+    }
 }
+
 
 // WIFI 接続
 void AzCommon::wifi_connect() {
@@ -515,12 +475,24 @@ void AzCommon::load_setting_json() {
         ESP.restart(); // ESP32再起動
         return;
     }
-    
-    ESP_LOGD(LOG_TAG, "status_pin: %D\r\n", setting_obj["status_pin"].as<signed int>());
-    // ステータス表示用ピン番号取得
-    if (setting_obj.containsKey("status_pin")) {
-        status_pin = setting_obj["status_pin"].as<signed int>();
+
+    // キーボードタイプの番号を取得する
+    String ktype = setting_obj["keyboard_type"].as<String>();
+    get_keyboard_type_int(setting_obj["keyboard_type"].as<String>());
+
+    // キーボードの名前を取得する
+    keyboard_name_str = setting_obj["keyboard_name"].as<const char*>();
+
+    // キーボードのタイプがeep_dataと一致しなければ現在選択しているキーボードと、設定ファイルのキーボードが一致していないので
+    // 現在選択しているキーボードのデフォルト設定ファイルを作成して再起動
+    if (!ktype.equals(eep_data.keyboard_type)) {
+        create_setting_json();
+        delay(1000);
+        ESP.restart(); // ESP32再起動
+        return;
     }
+
+    
     // デフォルトのレイヤー番号設定
     default_layer_no = setting_obj["default_layer"].as<signed int>();
     // 今選択してるレイヤーをデフォルトに
@@ -533,20 +505,11 @@ void AzCommon::load_setting_json() {
     // オープニングムービー再生取得
     op_movie_flag = false;
     if (setting_obj["option_set"]["op_movie"].as<signed int>() > 0) op_movie_flag = true;
-    // col,len情報取得
+    // 入力ピン情報取得
     int i, j, m;
-    col_len = setting_obj["keyboard_pin"]["col"].size();
-    row_len = setting_obj["keyboard_pin"]["row"].size();
     direct_len = setting_obj["keyboard_pin"]["direct"].size();
     touch_len = setting_obj["keyboard_pin"]["touch"].size();
-    col_list = new short[col_len];
-    for (i=0; i<col_len; i++) {
-        col_list[i] = setting_obj["keyboard_pin"]["col"][i].as<signed int>();
-    }
-    row_list = new short[row_len];
-    for (i=0; i<row_len; i++) {
-        row_list[i] = setting_obj["keyboard_pin"]["row"][i].as<signed int>();
-    }
+    ioxp_len = setting_obj["keyboard_pin"]["ioxp"].size();
     direct_list = new short[direct_len];
     for (i=0; i<direct_len; i++) {
         direct_list[i] = setting_obj["keyboard_pin"]["direct"][i].as<signed int>();
@@ -554,6 +517,10 @@ void AzCommon::load_setting_json() {
     touch_list = new short[touch_len];
     for (i=0; i<touch_len; i++) {
         touch_list[i] = setting_obj["keyboard_pin"]["touch"][i].as<signed int>();
+    }
+    ioxp_list = new short[ioxp_len];
+    for (i=0; i<ioxp_len; i++) {
+        ioxp_list[i] = setting_obj["keyboard_pin"]["ioxp"][i].as<signed int>();
     }
     // キーの設定を取得
     // まずは設定の数を取得
@@ -702,9 +669,6 @@ void AzCommon::load_setting_json() {
     // 設定されているデフォルトレイヤー取得
     default_layer_no = setting_obj["default_layer"].as<signed int>();
 
-    // キーボードタイプの番号を取得する
-    get_keyboard_type_int(setting_obj["keyboard_type"].as<String>());
-
     // キーボードの言語取得
     keyboard_language = setting_obj["keyboard_language"].as<signed int>();
 
@@ -731,25 +695,12 @@ void AzCommon::load_setting_json() {
 
 }
 
-// デフォルトレイヤー番号設定
-void AzCommon::set_default_layer_no() {
-    // キー4が押されていた時 デフォルトを1へ
-    if (common_cls.input_key[4] && layers_exists(1)) default_layer_no = 1;
-    // キー5が押されていた時 デフォルトを2へ
-    if (common_cls.input_key[5] && layers_exists(2)) default_layer_no = 2;
-    // キー6が押されていた時 デフォルトを3へ
-    if (common_cls.input_key[6] && layers_exists(3)) default_layer_no = 3;
-    // キー7が押されていた時 デフォルトを4へ
-    if (common_cls.input_key[7] && layers_exists(4)) default_layer_no = 4;
-    // 今選択してるレイヤーをデフォルトに
-    select_layer_no = default_layer_no;
-}
 
 // キーボードタイプの番号を取得する
 void AzCommon::get_keyboard_type_int(String t) {
-    if (t.equals("az_macro")) {
-        keyboard_type_int = 1;
-    }
+    if (t.equals("custom")) { keyboard_type_int = 1; } // カスタム
+    else if (t.equals("az_m5ortho")) { keyboard_type_int = 2; } // AZ-M5ortho
+    else { keyboard_type_int = 0; } // 不明なキーボード
 }
 
 // ユニットのタイプ番号を取得する
@@ -850,7 +801,15 @@ bool AzCommon::create_setting_json() {
         return false;
     }
     // 書込み
-    if(!json_file.print(setting_default_json_bin)){
+    int i;
+    if (strcmp(eep_data.keyboard_type, "az_m5macro") == 0) {
+        i = json_file.print(setting_azm5macro_default_min_json_bin); // AZ-M5orthoのデフォルト設定
+    } else if (strcmp(eep_data.keyboard_type, "az_m5ortho") == 0) {
+        i = json_file.print(setting_azm5ortho_default_min_json_bin); // AZ-M5orthoのデフォルト設定
+    } else if (strcmp(eep_data.keyboard_type, "az_m5orthow") == 0) {
+        i = json_file.print(setting_azm5orthow_default_min_json_bin); // AZ-M5orthoのデフォルト設定
+    }
+    if(!i){
         ESP_LOGD(LOG_TAG, "create_setting_json print error");
         json_file.close();
         return false;
@@ -873,17 +832,20 @@ void AzCommon::pin_setup() {
 
   // IOエキスパンダ初期化
   int i, j;
-  for (i=0; i<4; i++) {
-      if (iomcp[i].begin_I2C(0x20 + i, &Wire)) {
-          M5.Lcd.printf("begin_I2C %D ok\n", i);
+  M5.Lcd.printf("Adafruit_MCP23X17 %D\n", ioxp_len);
+  iomcp = new Adafruit_MCP23X17[ioxp_len];
+  for (i=0; i<ioxp_len; i++) {
+      if (iomcp[i].begin_I2C(ioxp_list[i], &Wire)) {
+          M5.Lcd.printf("begin_I2C %D  %D OK\n", i, ioxp_list[i]);
       } else {
-          M5.Lcd.printf("begin_I2C %D ng\n", i);
+          M5.Lcd.printf("begin_I2C %D %D NG\n", i, ioxp_list[i]);
           return;
       }
       for (j = 0; j < 16; j++) {
           iomcp[i].pinMode(j, INPUT_PULLUP);
       }
   }
+  delay(3000);
 
   key_input_length = 52;
   this->key_count_total = 0;
@@ -931,7 +893,7 @@ void AzCommon::load_data() {
     // WIFIアクセスポイントの名前
     char b[16];
     getRandomNumbers(4, b);
-    sprintf(eep_data.ap_ssid, "%S-%S", WIFI_AP_SSI_NAME, b);
+    sprintf(eep_data.ap_ssid, "AZ-Keyboard-%S", b);
     // ユニークID
     getRandomNumbers(10, eep_data.uid);
     // キーボードの種類
@@ -952,6 +914,11 @@ void AzCommon::load_data() {
         fp.read((uint8_t *)&eep_data, sizeof(mrom_data_set));
     }
     fp.close();
+    // データのバージョンが変わっていたらファイルを消して再起動
+    if (strcmp(eep_data.check, EEP_DATA_VERSION) != 0) {
+        SPIFFS.remove(SYSTEM_FILE_PATH);
+        ESP.restart(); // ESP32再起動
+    }
 }
 
 
@@ -1043,8 +1010,8 @@ void AzCommon::change_mode(int set_mode) {
 void AzCommon::key_read(void) {
     unsigned long start_time;
     unsigned long end_time;
-    int m[4];
-    int i, c;
+    int m[ioxp_len];
+    int i, j, n, c;
     bool idata[72];
     char convert_map[] = {
       37, 25, 13, 1, 36, 24, 12, 0, // 0 - 7
@@ -1059,13 +1026,14 @@ void AzCommon::key_read(void) {
       };
     for (i=0; i<70; i++) idata[i] = false;
     start_time = millis();
-    for (i=0; i<4; i++) m[i] = iomcp[i].readGPIOAB();
+    for (i=0; i<ioxp_len; i++) m[i] = iomcp[i].readGPIOAB();
     for (i=0; i<16; i++) {
         c = 1 << i;
-        idata[i] = (!(m[0] & c));
-        idata[i + 16] = (!(m[1] & c));
-        idata[i + 32] = (!(m[2] & c));
-        idata[i + 48] = (!(m[3] & c));
+        n = 0;
+        for (j=0; j<ioxp_len; j++) {
+            idata[i + n] = (!(m[j] & c));
+            n += 16;
+        }
     }
     end_time = millis();
     for (i=0; i<70; i++) {

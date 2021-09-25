@@ -368,10 +368,10 @@ class BleKeyboardJIS
     static void taskServer(void* pvParameter);
 
     /* メソッド */
-    BleKeyboardJIS(std::string deviceName = "BleKeyboardJIS", std::string deviceManufacturer = "PaletteSystem"); // コンストラクタ
+    BleKeyboardJIS(void); // コンストラクタ
     void set_keyboard_language(uint8_t kl);
     void set_report_map(uint8_t * report_map, unsigned short report_size);
-    void begin(void);
+    void begin(std::string deviceName = "BleKeyboardJIS", std::string deviceManufacturer = "PaletteSystem");
     void end(void);
     bool isConnected(void);
     unsigned short modifiers_press(unsigned short k);

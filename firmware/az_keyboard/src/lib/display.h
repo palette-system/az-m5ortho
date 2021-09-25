@@ -56,7 +56,6 @@ void lv_setup();
 class Display
 {
 	public:
-		int  _option_type; // オプションのタイプ
 		short _width; // 液晶のサイズ幅
 		short _height; // 液晶のサイズ高さ
 		uint8_t  _info_spot; // 待ち受け等を表示する時インフォメーション部分だけを表示しなおすかどうかのフラグ
@@ -75,7 +74,7 @@ class Display
 		uint8_t  _thermo_flag; // サーモ表示モードかどうか
 		uint8_t  _qr_flag; // 打鍵QRコード表示中かどうか
 		Display();   // コンストラクタ
-		void begin(int option_type); // 初期化
+		void begin(); // 初期化
 		void view_full_image(uint8_t *image_data); // 画面いっぱいに画像を表示する
 		void view_full_black(); // 画面を真っ暗にする
 		void view_int(uint16_t x, uint16_t y, int v); // 数字を表示する
@@ -104,6 +103,7 @@ class Display
 		void view_error_wifi_conn(); // Wifi接続して下さいエラー表示
 		void open_movie(); // 起動ムービー
 		void view_setting_menu(); // 設定メニュー表示
+		void view_keyboard_setting(); // キーボード選択画面表示
 		void loop_exec(); // 定期処理
 };
 

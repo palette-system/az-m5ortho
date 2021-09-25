@@ -24,8 +24,10 @@
 #include "src/lib/HTTPClient_my.h"
 
 
-// キーボード
-#include "src/keyboard/az_m5ortho.h"
+// キーボード別のデフォルト設定ファイル
+#include "src/keyboard/setting_m5macro_default.h"
+#include "src/keyboard/setting_m5ortho_default.h"
+#include "src/keyboard/setting_m5orthow_default.h"
 
 
 #if defined(CONFIG_ARDUHAL_ESP_LOG)
@@ -41,7 +43,7 @@
 #define FIRMWARE_VERSION   "000027"
 
 // EEPROMに保存しているデータのバージョン文字列
-#define EEP_DATA_VERSION    "AZM014"
+#define EEP_DATA_VERSION    "AZM020"
 
 // JSON のファイルパス
 #define SETTING_JSON_PATH "/setting.json"
@@ -56,9 +58,28 @@
 #define  KEY_COUNT_AUTO_SAVE_PATH  "/key_count_auto_save"
 
 
-#define P_DATA   25
-#define P_CLOCK  26
-#define P_RESET  14
+// M5Stackの画面の向き(0 = 縦長 / 1 = 横長)
+#define  DISPLAY_ROTATION  0
+
+// メモリに保持するキーの数(メモリを確保するサイズ)
+#define KEY_INPUT_MAX  55
+
+// レイヤー切り替え同時押し許容数
+#define PRESS_KEY_MAX 16
+
+// マウス移動ボタン同時押し許容数
+#define PRESS_MOUSE_MAX 4
+
+// WEBフック用のバッファサイズ
+#define WEBFOOK_BUF_SIZE 512
+
+// 設定JSONのバッファサイズ
+#define SETTING_JSON_BUF_SIZE 131072
+
+// 暗記ボタンで暗記できる数
+#define ANKEY_DATA_MAX_LENGTH  32
+
+
 
 // 今押されているボタンの情報
 struct press_key_data {
@@ -140,8 +161,8 @@ class AzCommon
     public:
         AzCommon();   // コンストラクタ
         void common_start(); // 共通処理の初期処理(setup時に呼ばれる)
+        void restart_loop(); // リスタート用ループ処理
         int split(String data, char delimiter, String *dst); // 区切り文字で分割する
-        void set_status_led_timer(); // ステータスLED点滅タイマー登録
         void wifi_connect(); // WIFI接続
         void get_domain(char *url, char *domain_name); // URLからドメイン名だけ取得
         String send_webhook_simple(char *url); // 単純なGETリクエストのWEBフック
@@ -150,7 +171,6 @@ class AzCommon
         String http_request(char *url, const JsonObject &prm); // httpリクエスト送信
         bool create_setting_json(); // デフォルトの設定json作成
         void load_setting_json(); // jsonデータロード
-        void set_default_layer_no(); // デフォルトレイヤー設定
         void get_keyboard_type_int(String t); // キーボードのタイプ番号を取得
         void get_option_type_int(JsonObject setting_obj); // オプションタイプの番号を取得
         int read_file(char *file_path, String &read_data); // ファイルからデータを読み出す
@@ -184,8 +204,6 @@ class AzCommon
 
 };
 
-// ステータスピン番号
-extern int status_pin;
 
 // ステータスLED今0-9
 extern int status_led_bit;
@@ -194,14 +212,12 @@ extern int status_led_bit;
 extern int status_led_mode;
 
 // 入力用ピン情報
-extern short col_len;
-extern short row_len;
 extern short direct_len;
-extern short touch_len;
-extern short *col_list;
-extern short *row_list;
 extern short *direct_list;
+extern short touch_len;
 extern short *touch_list;
+extern short ioxp_len;
+extern short *ioxp_list;
 
 // 液晶表示用オブジェクト
 extern Display *disp;
@@ -226,6 +242,9 @@ extern int key_input_length;
 
 // キーボードタイプの番号
 extern int keyboard_type_int;
+
+// キーボードの名前
+extern const char *keyboard_name_str;
 
 // キーボードの言語(日本語=0/ US=1 / 日本語(US記号) = 2)
 extern uint8_t keyboard_language;
@@ -324,7 +343,7 @@ extern uint8_t led_num_length;
 extern uint8_t key_matrix_length;
 
 // I/Oエキスパンダ用
-extern Adafruit_MCP23X17 iomcp[4];
+extern Adafruit_MCP23X17 *iomcp;
 
 // LVGL用
 extern TFT_eSPI lvtft;

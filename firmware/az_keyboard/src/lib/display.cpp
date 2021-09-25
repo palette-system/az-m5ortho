@@ -12,6 +12,8 @@ LV_IMG_DECLARE(setting_img);
 
 // リストオブジェクト
 lv_obj_t * lv_list_obj;
+// ドロップダウンオブジェクト
+lv_obj_t * lv_drop_down_obj;
 
 
 void view_mouse_page(); // マウスパッド画面表示
@@ -148,6 +150,37 @@ void view_keyboard_select_close(lv_obj_t * obj, lv_event_t event) {
 	}
 }
 
+// キーボード変更画面決定ボタンイベント(通常時)
+void view_keyboard_select_exec(lv_obj_t * obj, lv_event_t event) {
+	if(event == LV_EVENT_CLICKED) { // クリック
+		// 選択した
+		bool change_flag = false;
+		int select_no = lv_dropdown_get_selected(lv_drop_down_obj);
+		if (select_no == 0 && strcmp(eep_data.keyboard_type, "az_m5macro") != 0) {
+			strcpy(eep_data.keyboard_type, "az_m5macro");
+			change_flag = true;
+		} else if (select_no == 1 && strcmp(eep_data.keyboard_type, "az_m5ortho") != 0) {
+			strcpy(eep_data.keyboard_type, "az_m5ortho");
+			change_flag = true;
+		} else if (select_no == 2 && strcmp(eep_data.keyboard_type, "az_m5orthow") != 0) {
+			strcpy(eep_data.keyboard_type, "az_m5orthow");
+			change_flag = true;
+		}
+		if (change_flag) {
+			// 変更があれば保存して再起動
+			common_cls.save_data(); // eep_data保存
+			lv_obj_clean(lv_scr_act()); // 画面上のオブジェクト全て削除
+			restart_flag = 0; // キーボードモードで再起動
+			restart_index = 0; // カウント用のインデックス0
+			menu_mode_flag = false; // メニューモード終了
+		} else {
+			// 変更が無ければメニューに戻る
+			view_setting_menu_fnc(); // 設定メニューに戻る
+		}
+	}
+}
+
+
 // キーボード選択画面表示(select_mode = 0 設定メニューから来た / 1 初期起動時のキーボード選択)
 void view_keyboard_select(int select_mode) {
 	// 画面上のオブジェクト全て削除
@@ -163,13 +196,17 @@ void view_keyboard_select(int select_mode) {
     lv_obj_align(txt, NULL, LV_ALIGN_IN_TOP_MID, 0, 15);
 
 	// セレクトメニュー表示
-	lv_obj_t * ddlist = lv_dropdown_create(win, NULL);
-	lv_dropdown_set_options(ddlist, "AZ-M5macro\nAZ-M5ortho\nAZ-M5orthoW");
-	lv_obj_set_size(ddlist, 200, 34);
-	// lv_dropdown_set_selected(ddlist, mouse_pad_setting);
-	lv_dropdown_set_symbol(ddlist, "▼");
-	lv_obj_align(ddlist, NULL, LV_ALIGN_IN_TOP_MID, 0, 70);
-	// lv_obj_set_event_cb(ddlist, change_mousepad_type);
+	lv_drop_down_obj = lv_dropdown_create(win, NULL);
+	lv_dropdown_set_options(lv_drop_down_obj, "AZ-M5macro\nAZ-M5ortho\nAZ-M5orthoW");
+	lv_obj_set_size(lv_drop_down_obj, 200, 34);
+	int selected_num = 0;
+	if (strcmp(eep_data.keyboard_type, "az_m5macro") == 0) selected_num = 0;
+	if (strcmp(eep_data.keyboard_type, "az_m5ortho") == 0) selected_num = 1;
+	if (strcmp(eep_data.keyboard_type, "az_m5orthow") == 0) selected_num = 2;
+	lv_dropdown_set_selected(lv_drop_down_obj, selected_num);
+	lv_dropdown_set_symbol(lv_drop_down_obj, "▼");
+	lv_obj_align(lv_drop_down_obj, NULL, LV_ALIGN_IN_TOP_MID, 0, 70);
+	// lv_obj_set_event_cb(lv_drop_down_obj, change_mousepad_type);
 
 	// 決定ボタン
 	lv_obj_t * btn1 = lv_btn_create(win, NULL);
@@ -179,7 +216,7 @@ void view_keyboard_select(int select_mode) {
 	} else {
 		lv_obj_align(btn1, NULL, LV_ALIGN_IN_TOP_MID, -60, 150);
 	}
-	lv_obj_set_event_cb(btn1, view_keyboard_select_close);
+	lv_obj_set_event_cb(btn1, view_keyboard_select_exec);
 	lv_obj_set_style_local_value_str(btn1, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "決定");
 
 	// 閉じるボタン
@@ -195,7 +232,7 @@ void view_keyboard_select(int select_mode) {
 // キーボード選択ボタンイベント
 void view_keyboard_select_event(lv_obj_t * obj, lv_event_t event) {
 	if(event == LV_EVENT_CLICKED) { // クリック
-		view_keyboard_select(1);
+		view_keyboard_select(0);
 	}
 }
 
@@ -266,13 +303,13 @@ void view_setting_mousepad(lv_obj_t * obj, lv_event_t event) {
     lv_obj_align(txt, NULL, LV_ALIGN_IN_TOP_MID, 0, 15);
 
 	// セレクトメニュー表示
-	lv_obj_t * ddlist = lv_dropdown_create(win, NULL);
-	lv_dropdown_set_options(ddlist, "なし\nマウスパッド\nジョイスティック");
-	lv_obj_set_size(ddlist, 200, 34);
-	lv_dropdown_set_selected(ddlist, mouse_pad_setting);
-	lv_dropdown_set_symbol(ddlist, "▼");
-	lv_obj_align(ddlist, NULL, LV_ALIGN_IN_TOP_MID, 0, 70);
-	lv_obj_set_event_cb(ddlist, change_mousepad_type);
+	lv_drop_down_obj = lv_dropdown_create(win, NULL);
+	lv_dropdown_set_options(lv_drop_down_obj, "なし\nマウスパッド\nジョイスティック");
+	lv_obj_set_size(lv_drop_down_obj, 200, 34);
+	lv_dropdown_set_selected(lv_drop_down_obj, mouse_pad_setting);
+	lv_dropdown_set_symbol(lv_drop_down_obj, "▼");
+	lv_obj_align(lv_drop_down_obj, NULL, LV_ALIGN_IN_TOP_MID, 0, 70);
+	lv_obj_set_event_cb(lv_drop_down_obj, change_mousepad_type);
 
 	// 閉じるボタン
 	lv_obj_t * btn1 = lv_btn_create(win, NULL);
@@ -304,8 +341,7 @@ Display::Display() {
 }
 
 // 液晶制御初期化
-void Display::begin(int option_type) {
-	_option_type = option_type;
+void Display::begin() {
 	this->_info_spot = 0;
 	this->dakagi_last_view = -1;
 	this->_wait_index = 0;
@@ -318,8 +354,14 @@ void Display::begin(int option_type) {
 	view_mouse_page();
 }
 
+// 設定メニュー表示
 void Display::view_setting_menu() {
 	view_setting_menu_fnc();
+}
+
+// キーボード選択画面表示
+void Display::view_keyboard_setting() {
+	view_keyboard_select(1);
 }
 
 // 画面いっぱい黒い画面
@@ -332,6 +374,7 @@ void Display::view_full_image(uint8_t *image_data) {
 
 // 数字を表示
 void Display::view_int(uint16_t x, uint16_t y, int v) {
+	/*
 	char s[12];
 	uint8_t *set_img;
 	int i;
@@ -352,6 +395,7 @@ void Display::view_int(uint16_t x, uint16_t y, int v) {
 		x += 16;
 		i++;
 	}
+	*/
 	
 }
 
@@ -456,7 +500,7 @@ void Display::view_dakagi_qr() {
 // 待ち受け画像表示
 void Display::view_standby_image() {
 	if (this->_last_view_type == DISP_TYPE_STANDBY) return; // 最後に表示したのが待ち受けなら何もしない
-	M5.Lcd.drawBitmap(0, 0, 240, 320, (uint16_t *)m5_palettesystem_img);
+	// M5.Lcd.drawBitmap(0, 0, 240, 320, (uint16_t *)m5_palettesystem_img);
 	M5.Lcd.printf("BAT: %f", power.GetBatVoltage());
 	this->_last_view_type = DISP_TYPE_STANDBY;
 	this->_last_view_info = 255;

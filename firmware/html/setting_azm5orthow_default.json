@@ -1,0 +1,948 @@
+{
+	"ap": {
+		"pass": ""
+	},
+	"wifi": [],
+	"rgb_pin": 27,
+	"rgb_len": 59,
+	"led_num": [7,6,4,3,1,0,58,57,55,54,52,51,8,9,10,11,12,13,45,46,47,48,49,50,21,20,18,17,15,14,44,43,41,40,38,37,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36],
+	"key_matrix": [0,1,2,3,4,5,-1,-1,-1,6,7,8,9,10,11,12,13,14,15,16,17,-1,-1,-1,18,19,20,21,22,23,24,25,26,27,28,29,-1,-1,-1,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50],
+	"matrix_row": 4,
+	"matrix_col": 15,
+	"keyboard_language": 0,
+	"keyboard_name": "AZ-M5orthoW",
+	"keyboard_type": "az_m5orthow",
+	"keyboard_pin": {
+		"direct": [],
+		"touch": [],
+		"ioxp": [32, 33, 34, 35]
+	},
+	"default_layer": 0,
+	"layers": {
+		"layer_0": {
+			"name": "レイヤー0",
+			"keys": {
+				"key_0": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							41
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_1": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							20
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_2": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							26
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_3": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							8
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_4": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							21
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_5": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							23
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_6": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							28
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_7": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							24
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_8": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							12
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_9": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							18
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_10": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							19
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_11": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							42
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_12": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							43
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_13": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							4
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_14": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							22
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_15": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							7
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_16": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							9
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_17": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							10
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_18": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							11
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_19": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							13
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_20": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							14
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_21": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							15
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_22": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							51
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_23": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							52
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_24": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							225
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_25": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							29
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_26": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							27
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_27": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							6
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_28": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							25
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_29": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							5
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_30": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							17
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_31": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							16
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_32": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							4150
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_33": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							4151
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_34": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							82
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_35": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							229
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_36": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							224
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_37": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							227
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_38": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							226
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_39": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							76
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_40": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							44
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_41": {
+					"press": {
+						"action_type": 3,
+						"layer": 1
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_42": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							16385
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_43": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							16388
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_44": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							16386
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_45": {
+					"press": {
+						"action_type": 3,
+						"layer": 1
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_46": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							53
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_47": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							70
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_48": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							80
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_49": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							81
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_50": {
+					"press": {
+						"action_type": 1,
+						"key": [
+							79
+						],
+						"repeat_interval": "51"
+					},
+					"long_press": {},
+					"long_press_time": 0
+				}
+			}
+		},
+		"layer_1": {
+			"name": "レイヤー1",
+			"keys": {
+				"key_0": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_1": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_2": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_3": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_4": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_5": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_6": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_7": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_8": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_9": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_10": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_11": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_12": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_13": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_14": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_15": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_16": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_17": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_18": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_19": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_20": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_21": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_22": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_23": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_24": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_25": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_26": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_27": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_28": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_29": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_30": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_31": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_32": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_33": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_34": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_35": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_36": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_37": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_38": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_39": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_40": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_41": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_42": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_43": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_44": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_45": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_46": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_47": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_48": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_49": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				},
+				"key_50": {
+					"press": {
+						"action_type": 0
+					},
+					"long_press": {},
+					"long_press_time": 0
+				}
+			}
+		}
+	},
+	"option_set": {
+		"type": ""
+	}
+}
