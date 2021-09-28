@@ -5,7 +5,6 @@
 #include "az_keyboard.h"
 #include "az_setting.h"
 
-
 // 起動モード
 int boot_type;
 

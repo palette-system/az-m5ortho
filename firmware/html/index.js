@@ -139,6 +139,9 @@ mst.end_type = 0;
 // 削除するファイルリスト
 mst.delete_file_list = [];
 
+// モニター設定データ
+mst.moniter_setting = {};
+
 // 初期処理
 mst.init = function() {
     // スマホなら画面を90度回転
@@ -1370,7 +1373,121 @@ mst.keytype_setting_btn_click = function(save_flag, select_type) {
     mst.end_setting(2);
 };
 
+// モニター設定画面表示
+mst.view_moniter_setting = function() {
+    mst.moniter_setting = {};
+    mst.moniter_setting.change_flag = false;
+    var s = "";
+    s += "<b style='font-size: 30px;'>モニター設定</b><br><br><br><br>";
+    s += "<b>待ち受け画像：</b><br>";
+    s += "<input id='moniter_stimg_file' type='file' accept='image/*' onChange='javascript:mst.moniter_stimg_change(this, {\"width\": 240, \"height\": 320}, \"moniter_stimg_canvas\");'><br>";
+    s += "<canvas id='moniter_stimg_canvas' width='0' height='0'></canvas>";
+    s += "<br><br>";
+    s += "<a href='#' id='moniter_stimg_ch' class='update_button' onClick='javascript:mst.stimg_check(mst.moniter_setting.stimg_data, \"moniter_setting_info\", \"待ち受け画像\", function() {});return false;'>確認</a>　";
+    s += "<a href='#' id='moniter_stimg_del' class='update_button' onClick='javascript:mst.moniter_stimg_delete();return false;'>削除</a>";
+    s += "<br><br>";
+    s += "<div id='moniter_setting_info'></div>";
+    s += "<br><br><br><br>";
+    s += "<center><div id='wifi_setting_btn_box'>";
+    s += "<a href='#' class='button' onClick='javascript:mst.moniter_setting_btn_click(1);return false;'>決定</a>　　";
+    s += "<a href='#' class='button' onClick='javascript:mst.moniter_setting_btn_click(0);return false;'>キャンセル</a>";
+    s += "</div></center>";
+    set_html("setting_box", s);
+    set_html("info_box", "");
+    mst.view_box(["info_box", "setting_box"]);
+    // 待ち受け画像が登録されていれば表示
+    mst.view_imgdata("moniter_stimg_canvas", "stimg.bin", {"width": 240, "height": 320});
+};
 
+// 待ち受け画像ファイル変更
+mst.moniter_stimg_change = function(obj, max_size, canvas_id) {
+    var r = mst.image_change(obj, max_size, canvas_id, function(img_data) {
+        console.log(img_data);
+        mst.moniter_setting.stimg_data = img_data;
+        mst.moniter_setting.change_flag = 1;
+    });
+};
+
+// 待ち受け画像削除
+mst.moniter_stimg_delete = function() {
+    var cvobj = $("moniter_stimg_canvas");
+    cvobj.width = 0;
+    cvobj.height = 0;
+    mst.moniter_setting.stimg_data = [];
+    mst.moniter_setting.change_flag = 2;
+};
+
+
+// モニター設定画面閉じるボタン
+mst.moniter_setting_btn_click = function(save_flag) {
+    var btn_list = ["moniter_stimg_ch", "moniter_stimg_del", "wifi_setting_btn_box"];
+    // キャンセルなら何もしない | 元の設定から変更が無ければ何もしない
+    if (!save_flag) {
+        mst.view_detail_setting();
+        return;
+    }
+    if (mst.moniter_setting.change_flag == 1) {
+        // 待ち受け画像変更
+        mst.save_file_exec(mst.moniter_setting.stimg_data, "stimg.bin", "moniter_setting_info", "待ち受け画像", btn_list, function(stat, res) {
+            if (!stat) return;
+            mst.view_detail_setting();
+        });
+        return;
+    } else if (mst.moniter_setting.change_flag == 2) {
+        // 待ち受け画像削除
+        mst.remove_file_exec("stimg.bin", "moniter_setting_info", "待ち受け画像", btn_list, function(stat, res) {
+            if (!stat) return;
+            mst.view_detail_setting();
+        });
+    } else {
+	    mst.view_detail_setting();
+    }
+};
+
+// SPIFFSにファイルを保存する
+// save_data = 保存するデータ
+// file_name = 保存するファイル名
+// info_id = インフォメーションを表示するdivのID
+// info_name = インフォ表示用の名前
+// btn_list = 保存中非表示にするボタンのIDリスト
+// cb_func = コールバック関数 func(stat, res)
+mst.save_file_exec = function(save_data, file_name, info_id, info_name, btn_list, cb_func) {
+    var i;
+    var uint8obj = new Uint8Array(save_data);
+    var blobobj = new Blob([uint8obj]);
+    for (i in btn_list) { hide(btn_list[i]); } // ボタン非表示
+    set_html(info_id, info_name + "を保存中です…");
+    mst.file_send("/file_save", file_name, blobobj, function(stat, res) {
+        if (!stat) {
+            for (i in btn_list) { show(btn_list[i], "inline-block"); } // ボタン表示
+            set_html(info_id, info_name + "を保存できませんでした");
+        }
+        cb_func(stat, res);
+    });
+};
+
+// SPIFFSにあるファイルを削除する
+// file_name = 削除するファイルのファイル名
+// info_id = インフォメーションを表示するdivのID
+// info_name = インフォ表示用の名前
+// btn_list = 保存中非表示にするボタンのIDリスト
+// cb_func = コールバック関数 func(stat, res)
+mst.remove_file_exec = function(file_name, info_id, info_name, btn_list, cb_func) {
+    var i;
+    for (i in btn_list) { hide(btn_list[i]); } // ボタン非表示
+    set_html(info_id, info_name + "を削除中です…");
+    mst.file_delete("stimg.dat", function(stat, res) {
+        if (!stat) {
+            for (i in btn_list) { show(btn_list[i], "inline-block"); } // ボタン表示
+            set_html(info_id, info_name + "を削除できませんでした");
+        }
+        cb_func(stat, res);
+    });
+};
+
+
+
+// オプション設定画面表示
 mst.view_option_setting = function(option_set) {
     var s = "";
     var hrst = "border: 1px solid #9a9fe3; margin: 40px 0;";
@@ -1421,12 +1538,12 @@ mst.view_option_setting = function(option_set) {
         // 待ち受け画像
         s += "<tr><td colspan='2' style='padding: 12px 0;'><hr style='"+hrst+"'></td></tr>";
         s += "<tr><td colspan='2'><b>待ち受け画像：</b><br>";
-        s += "<input id='stimg_file' type='file' accept='image/*' onChange='javascript:mst.stimg_change(this);'><br>";
+        s += "<input id='stimg_file' type='file' accept='image/*' onChange='javascript:mst.stimg_change(this, mst.get_tft_size(), \"stimg_canvas\");'><br>";
         s += "<canvas id='stimg_canvas' width='0' height='0'></canvas>";
         s += "</td></tr>";
         s += "<tr><td colspan='2' align='right'>";
         if (mst.option_edit_data.type == mst.setting_data.option_set.type) {
-            s += "<a href='#' id='stimg_ch' class='update_button' onClick='javascript:mst.stimg_check();return false;'>確認</a>　";
+            s += "<a href='#' id='stimg_ch' class='update_button' onClick='javascript:mst.stimg_check(mst.option_edit_data.stimg_data, \"option_setting_info\", \"画像データ\", function() {});return false;'>確認</a>　";
         }
         s += "<a href='#' id='stimg_del' class='update_button' onClick='javascript:mst.stimg_delete();return false;'>削除</a>";
         s += "</td></tr>";
@@ -1452,12 +1569,15 @@ mst.view_option_setting = function(option_set) {
         $("trackball_direction").value = mst.option_edit_data.trackball_direction + "";
     } else if (mst.is_tft(mst.option_edit_data.type)) {
         // 液晶ユニット
-        mst.view_imgdata("stimg_canvas", "stimg.dat");
+        mst.view_imgdata("stimg_canvas", "stimg.dat", mst.get_tft_size());
     }
 };
 
 // 画像データを取得してきてキャンバスに表示
-mst.view_imgdata = function(canvas_id, file_name) {
+// canvas_id = 表示したいキャンバスのID
+// file_name = 表示したいファイルのパス
+// max_size = {"width": 画像の幅, "height": 画像の高さ}
+mst.view_imgdata = function(canvas_id, file_name, max_size) {
     ajax("read_file_" + file_name, "arraybuffer", function(stat, res) {
         if (!stat) {
             // ファイル無しなら何もしない
@@ -1469,18 +1589,17 @@ mst.view_imgdata = function(canvas_id, file_name) {
         var i = 0;
         var cl, ch, cr, cg, cb;
         var x = 0, y = 0;
-        var max_size = mst.get_tft_size();
         var max_width = max_size.width;
         var max_height = max_size.height;
         // キャンバス準備
-        var cvobj = $("stimg_canvas");
+        var cvobj = $(canvas_id);
         cvobj.width = max_width;
         cvobj.height = max_height;
         var ctx = cvobj.getContext("2d");
         // データ分ループ
         while (i < img_data.length) {
-            cl = img_data[i + 1];
-            ch = img_data[i];
+            cl = img_data[i];
+            ch = img_data[i + 1];
             cr = ch & 0xF8;
             cg = ((ch & 0x07) << 3 | (cl >> 5)) << 2;
             cb = (cl & 0x1F) << 3;
@@ -1574,16 +1693,28 @@ mst.get_tft_size = function() {
     return {"width": 0, "height": 0};
 };
 
+// 待ち受け画像ファイル変更
+mst.stimg_change = function(obj, max_size, canvas_id) {
+    var r = mst.image_change(obj, max_size, canvas_id, function(img_data) {
+        mst.option_edit_data.stimg_data = r;
+        mst.option_edit_data.stimg_change = 1;
+    });
+}
+
 
 // 待ち受け画像ファイル変更
-mst.stimg_change = function(obj) {
+// obj = ファイルinput のオブジェクト
+// max_size = {"width": 作成する画像の幅, "height": 作成する画像の高さ}
+// canvas_id = 作成した画像を表示するキャンバスのID
+// cb_func = 画像データ生成後呼び出される関数 func(生成した画像データ配列) ※生成しなかった場合は呼び出されない
+mst.image_change = function(obj, max_size, canvas_id, cb_func) {
     var set_file = obj.files[0];
     
     // 選択されたファイルが画像かどうか判定する
     // ここでは、jpeg形式とpng形式のみを画像をみなす
     if (set_file.type != "image/jpeg" && set_file.type != "image/png" && set_file.type != "image/bmp") {
       // 画像でない場合は何もせず終了する
-      return;
+      return false;
     }
     // 画像をリサイズする
     var imgobj = new Image();
@@ -1591,7 +1722,6 @@ mst.stimg_change = function(obj) {
     reader.onload = function(e) {
       imgobj.onload = function() {
 
-        var max_size = mst.get_tft_size();
         var max_width = max_size.width;
         var max_height = max_size.height;
         // 縮小後のサイズを計算する
@@ -1614,7 +1744,7 @@ mst.stimg_change = function(obj) {
         }
 
         // 縮小画像を描画するcanvasのサイズを上で算出した値に変更する
-        var cvobj = $("stimg_canvas");
+        var cvobj = $(canvas_id);
         cvobj.width = max_width;
         cvobj.height = max_height;
         
@@ -1639,25 +1769,31 @@ mst.stimg_change = function(obj) {
         var i = 0;
         var cr, cg, cb, ch, cl;
         var img_data = [];
+        // ヘッダデータ(lvglの.binファイル用)
+        img_data.push(0x04);
+        img_data.push(((max_width & 0x3f) << 2));
+        img_data.push(((max_height & 0x07) << 5) | ((max_width & 0x07c0) >> 6));
+        img_data.push(((max_height & 0x07f8) >> 3));
+        // 画像データ
         while (i < imgdata.data.length) {
             cr = imgdata.data[i] >> 3;
             cg = imgdata.data[i + 1] >> 2;
             cb = imgdata.data[i + 2] >> 3;
             ch = cr << 3 | cg >> 3;
             cl = (cg & 0x07) << 5 | cb;
-            img_data.push(ch);
             img_data.push(cl);
+            img_data.push(ch);
             i += 4;
         }
-        mst.option_edit_data.stimg_data = img_data;
-        mst.option_edit_data.stimg_change = 1;
+        // フッタデータ
+        img_data.push(0x0A);
         
         // RGB565のデータでキャンバスに画像を描く(色が多少変わるため)
-        i = 0;
+        i = 4;
         var x = 0, y = 0;
-        while (i < img_data.length) {
-            cl = img_data[i + 1];
-            ch = img_data[i];
+        while (i < (img_data.length - 1)) {
+            cl = img_data[i];
+            ch = img_data[i + 1];
             cr = ch & 0xF8;
             cg = ((ch & 0x07) << 3 | (cl >> 5)) << 2;
             cb = (cl & 0x1F) << 3;
@@ -1667,6 +1803,9 @@ mst.stimg_change = function(obj) {
             if (x >= max_width) { x = 0; y++; }
             i += 2;
         }
+        
+        // コールバック実行
+        cb_func(img_data);
 
       }
       imgobj.src = e.target.result;
@@ -1675,15 +1814,19 @@ mst.stimg_change = function(obj) {
 };
 
 // 待ち受け画像確認(キーボードにデータを送って液晶に表示)
-mst.stimg_check = function() {
-    var uint8obj = new Uint8Array(mst.option_edit_data.stimg_data);
+// img_data = 送信する画像データ
+// info_id = ステータスを表示するinfodivのID
+// info_name = infoに表示する名前
+mst.stimg_check = function(img_data, info_id, info_name, cb_func) {
+    var uint8obj = new Uint8Array(img_data);
     var blobobj = new Blob([uint8obj]);
-    set_html("option_setting_info", "画像を送信中です…");
-    mst.file_send("/view_tft", "stimg.dat", blobobj, function(stat, res) {
+    set_html(info_id, info_name + "を送信中です…");
+    mst.file_send("/view_tft", "stimg.bin", blobobj, function(stat, res) {
         if (!stat) {
-            set_html("option_setting_info", "画像の送信に失敗しました。");
+            set_html(info_id, info_name + "の送信に失敗しました。");
         }
-        set_html("option_setting_info", "");
+        set_html(info_id, "");
+        cb_func(stat, res);
     });
 };
 
@@ -1766,6 +1909,7 @@ mst.view_detail_setting = function() {
     s += "<b style='font-size: 30px;'>設定メニュー</b><br><br>";
     s += "<a href='#' class='update_button' "+bs+" onClick='javascript:mst.view_language_setting();return false;'>日本語/US 切り替え</a><br><br>";
     s += "<a href='#' class='update_button' "+bs+" onClick='javascript:mst.view_keytype_setting();return false;'>キーボードの種類</a><br><br>";
+    s += "<a href='#' class='update_button' "+bs+" onClick='javascript:mst.view_moniter_setting();return false;'>モニタ設定</a><br><br>";
     s += "<a href='#' class='update_button' "+bs+" onClick='javascript:mst.view_option_setting();return false;'>ユニット設定</a><br><br>";
     s += "<a href='#' class='update_button' "+bs+" onClick='javascript:mst.view_switch_check();return false;'>スイッチ接触確認</a><br><br>";
     s += "<a href='#' class='update_button' "+bs+" onClick='javascript:mst.view_wifi_setting();return false;'>WIFI設定</a><br><br>";

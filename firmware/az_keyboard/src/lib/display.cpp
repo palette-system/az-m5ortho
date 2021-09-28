@@ -10,6 +10,13 @@
 
 LV_IMG_DECLARE(setting_img);
 
+
+
+lv_img_dsc_t stimg_obj;
+bool stimg_load_fl;
+
+
+
 // リストオブジェクト
 lv_obj_t * lv_list_obj;
 // ドロップダウンオブジェクト
@@ -105,6 +112,9 @@ void lv_setup() {
   indev_drv.read_cb = my_touchpad_read;
   lv_indev_drv_register(&indev_drv);
   
+  // init spiffs system driver
+  // init_file_system_driver();
+	stimg_load_fl = false;
 
 
 }
@@ -431,7 +441,30 @@ void view_setting_led(lv_obj_t * obj, lv_event_t event) {
 void view_mouse_page() {
 	// 画面上のオブジェクト全て削除
 	lv_obj_clean(lv_scr_act());
+	uint8_t head_data[4];
 	
+	// 待ち受け画像表示
+	if (SPIFFS.exists("/stimg.bin")) {
+		if (!stimg_load_fl) {
+			stimg_obj.header.always_zero = 0;
+			stimg_obj.header.cf = LV_IMG_CF_TRUE_COLOR;
+			File fp = SPIFFS.open("/stimg.bin", FILE_READ);
+			fp.read((unsigned char*)head_data, 4);
+			stimg_obj.header.w = (head_data[1] >> 2) | ((head_data[2] & 0x1F) << 6);
+			stimg_obj.header.h = ((head_data[2] & 0xE0) >> 5) | (head_data[3] << 3);
+			stimg_obj.data_size = stimg_obj.header.w * stimg_obj.header.h * 2;
+			stimg_obj.data = (uint8_t *)heap_caps_malloc(stimg_obj.data_size, MALLOC_CAP_SPIRAM); // new uint8_t[stimg_obj.data_size];
+			fp.read((unsigned char*)stimg_obj.data, stimg_obj.data_size);
+			fp.close();
+			stimg_load_fl = true;
+		}
+		
+		
+		lv_obj_t * icon = lv_img_create(lv_scr_act(), NULL);
+		lv_img_set_src(icon, &stimg_obj);
+		lv_obj_align(icon, NULL, LV_ALIGN_CENTER, 0, 0);
+	}
+
 	// マウスパッド操作
 	mouse_pad_status = mouse_pad_setting;
 	// メニュー表示終了
@@ -440,6 +473,25 @@ void view_mouse_page() {
 	lvgl_loop_index = 2;
 	
 }
+
+void Display::view_raw_image(uint8_t *img_data) {
+	stimg_obj.header.always_zero = 0;
+	stimg_obj.header.cf = LV_IMG_CF_TRUE_COLOR;
+	stimg_obj.header.w = (img_data[1] >> 2) | ((img_data[2] & 0x1F) << 6);
+	stimg_obj.header.h = ((img_data[2] & 0xE0) >> 5) | (img_data[3] << 3);
+	stimg_obj.data_size = stimg_obj.header.w * stimg_obj.header.h * 2;
+	stimg_obj.data = (uint8_t *)&img_data[4];
+
+	// 画面上のオブジェクト全て削除
+	lv_obj_clean(lv_scr_act());
+
+	// 画像オブジェクト作成
+	lv_obj_t * icon = lv_img_create(lv_scr_act(), NULL);
+	lv_img_set_src(icon, &stimg_obj);
+	lv_obj_align(icon, NULL, LV_ALIGN_CENTER, 0, 0);
+}
+
+
 
 
 

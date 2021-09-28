@@ -31,6 +31,9 @@ File upfp;
 // キーが押されたか
 int last_key_down = -1;
 
+// データ受け取り用のバッファ(受け取ったサイズ+データのポインタ)
+int post_data_size;
+uint8_t *post_data_buf;
 
 
 // IP アドレスデータを表示用の文字列にする
@@ -353,12 +356,14 @@ void start_wifi() {
         server.send(200, "application/json", "OK");
     }, []() {
         // ファイルを受け取って液晶に送る
-        if (option_type_int != 3 && option_type_int != 4) return;
         HTTPUpload& upload = server.upload();
         if (upload.status == UPLOAD_FILE_START) {
-            disp->viewBMPspi_head();
+            post_data_size = 0;
         } else if (upload.status == UPLOAD_FILE_WRITE) {
-            disp->viewBMPspi_data(upload.buf, upload.currentSize);
+            memmove(&post_data_buf[post_data_size], upload.buf, upload.currentSize);
+            post_data_size += upload.currentSize;
+        } else if (upload.status == UPLOAD_FILE_END) {
+            disp->view_raw_image(post_data_buf);
         }
     });
     // httpサーバーそれ以外のページ
@@ -385,6 +390,10 @@ void AzSetting::start_setting() {
 
     // ステータスLED設定
     status_led_mode = 2;
+
+    // データ受け取り用のバッファ確保(500kbまで)
+    post_data_size = 0;
+    post_data_buf = (uint8_t *)heap_caps_malloc(512000, MALLOC_CAP_SPIRAM);
 
     // 液晶に設定モード画面を表示する
     disp->view_setting_mode();

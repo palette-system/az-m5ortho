@@ -104,6 +104,7 @@ class Display
 		void open_movie(); // 起動ムービー
 		void view_setting_menu(); // 設定メニュー表示
 		void view_keyboard_setting(); // キーボード選択画面表示
+		void view_raw_image(uint8_t *img_data); // 渡された画像データを表示
 		void loop_exec(); // 定期処理
 };
 

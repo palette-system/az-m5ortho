@@ -131,7 +131,13 @@ $(function() {
             i += 4;
         }
         var fname = file.name.split(".")[0] + "_img";
+        var head_byte = [];
+        head_byte.push(toHex(0x04));
+        head_byte.push(toHex((max_width & 0x3f) << 2));
+        head_byte.push(toHex(((max_height & 0x07) << 5) | ((max_width & 0x07c0) >> 6)));
+        head_byte.push(toHex((max_height & 0x07f8) >> 3));
         var ccode = "// "+file.name+"   [ "+max_width+" x "+max_height+" ]\n";
+        ccode += "// lvgl header " + head_byte.join() + "\n"
         ccode += "const uint8_t "+fname+"["+(imageData.data.length / 2)+"] PROGMEM  = {\n" + res + "};\n";
         $("#rgb565_text").html(ccode);
         
