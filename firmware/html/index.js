@@ -681,10 +681,7 @@ mst.set_layer_name = function(layer_no, layer_name) {
 mst.select_input_type = function() {
     var i, l = [];
     for (i in mst.input_type_list) {
-        if (i == 6 && mst.esp_type == 0) continue; // 通常のESP32の場合暗記ボタンはスキップ
-        if (i == 7 && mst.setting_data.rgb_pin < 0) continue; // RGB LEDが付いてないキーボードはスキップ
-        // if (i == 8 && !mst.is_tft(mst.setting_data.option_set.type)) continue; // 打鍵設定は液晶が付いてないキーボードはスキップ
-        if (i == 8 && mst.setting_data.option_set.type != "display_66jp") continue; // 66jpの液晶オプション以外はスキップ
+        if (i == 6 || i == 7 || i == 8) continue; // 暗記ボタン、LED設定ボタン、打鍵設定ボタンは一旦スキップ
         l.push({"key": i, "value": mst.input_type_list[i]});
     }
     mst.select_exec(l, mst.key_edit_data.press.action_type+"", function(select_key) {
