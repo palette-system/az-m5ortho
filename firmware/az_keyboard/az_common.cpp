@@ -30,7 +30,10 @@ int status_led_mode;
 int8_t mouse_pad_status;
 
 // マウスパッド操作方法設定
-int8_t mouse_pad_setting;
+mousepad_data_set mouse_pad_setting;
+
+// 画面設定
+moniterset_data_set moniter_setting;
 
 // 液晶表示用オブジェクト
 Display *disp;
@@ -182,6 +185,8 @@ AzCommon::AzCommon() {
 void AzCommon::common_start() {
     // M5Stack初期化
     M5.begin(true, true, true, true);
+    M5.Axp.SetLed(false); // サイドの緑LEDを消す
+    M5.Lcd.setRotation(0); // 画面を横向きにする
     // 乱数初期化
     randomSeed(millis());
     // ファイルシステム初期化
@@ -205,8 +210,6 @@ void AzCommon::common_start() {
 
     // マウスパッドステータス
     mouse_pad_status = 0;
-    // マウスパッド操作設定ステータス
-    mouse_pad_setting = 0;
     // リスタートフラグ
     restart_flag = -1;
     restart_index = -1;
@@ -685,11 +688,13 @@ void AzCommon::load_setting_json() {
 
     led_num_length = setting_obj["led_num"].size();
     key_matrix_length = setting_obj["key_matrix"].size();
-    if (led_num_length > 0 && key_matrix_length > 0) {
+    if (led_num_length > 0) {
         led_num = new int8_t[led_num_length];
         for (i=0; i<led_num_length; i++) {
             led_num[i] = setting_obj["led_num"][i].as<signed int>();
         }
+    }
+    if (key_matrix_length > 0) {
         key_matrix = new int8_t[key_matrix_length];
         for (i=0; i<key_matrix_length; i++) {
             key_matrix[i] = setting_obj["key_matrix"][i].as<signed int>();
@@ -794,6 +799,91 @@ int AzCommon::remove_file(char *file_path) {
     }
 }
 
+// マウスパッド設定読み込み
+int AzCommon::mouse_pad_load() {
+    // デフォルト値を入れておく
+    mouse_pad_setting.mouse_type = 0;
+    mouse_pad_setting.mouse_speed = 50;
+    mouse_pad_setting.value_1 = 0;
+    mouse_pad_setting.value_2 = 0;
+    mouse_pad_status = 0;
+    // ファイルが存在したら読み込み
+    if (SPIFFS.exists(MOUSE_PAD_SETTING_PATH)) {
+        File fp = SPIFFS.open(MOUSE_PAD_SETTING_PATH, "r");
+        if (!fp) return 0;
+        int i = fp.read((uint8_t *)&mouse_pad_setting, sizeof(mousepad_data_set));
+        if (!i) return 0;
+        fp.close();
+    }
+    mouse_pad_status = mouse_pad_setting.mouse_type;
+    return 1;
+}
+
+
+// マウスパッド設定保存
+int AzCommon::mouse_pad_save() {
+    File fp = SPIFFS.open(MOUSE_PAD_SETTING_PATH, "w");
+    if (!fp) return 0;
+    int i = fp.write((uint8_t *)&mouse_pad_setting, sizeof(mousepad_data_set));
+    if (!i) return 0;
+    fp.close();
+    return 1;
+}
+
+
+// 画面設定読み込み
+int AzCommon::moniterset_load() {
+    // デフォルト値を入れておく
+    moniter_setting.st_brightness = 50;
+    moniter_setting.menu_brightness = 50;
+    moniter_setting.value_1 = 0;
+    moniter_setting.value_2 = 0;
+    // ファイルが存在したら読み込み
+    if (SPIFFS.exists(MONITER_SETTING_PATH)) {
+        File fp = SPIFFS.open(MONITER_SETTING_PATH, "r");
+        if (!fp) return 0;
+        int i = fp.read((uint8_t *)&moniter_setting, sizeof(moniterset_data_set));
+        if (!i) return 0;
+        fp.close();
+    }
+    return 1;
+}
+
+// 画面の明るさを設定 set_type= 0=待ち受け / 1=メニュー
+void AzCommon::moniter_brightness(int set_type) {
+    int s = 0;
+    if (set_type == 1) {
+        // メニューの明るさ設定取得
+        if (moniter_setting.menu_brightness > 0) {
+            s = 2500 + ((600 * moniter_setting.menu_brightness) / 100);
+        }
+        if (s < 2500) s = 2500;
+    } else {
+        // 待ち受けの明るさ設定取得
+        if (moniter_setting.st_brightness > 0) {
+            s = 2500 + ((600 * moniter_setting.st_brightness) / 100);
+        }
+    }
+    if (s > 0) {
+      M5.Axp.SetDCDC3(true);
+      M5.Axp.SetLcdVoltage(s);
+    } else {
+        if (set_type == 0) M5.Axp.SetDCDC3(false); // 待ち受けの場合のみ バックライトOFF
+        M5.Axp.SetLcdVoltage(2500);
+    }
+}
+
+
+// 画面設定保存
+int AzCommon::moniterset_save() {
+    File fp = SPIFFS.open(MONITER_SETTING_PATH, "w");
+    if (!fp) return 0;
+    int i = fp.write((uint8_t *)&moniter_setting, sizeof(moniterset_data_set));
+    if (!i) return 0;
+    fp.close();
+    return 1;
+}
+
 
 // デフォルトのsetting.jsonを生成する
 bool AzCommon::create_setting_json() {
@@ -849,7 +939,7 @@ void AzCommon::pin_setup() {
       }
   }
 
-  key_input_length = 52;
+  key_input_length = 16 * ioxp_len;
   this->key_count_total = 0;
 }
 
@@ -1014,41 +1104,25 @@ void AzCommon::key_read(void) {
     unsigned long end_time;
     int m[ioxp_len];
     int i, j, n, c;
-    bool idata[72];
-    char convert_map[] = {
-      37, 25, 13, 1, 36, 24, 12, 0, // 0 - 7
-      2, 14, 26, 38, 3, 15, 27, 39, // 8 - 15
-      41, 29, 17, 5, 40, 28, 16, 4, // 16 - 23
-      42, 43, 44, // 24 - 26
-      -1, -1, -1, -1, -1, // 27 - 31
-      46, 31, 19, 7, 45, 30, 18, 6, // 32 - 39
-      -1, -1, -1, -1, -1, -1, -1, -1, // 40 - 47
-      48, 33, 21, 9, 47, 32, 20, 8, // 48 - 55
-      10, 22, 34, 49, 11, 23, 35, 50 // 56 - 63
-      };
-    for (i=0; i<70; i++) idata[i] = false;
     start_time = millis();
     for (i=0; i<ioxp_len; i++) m[i] = iomcp[i].readGPIOAB();
     for (i=0; i<16; i++) {
         c = 1 << i;
         n = 0;
         for (j=0; j<ioxp_len; j++) {
-            idata[i + n] = (!(m[j] & c));
+            input_key[i + n] = (!(m[j] & c));
             n += 16;
         }
     }
     end_time = millis();
-    for (i=0; i<70; i++) {
-        if (convert_map[i] < 0) continue;
-        if (idata[i]) {
-            input_key[convert_map[i]] = 1;
-        } else {
-            input_key[convert_map[i]] = 0;
-        }
+    /*
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setCursor(0, 0, 2);
+    for (i=0; i<key_input_length; i++) {
+        if ((i % 6) == 5) M5.Lcd.printf("\n");
+        M5.Lcd.printf("[%D,%D]", i, input_key[i]);
     }
-    // M5.Lcd.printf("\n%D", end_time - start_time);
-
-
+    */
 }
 
 // キーボード別の後処理

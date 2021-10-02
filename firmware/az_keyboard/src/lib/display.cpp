@@ -9,7 +9,7 @@
 // コンバーター： https://lvgl.io/tools/fontconverter
 
 LV_IMG_DECLARE(setting_img);
-
+LV_IMG_DECLARE(stimg_default);
 
 
 lv_img_dsc_t stimg_obj;
@@ -22,13 +22,19 @@ lv_obj_t * lv_list_obj;
 // ドロップダウンオブジェクト
 lv_obj_t * lv_drop_down_obj;
 lv_obj_t * lv_drop_down_obj_2;
+// スライダーオブジェクト
+lv_obj_t * lv_slider_obj;
+lv_obj_t * lv_slider_obj_2;
+// テキストオブジェクト
+lv_obj_t * lv_text_obj;
+lv_obj_t * lv_text_obj_2;
 
 
 void view_mouse_page(); // マウスパッド画面表示
 void view_setting_mousepad(lv_obj_t * obj, lv_event_t event); // マウスパッド設定画面表示
 void view_setting_led(lv_obj_t * obj, lv_event_t event); // バックライト設定画面表示
+void view_setting_moniter(lv_obj_t * obj, lv_event_t event); // モニター設定画面表示
 void view_setting_menu_fnc(); // 設定メニュー表示
-
 
 //=====================================================================
 /*Read the touchpad*/
@@ -222,7 +228,7 @@ void view_keyboard_select(int select_mode) {
 
 	// 決定ボタン
 	lv_obj_t * btn1 = lv_btn_create(win, NULL);
-	lv_obj_set_size(btn1, 100, 50);
+	lv_obj_set_size(btn1, 100, 40);
 	if (select_mode == 1) {
 		lv_obj_align(btn1, NULL, LV_ALIGN_IN_TOP_MID, 0, 150);
 	} else {
@@ -234,8 +240,8 @@ void view_keyboard_select(int select_mode) {
 	// 閉じるボタン
 	if (select_mode != 1) {
 		lv_obj_t * btn2 = lv_btn_create(win, NULL);
-		lv_obj_set_size(btn2, 100, 50);
-		lv_obj_align(btn2, NULL, LV_ALIGN_IN_TOP_MID, 60, 150);
+		lv_obj_set_size(btn2, 100, 40);
+		lv_obj_align(btn2, NULL, LV_ALIGN_IN_TOP_MID, 50, 150);
 		lv_obj_set_event_cb(btn2, view_keyboard_select_close);
 		lv_obj_set_style_local_value_str(btn2, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "閉じる");
 	}
@@ -254,6 +260,9 @@ void view_setting_menu_fnc() {
 	// 画面上のオブジェクト全て削除
 	lv_obj_clean(lv_scr_act());
 
+	// 設定画面用の画面の明るさに設定
+	common_cls.moniter_brightness(1);
+
 	// テキスト
     lv_obj_t * txt = lv_label_create(lv_scr_act(), NULL);
     lv_label_set_text(txt, "設定メニュー");
@@ -267,6 +276,8 @@ void view_setting_menu_fnc() {
 	lv_obj_t * btn;
     btn = lv_list_add_btn(lv_list_obj, NULL, "キーボード選択");
     lv_obj_set_event_cb(btn, view_keyboard_select_event);
+    btn = lv_list_add_btn(lv_list_obj, NULL, "画面設定");
+    lv_obj_set_event_cb(btn, view_setting_moniter);
     btn = lv_list_add_btn(lv_list_obj, NULL, "マウス操作");
     lv_obj_set_event_cb(btn, view_setting_mousepad);
     btn = lv_list_add_btn(lv_list_obj, NULL, "バックライト設定");
@@ -282,7 +293,20 @@ void view_setting_menu_fnc() {
 	menu_mode_flag = true;
 }
 
-// マウスパッド設定画面終了
+// マウスパッド設定画面決定クリック
+void setting_mousepad_save(lv_obj_t * obj, lv_event_t event) {
+	// クリック以外のイベントは無視
+	if (event != LV_EVENT_CLICKED) return;
+	// 設定を反映
+	mouse_pad_setting.mouse_type = lv_dropdown_get_selected(lv_drop_down_obj);
+	mouse_pad_setting.mouse_speed = lv_slider_get_value(lv_slider_obj);
+	// 設定を保存
+	common_cls.mouse_pad_save();
+	// 設定メニュー表示
+	view_setting_menu_fnc();
+}
+
+// 設定メニューに戻る
 void view_setting_menu_ev(lv_obj_t * obj, lv_event_t event) {
 	// クリック以外のイベントは無視
 	if (event != LV_EVENT_CLICKED) return;
@@ -294,7 +318,16 @@ void view_setting_menu_ev(lv_obj_t * obj, lv_event_t event) {
 // マウス操作設定セレクトが変更された
 void change_mousepad_type(lv_obj_t * obj, lv_event_t event) {
     if(event == LV_EVENT_VALUE_CHANGED) {
-        mouse_pad_setting = lv_dropdown_get_selected(obj);
+        mouse_pad_setting.mouse_type = lv_dropdown_get_selected(obj);
+    }
+}
+
+// マウス速度が変更された
+void change_mousepad_speed(lv_obj_t * obj, lv_event_t event) {
+    if(event == LV_EVENT_VALUE_CHANGED) {
+        char kand_buf[32];
+        sprintf(kand_buf, "感度: %D", lv_slider_get_value(obj));
+        lv_label_set_text(lv_text_obj, kand_buf);
     }
 }
 
@@ -314,23 +347,52 @@ void view_setting_mousepad(lv_obj_t * obj, lv_event_t event) {
 	// テキスト
     lv_obj_t * txt = lv_label_create(win, NULL);
     lv_label_set_text(txt, "操作方法");
-    lv_obj_align(txt, NULL, LV_ALIGN_IN_TOP_MID, 0, 15);
+    lv_obj_align(txt, NULL, LV_ALIGN_IN_TOP_MID, -70, 20);
 
 	// セレクトメニュー表示
 	lv_drop_down_obj = lv_dropdown_create(win, NULL);
 	lv_dropdown_set_options(lv_drop_down_obj, "なし\nマウスパッド\nジョイスティック");
-	lv_obj_set_size(lv_drop_down_obj, 200, 34);
-	lv_dropdown_set_selected(lv_drop_down_obj, mouse_pad_setting);
+	lv_obj_set_size(lv_drop_down_obj, 180, 34);
+	lv_dropdown_set_selected(lv_drop_down_obj, mouse_pad_setting.mouse_type);
 	lv_dropdown_set_symbol(lv_drop_down_obj, "▼");
-	lv_obj_align(lv_drop_down_obj, NULL, LV_ALIGN_IN_TOP_MID, 0, 70);
-	lv_obj_set_event_cb(lv_drop_down_obj, change_mousepad_type);
+	lv_obj_align(lv_drop_down_obj, NULL, LV_ALIGN_IN_TOP_MID, -10, 60);
+
+	// 感度
+	char kand_buf[32];
+	sprintf(kand_buf, "感度: %D", mouse_pad_setting.mouse_speed);
+    lv_text_obj = lv_label_create(win, NULL);
+    lv_label_set_text(lv_text_obj, kand_buf);
+    lv_obj_align(lv_text_obj, NULL, LV_ALIGN_IN_TOP_MID, -80, 140);
+
+	// 感度調節のスライダー
+	lv_slider_obj = lv_slider_create(win, NULL);
+	lv_obj_set_size(lv_slider_obj, 150, 10);
+	lv_obj_align(lv_slider_obj, NULL, LV_ALIGN_IN_TOP_MID, -10, 180);
+	lv_obj_set_event_cb(lv_slider_obj, change_mousepad_speed);
+	lv_slider_set_range(lv_slider_obj, 0, 100);
+	lv_slider_set_value(lv_slider_obj, mouse_pad_setting.mouse_speed, LV_ANIM_OFF);
+
+	// 決定ボタン
+	lv_obj_t * btn1 = lv_btn_create(win, NULL);
+	lv_obj_set_size(btn1, 100, 50);
+	lv_obj_align(btn1, NULL, LV_ALIGN_IN_TOP_MID, -60, 240);
+	lv_obj_set_event_cb(btn1, setting_mousepad_save);
+	lv_obj_set_style_local_value_str(btn1, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "決定");
 
 	// 閉じるボタン
-	lv_obj_t * btn1 = lv_btn_create(win, NULL);
-	lv_obj_set_size(btn1, 150, 50);
-	lv_obj_align(btn1, NULL, LV_ALIGN_IN_TOP_MID, 0, 150);
-	lv_obj_set_event_cb(btn1, view_setting_menu_ev);
-	lv_obj_set_style_local_value_str(btn1, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "閉じる");
+	lv_obj_t * btn2 = lv_btn_create(win, NULL);
+	lv_obj_set_size(btn2, 100, 50);
+	lv_obj_align(btn2, NULL, LV_ALIGN_IN_TOP_MID, 50, 240);
+	lv_obj_set_event_cb(btn2, view_setting_menu_ev);
+	lv_obj_set_style_local_value_str(btn2, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "閉じる");
+	
+	// 下がギリギリ過ぎてボタンが押せないから空のラベルを置いて下に隙間を作る
+    lv_obj_t * txt2 = lv_label_create(win, NULL);
+    lv_label_set_text(txt2, " ");
+    lv_obj_align(txt2, NULL, LV_ALIGN_IN_TOP_MID, 0, 300);
+
+	// ドラッグした時だけスクロールバー表示
+	// lv_win_set_scrollbar_mode(win, LV_SCRLBAR_MODE_DRAG);
 }
 
 // バックライトON/OFF
@@ -443,6 +505,9 @@ void view_mouse_page() {
 	lv_obj_clean(lv_scr_act());
 	uint8_t head_data[4];
 	
+	// 待ち受け画面用の画面の明るさに設定
+	common_cls.moniter_brightness(0);
+
 	// 待ち受け画像表示
 	if (SPIFFS.exists("/stimg.bin")) {
 		if (!stimg_load_fl) {
@@ -463,10 +528,15 @@ void view_mouse_page() {
 		lv_obj_t * icon = lv_img_create(lv_scr_act(), NULL);
 		lv_img_set_src(icon, &stimg_obj);
 		lv_obj_align(icon, NULL, LV_ALIGN_CENTER, 0, 0);
+	} else {
+		// ファイルが無ければデフォルトの画像表示
+		lv_obj_t * icon = lv_img_create(lv_scr_act(), NULL);
+		lv_img_set_src(icon, &stimg_default);
+		lv_obj_align(icon, NULL, LV_ALIGN_CENTER, 0, 0);
 	}
 
 	// マウスパッド操作
-	mouse_pad_status = mouse_pad_setting;
+	mouse_pad_status = mouse_pad_setting.mouse_type;
 	// メニュー表示終了
 	menu_mode_flag = false;
 	// 表示インデックス
@@ -474,6 +544,96 @@ void view_mouse_page() {
 	
 }
 
+// バックライト明るさアップ
+void moniter_menu_bright_ev(lv_obj_t * obj, lv_event_t event) {
+	if(event == LV_EVENT_VALUE_CHANGED) {
+		int v = lv_slider_get_value(obj);
+		int s;
+		if (v > 0) {
+			s = 2500 + ((600 * v) / 100);
+			M5.Axp.SetDCDC3(true);
+			M5.Axp.SetLcdVoltage(s);
+			// M5.Lcd.setBrightness(s);
+		} else {
+			M5.Axp.SetDCDC3(false);
+		}
+	}
+}
+
+// 画面設定画面決定クリック
+void setting_moniter_save(lv_obj_t * obj, lv_event_t event) {
+	// クリック以外のイベントは無視
+	if (event != LV_EVENT_CLICKED) return;
+	// 設定を反映
+	moniter_setting.st_brightness = lv_slider_get_value(lv_slider_obj);
+	moniter_setting.menu_brightness = lv_slider_get_value(lv_slider_obj_2);
+	// 設定を保存
+	common_cls.moniterset_save();
+	// 設定メニュー表示
+	view_setting_menu_fnc();
+}
+
+// 画面設定ページ表示
+void view_setting_moniter(lv_obj_t * obj, lv_event_t event) {
+	// クリック以外のイベントは無視
+	if (event != LV_EVENT_CLICKED) return;
+
+	// 画面上のオブジェクト全て削除
+	lv_obj_clean(lv_scr_act());
+
+	// window作成
+    lv_obj_t * win = lv_win_create(lv_scr_act(), NULL);
+    lv_win_set_title(win, "画面設定");
+
+	// 待ち受け画面の明るさ
+    lv_text_obj = lv_label_create(win, NULL);
+    lv_label_set_text(lv_text_obj, "待ち受け画面の明るさ");
+    lv_obj_align(lv_text_obj, NULL, LV_ALIGN_IN_TOP_MID, -10, 40);
+
+	// 明るさ調節のスライダー
+	lv_slider_obj = lv_slider_create(win, NULL);
+	lv_obj_set_size(lv_slider_obj, 150, 10);
+	lv_obj_align(lv_slider_obj, NULL, LV_ALIGN_IN_TOP_MID, 0, 90);
+	// lv_obj_set_event_cb(lv_slider_obj, led_bright_ev);
+	lv_slider_set_range(lv_slider_obj, 0, 100);
+	lv_slider_set_value(lv_slider_obj, moniter_setting.st_brightness, LV_ANIM_OFF);
+
+	// メニュー画面の明るさ
+    lv_text_obj_2 = lv_label_create(win, NULL);
+    lv_label_set_text(lv_text_obj_2, "メニュー画面の明るさ");
+    lv_obj_align(lv_text_obj_2, NULL, LV_ALIGN_IN_TOP_MID, -10, 140);
+
+	// 明るさ調節のスライダー
+	lv_slider_obj_2 = lv_slider_create(win, NULL);
+	lv_obj_set_size(lv_slider_obj_2, 150, 10);
+	lv_obj_align(lv_slider_obj_2, NULL, LV_ALIGN_IN_TOP_MID, 0, 190);
+	lv_obj_set_event_cb(lv_slider_obj_2, moniter_menu_bright_ev);
+	lv_slider_set_range(lv_slider_obj_2, 0, 100);
+	lv_slider_set_value(lv_slider_obj_2, moniter_setting.menu_brightness, LV_ANIM_OFF);
+
+	// 決定ボタン
+	lv_obj_t * btn1 = lv_btn_create(win, NULL);
+	lv_obj_set_size(btn1, 100, 50);
+	lv_obj_align(btn1, NULL, LV_ALIGN_IN_TOP_MID, -60, 240);
+	lv_obj_set_event_cb(btn1, setting_moniter_save);
+	lv_obj_set_style_local_value_str(btn1, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "決定");
+
+	// 閉じるボタン
+	lv_obj_t * btn2 = lv_btn_create(win, NULL);
+	lv_obj_set_size(btn2, 100, 50);
+	lv_obj_align(btn2, NULL, LV_ALIGN_IN_TOP_MID, 50, 240);
+	lv_obj_set_event_cb(btn2, view_setting_menu_ev);
+	lv_obj_set_style_local_value_str(btn2, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "閉じる");
+	
+	// 下がギリギリ過ぎてボタンが押せないから空のラベルを置いて下に隙間を作る
+    lv_obj_t * txt2 = lv_label_create(win, NULL);
+    lv_label_set_text(txt2, " ");
+    lv_obj_align(txt2, NULL, LV_ALIGN_IN_TOP_MID, 0, 300);
+
+}
+
+
+// 渡した画像データを画面に表示する
 void Display::view_raw_image(uint8_t *img_data) {
 	stimg_obj.header.always_zero = 0;
 	stimg_obj.header.cf = LV_IMG_CF_TRUE_COLOR;
@@ -515,6 +675,9 @@ void Display::begin() {
 
 // 設定メニュー表示
 void Display::view_setting_menu() {
+	// 設定画面用の画面の明るさに設定
+	common_cls.moniter_brightness(1);
+	// 設定画面表示
 	view_setting_menu_fnc();
 }
 

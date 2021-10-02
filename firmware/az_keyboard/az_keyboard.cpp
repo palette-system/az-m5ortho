@@ -95,6 +95,7 @@ void AzKeyboard::key_action_exec() {
     for (i=0; i<key_input_length; i++) {
         if (common_cls.input_key_last[i] != common_cls.input_key[i]) {
             if (common_cls.input_key[i]) {
+              // M5.Lcd.printf("[%D,down]", i);
                 // キーが押された
                 key_down_action(i); // 押された時の動作
                 rgb_led_cls.set_led_buf(i, 1); // LED に押したよを送る
@@ -103,6 +104,7 @@ void AzKeyboard::key_action_exec() {
                 common_cls.key_count[i]++;
                 common_cls.key_count_total++;
             } else {
+              // M5.Lcd.printf("[%D,up]", i);
                 // キーは離された
                 key_up_action(i); // 離された時の動作
                 rgb_led_cls.set_led_buf(i, 0); // LED に離したよを送る
@@ -589,8 +591,8 @@ void AzKeyboard::mouse_loop_joy() {
         x = 240 - tp.y;
         y = tp.x;
         if (x > 20 && x < 220 && y > 20 && y < 300) {
-            send_x = ( x - start_touch_x) / 8;
-            send_y = (y - start_touch_y) / 8;
+            send_x = (( x - start_touch_x) * mouse_pad_setting.mouse_speed) / 400;
+            send_y = ((y - start_touch_y) * mouse_pad_setting.mouse_speed) / 400;
             if (last_touch_index == 0) {
                 start_touch_x = x;
                 start_touch_y = y;
@@ -638,8 +640,8 @@ void AzKeyboard::mouse_loop_pad() {
         x = 240 - tp.y;
         y = tp.x;
         if (x > 20 && x < 220 && y > 20 && y < 300) {
-            send_x = ( x - start_touch_x);
-            send_y = (y - start_touch_y);
+            send_x = (( x - start_touch_x) * mouse_pad_setting.mouse_speed) / 50;
+            send_y = ((y - start_touch_y) * mouse_pad_setting.mouse_speed) / 50;
             if (last_touch_index == 0) {
                 start_touch_x = x;
                 start_touch_y = y;
@@ -748,7 +750,7 @@ void AzKeyboard::loop_exec(void) {
         mouse_loop_pad();
     } else if (mouse_pad_status == 2) { // ジョイスティック操作の時
         mouse_loop_joy();
-    } else if (mouse_pad_setting == 0 && mouse_pad_status == 0) { // 操作なし設定で操作なしの時
+    } else if (mouse_pad_setting.mouse_type == mouse_pad_status) { // 操作なし設定で操作なしの時
         mouse_loop_none();
     }
 
@@ -768,7 +770,7 @@ void AzKeyboard::loop_exec(void) {
     // リスタート用ループ処理
     common_cls.restart_loop();
 
-    delay(10);
+    delay(8);
 
   }
 }

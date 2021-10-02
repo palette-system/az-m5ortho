@@ -57,12 +57,17 @@
 // 打鍵数を自動保存するかどうかの設定を保存するファイルパス
 #define  KEY_COUNT_AUTO_SAVE_PATH  "/key_count_auto_save"
 
+// マウスパッドの設定を保存するファイルのパス
+#define  MOUSE_PAD_SETTING_PATH  "/mousepad_data"
+
+// 画面設定を保存するファイルのパス
+#define  MONITER_SETTING_PATH  "/moniter_data"
 
 // M5Stackの画面の向き(0 = 縦長 / 1 = 横長)
 #define  DISPLAY_ROTATION  0
 
 // メモリに保持するキーの数(メモリを確保するサイズ)
-#define KEY_INPUT_MAX  55
+#define KEY_INPUT_MAX  128
 
 // レイヤー切り替え同時押し許容数
 #define PRESS_KEY_MAX 16
@@ -110,6 +115,23 @@ struct mrom_data_set {
     int boot_mode; // 起動モード 0=キーボード / 1=設定モード
     char uid[12];
 };
+
+// マウスパッド設定
+struct mousepad_data_set {
+    int8_t mouse_type; // マウス操作のタイプ 0=無し / 1=タッチパッド / 2=ジョイスティック
+    uint8_t mouse_speed; // 感度 0 - 100
+    uint8_t value_1;
+    uint8_t value_2;
+};
+
+// 画面設定
+struct moniterset_data_set {
+    int8_t st_brightness;
+    int8_t menu_brightness;
+    uint8_t value_1;
+    uint8_t value_2;
+};
+
 
 // ArduinoJSON SPRAM用の定義
 struct SpiRamAllocator {
@@ -176,6 +198,11 @@ class AzCommon
         int read_file(char *file_path, String &read_data); // ファイルからデータを読み出す
         int write_file(char *file_path, String &write_data); // ファイルにデータを保存する
         int remove_file(char *file_path); // ファイルを削除する
+        int mouse_pad_load(); // マウスパッド設定読み込み
+        int mouse_pad_save(); // マウスパッド設定保存
+        int moniterset_load(); // 画面設定読み込み
+        int moniterset_save(); // 画面設定保存
+        void moniter_brightness(int set_type); // 画面の明るさ設定
         void pin_setup(); // キーの入力ピンの初期化
         void pin_setup_sub_process(); // 入力ピン初期化のキーボード別の処理
         bool layers_exists(int layer_no); // レイヤーが存在するか確認
@@ -331,7 +358,10 @@ extern char *ap_pass_char;
 extern int8_t mouse_pad_status;
 
 // マウスパッド操作方法設定
-extern int8_t mouse_pad_setting;
+extern mousepad_data_set mouse_pad_setting;
+
+// 画面設定
+extern moniterset_data_set moniter_setting;
 
 // RGBLED
 extern int8_t rgb_pin;

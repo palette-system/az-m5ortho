@@ -54,6 +54,8 @@ class Neopixel
 		short _led_length; // 接続LED数
 		short _row_size; // マトリックス縦サイズ
 		short _col_size; // マトリックス横サイズ
+		short _led_num_len; // led_numのサイズ
+		short _key_matrix_len; // キーマトリックスのサイズ
 		int8_t _hide_flag; // 消灯フラグ
 		int8_t *led_buf;
 		int8_t *led_num;
@@ -65,7 +67,7 @@ class Neopixel
 		uint16_t  lotate_index; // グラデーションインデックス
 		Adafruit_NeoPixel *rgb_led; // RGB_LEDオブジェクト
 		Neopixel();   // コンストラクタ
-		void begin(short data_pin, short led_length, short row_size, short col_size, int *select_layer, int8_t *led_num, int8_t *key_matrix); // LED制御初期化
+		void begin(short data_pin, short led_length, short row_size, short col_size, int *select_layer, int8_t *led_num, short led_num_len, int8_t *key_matrix, short key_matrix_len); // LED制御初期化
 		void setting_load();
 		void setting_save();
 		void set_led_num(int8_t key, int8_t val);

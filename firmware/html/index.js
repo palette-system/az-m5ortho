@@ -234,7 +234,7 @@ mst.get_setting_json = function() {
 // 設定JSON保存
 mst.save_setting_json = function() {
     var key_pattern = mst.key_pattern_list[ mst.setting_data.keyboard_type ]
-    mst.setting_data.keyboard_pin = key_pattern.pin;
+    mst.setting_data.keyboard_pin = key_pattern.keyboard_pin;
     mst.setting_data.status_pin = key_pattern.status_pin;
     mst.setting_data.rgb_pin = key_pattern.rgb_pin;
     mst.setting_data.rgb_len = key_pattern.rgb_len;

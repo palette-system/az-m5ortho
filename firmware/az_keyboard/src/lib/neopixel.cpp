@@ -1,3 +1,4 @@
+#include <M5Core2.h>
 #include "Arduino.h"
 #include "neopixel.h"
 
@@ -13,17 +14,19 @@ Neopixel::Neopixel() {
 
 
 // LED制御初期化
-void Neopixel::begin(short data_pin, short led_length, short row_size, short col_size, int *select_layer, int8_t *led_num, int8_t *key_matrix) {
+void Neopixel::begin(short data_pin, short led_length, short row_size, short col_size, int *select_layer, int8_t *led_num, short led_num_len, int8_t *key_matrix, short key_matrix_len) {
 	int i;
 	this->_data_pin = data_pin;
 	this->_led_length = led_length;
 	this->_row_size = row_size;
 	this->_col_size = col_size;
 	this->_select_layer_no = select_layer;
-	this->led_buf = new int8_t[this->_led_length];
+	this->led_buf = new int8_t[key_matrix_len];
 	for (i=0; i<this->_led_length; i++) { this->led_buf[i] = 0; }
 	this->led_num = led_num;
+	this->_led_num_len = led_num_len;
 	this->key_matrix = key_matrix;
+	this->_key_matrix_len = key_matrix_len;
 	// 消灯フラグ(最初は１回消灯させる)
 	this->_hide_flag = 1;
 	// 設定ファイル読み込み
@@ -76,7 +79,7 @@ void Neopixel::set_key_matrix(int8_t key, int8_t val) {
 void Neopixel::set_led_buf(int8_t key_id, int8_t set_num) {
     if (this->_data_pin < 0 || this->_led_length <= 0) return;
     int i;
-    for (i=0; i<this->_led_length; i++) {
+    for (i=0; i<this->_key_matrix_len; i++) {
         if (this->key_matrix[i] == key_id) {
             this->led_buf[i] = set_num;
             return;
@@ -261,8 +264,10 @@ void Neopixel::hide_all() {
 	uint32_t n = this->rgb_led->Color(0, 0, 0);
     // LEDを点灯
     for (i=0; i<this->_led_length; i++) {
-        this->led_buf[i] = 0;
         this->rgb_led->setPixelColor(i, n);
+    }
+    for (i=0; i<this->_key_matrix_len; i++) {
+        this->led_buf[i] = 0;
     }
 	// LEDにデータを送る
     this->rgb_led->show();
@@ -317,11 +322,25 @@ void Neopixel::rgb_led_loop_type_0() {
 
 
 // 押すと光る
+/*
 void Neopixel::rgb_led_loop_type_1() {
 	int i;
 	uint32_t n = this->rgb_led->Color(0, 0, 0);
 	uint32_t c = this->get_setting_color();
     for (i=0; i<this->_led_length; i++) {
+    	if (this->led_buf[i]) {
+            this->rgb_led->setPixelColor(i, c);
+    	} else {
+            this->rgb_led->setPixelColor(i, n);
+    	}
+    }
+}
+*/
+void Neopixel::rgb_led_loop_type_1() {
+	int i;
+	uint32_t n = this->rgb_led->Color(0, 0, 0);
+	uint32_t c = this->get_setting_color();
+    for (i=0; i<this->_key_matrix_len; i++) {
         if (this->key_matrix[i] < 0) continue;
     	if (this->led_buf[i]) {
             this->rgb_led->setPixelColor(this->led_num[this->key_matrix[i]], c);
@@ -341,12 +360,12 @@ void Neopixel::rgb_led_loop_type_2() {
     int cmax = csize - 1;
 	uint32_t n = this->rgb_led->Color(0, 0, 0);
 	uint32_t c = this->get_setting_color();
-    int8_t read_buf[this->_led_length];
+    int8_t read_buf[this->_key_matrix_len];
     // led_bufの値をコピーしておいて作業はread_bufのデータをもとにled_bufを書き換える
-    for (i=0; i<this->_led_length; i++) {
+    for (i=0; i<this->_key_matrix_len; i++) {
         read_buf[i] = this->led_buf[i];
     }
-    for (i=0; i<this->_led_length; i++) {
+    for (i=0; i<this->_key_matrix_len; i++) {
             if (read_buf[i] == 1) {
                 // 上下左右に作る
                 if (i >= csize) this->led_buf[i - csize] = 2; // 上
@@ -399,7 +418,7 @@ void Neopixel::rgb_led_loop_type_2() {
     for (i=0; i<this->_led_length; i++) {
         this->rgb_led->setPixelColor(i, n);
     }
-    for (i=0; i<this->_led_length; i++) {
+    for (i=0; i<this->_key_matrix_len; i++) {
         if (this->led_buf[i] && this->key_matrix[i] >= 0) {
             this->rgb_led->setPixelColor(this->led_num[this->key_matrix[i]], c);
         }

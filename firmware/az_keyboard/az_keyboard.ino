@@ -23,6 +23,8 @@ void setup() {
     common_cls.common_start();
     // eepromからデータ読み込み
     common_cls.load_data();
+    // 画面設定読み込み
+    common_cls.moniterset_load();
     // ディスプレイ初期化
     disp = new Display();
     disp->begin();
@@ -40,7 +42,7 @@ void setup() {
     // RGB_LEDクラス初期化
     if (rgb_pin > 0 && rgb_len > 0 && matrix_row > 0 && matrix_col > 0) {
         M5.Lcd.printf("RGB_LED: pin=%D len=%D row=%D col=%D\n", rgb_pin, rgb_len, matrix_row, matrix_col);
-        rgb_led_cls.begin( rgb_pin, rgb_len, matrix_row, matrix_col, &select_layer_no, led_num, key_matrix);
+        rgb_led_cls.begin( rgb_pin, rgb_len, matrix_row, matrix_col, &select_layer_no, led_num, led_num_length, key_matrix, key_matrix_length);
     }
     // キーの入力ピンの初期化
     common_cls.pin_setup();
@@ -49,10 +51,13 @@ void setup() {
     // 打鍵数を自動保存するかどうかの設定を読み込み
     key_count_auto_save = 0;
     common_cls.load_file_data(KEY_COUNT_AUTO_SAVE_PATH, (uint8_t *)&key_count_auto_save, 1);
+    // マウスパッド設定を読み込み
+    common_cls.mouse_pad_load();
+    // 起動モード取得
     ESP_LOGD(LOG_TAG, "boot_mode = %D\r\n", eep_data.boot_mode);
     boot_type = eep_data.boot_mode;
-    // 0番目のキーが押されていたら設定モードにする
-    common_cls.key_read(); // キーの状態を取得
+    // キーの状態を取得
+    common_cls.key_read();
     // 今選択してるレイヤーをデフォルトに
     select_layer_no = default_layer_no;
     if (boot_type == 1) {
