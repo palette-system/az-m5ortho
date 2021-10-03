@@ -6,10 +6,12 @@
 ## 使う道具
 <table>
   <tr>
-    <td><img src="/images/az66jp/dougu.jpg" width="400"></td>
+    <td><img src="/images/azm5ortho/dougu.jpg" width="400"></td>
     <td>
+      カッター<br>
       プラスドライバー（中）<br>
       ピンセット<br>
+      ニッパー<br>
       はんだ<br>
       はんだごて
     </td>
@@ -68,7 +70,7 @@
 ## PHコネクタのはんだ付け
 <table>
   <tr>
-    <td><img src="/images/azm5ortho/muki_4.jpg" width="400"><br><img src="/images/az66jp/muki_5.jpg" width="400"></td>
+    <td><img src="/images/azm5ortho/muki_4.jpg" width="400"><br><img src="/images/azm5ortho/muki_5.jpg" width="400"></td>
     <td valign="top">
       PHコネクタも表側から差し込み裏側をはんだ付けします。<br>
       ※ 誤って表裏逆にさすと＋、－が逆になってしまうので気を付けて下さい。
