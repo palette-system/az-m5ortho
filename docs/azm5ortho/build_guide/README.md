@@ -57,7 +57,7 @@
 ## ピンヘッダのはんだ付け
 <table>
   <tr>
-    <td><img src="/images/azm5ortho/muki_6.jpg" width="400"></td>
+    <td><img src="/images/azm5ortho/muki_6.jpg" width="400"><br><img src="/images/azm5ortho/muki_6b.jpg" width="400"></td>
     <td valign="top">
       ニッパーなどでピンヘッダを幅15ピンでカットし、PCBの表側から差し込み、裏側裏側をはんだ付けします。<br>
       ※ この位置が重要でピンヘッダが斜めに刺さっていたりズレたりするとM5StackCore2の位置がズレます。<br>
