@@ -34,7 +34,8 @@
   <tr>
     <td><img src="/images/azm5ortho/muki_3.jpg" width="400"></td>
     <td valign="top">
-      8ヶ所LEDの穴の枠が黒く塗られている所があり、こちらはLEDを表向きにしてはんだします。
+      8ヶ所LEDの穴の枠が黒く塗られている所があり、こちらはLEDを表向きにしてはんだします。<br>
+      こちらもPCBの三角マークと、LEDの足の角が欠けている方向を一緒にして下さい。
     </td>
   </tr>
 </table>

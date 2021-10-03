@@ -70,6 +70,11 @@
     <td>M5StackCore2 固定用のネジ (M3 15mm x 2本、 M3 20mm x 2本)</td>
     <td valign="center">4</td>
   </tr>
+  <tr>
+    <td><img src="/images/azm5ortho/parts_6.jpg" width="400"></td>
+    <td>ゴム足</td>
+    <td valign="center">8</td>
+  </tr>
 </table>
 
 
