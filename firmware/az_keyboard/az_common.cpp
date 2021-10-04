@@ -802,7 +802,7 @@ int AzCommon::remove_file(char *file_path) {
 // マウスパッド設定読み込み
 int AzCommon::mouse_pad_load() {
     // デフォルト値を入れておく
-    mouse_pad_setting.mouse_type = 0;
+    mouse_pad_setting.mouse_type = 1;
     mouse_pad_setting.mouse_speed = 50;
     mouse_pad_setting.value_1 = 0;
     mouse_pad_setting.value_2 = 0;
