@@ -10,8 +10,7 @@
     <td>
       まずはM5StackCore2のドライバをインストールします。<br>
       (既にM5Stackの開発環境が整っている場合は必要ありません。)<br><br>
-      <a href="https://shop.m5stack.com/pages/download" target="_blank">https://shop.m5stack.com/pages/download</a> にアクセスしお使いのOSに合った 「 <b>CP2104 Driver</b> 」をダウンロードします。<br>
-      
+      <a href="https://shop.m5stack.com/pages/download" target="_blank"> https://shop.m5stack.com/pages/download</a> にアクセスしお使いのOSに合った 「 <b>CP2104 Driver</b> 」をダウンロードします。
     </td>
   </tr>
   <tr>
@@ -32,7 +31,7 @@
     <td><img src="/images/azm5ortho/init_4.jpg" width="600"></td>
     <td valign="top">
       ドライバのインストールが終わったらM5StackCore2をPCにUSBでつなぎます。<br><br>
-      その後 <b>Chrome</b> で <a href="https://azkey.jp/azm5ortho/" target="_blank">https://azkey.jp/azm5ortho/</b> を開き、ファームウェア欄の「 <b>Version　0.0.1　書込み</b> 」をクリックします。<br>
+      その後 <b>Chrome</b> で <a href="https://azkey.jp/azm5ortho/" target="_blank">https://azkey.jp/azm5ortho/</a> を開き、ファームウェア欄の「 <b>Version　0.0.1　書込み</b> 」をクリックします。<br>
       必ずChromeで開いて下さい。
     </td>
   </tr>
@@ -59,13 +58,15 @@
   </tr>
 </table>
 
+<br><br>
+
 ## 接続しているキーボードの選択
 <table>
   <tr>
     <td><img src="/images/azm5ortho/mon_1.jpg" width="600"></td>
     <td valign="top">
       初回起動時のみ現在接続しているキーボードの選択画面が表示されます。<br>
-      接続しているキーボードを選択し「 決定 」をタップしてください。
+      接続しているキーボード(<b>AZ-M5ortho</b>)を選択し「 決定 」をタップしてください。
     </td>
   </tr>
   <tr>
