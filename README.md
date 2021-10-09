@@ -6,7 +6,7 @@
   
 - [入っている物](/docs/azm5ortho/builtin_parts/)
 - [作成マニュアル](/docs/azm5ortho/build_guide/)
-- [ファームウェアのインストール](https://azkey.jp/azm5ortho/)
+- [初期設定](/docs/azm5ortho/Initial_setting/)
 <br><br>
 
 ## M5Stack Japan Creativity Contest 2021 3位入賞
