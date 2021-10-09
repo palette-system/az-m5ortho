@@ -295,6 +295,7 @@ void AzKeyboard::send_string(char *send_char) {
     bleKeyboard.releaseAll();
 }
 
+// キーが押された時の動作
 void AzKeyboard::key_down_action(int key_num) {
     int i, m, k, r, lid;
     // キーの設定取得
@@ -325,7 +326,10 @@ void AzKeyboard::key_down_action(int key_num) {
         memcpy(&normal_input, key_set.data, sizeof(setting_normal_input));
         for (i=0; i<normal_input.key_length; i++) {
             if (normal_input.repeat_interval < 0 || normal_input.repeat_interval > 50) {
-                if (normal_input.key[i] & MOUSE_CODE) {
+                if (normal_input.key[i] == 0x4005) {
+                    // マウススクロールボタン
+                    mouse_scroll_flag = true;
+                } else if (normal_input.key[i] & MOUSE_CODE) {
                     // マウスボタンだった場合
                     bleKeyboard.mouse_press(normal_input.key[i] - MOUSE_CODE); // マウスボタンを押す
                 } else {
@@ -439,7 +443,10 @@ void AzKeyboard::key_up_action(int key_num) {
         }
         if (action_type == 1) {
             // 通常入力
-            if (press_key_list[i].key_id & MOUSE_CODE) {
+            if (press_key_list[i].key_id == 0x4005) {
+                // マウススクロールボタン
+                mouse_scroll_flag = false;
+            } else if (press_key_list[i].key_id & MOUSE_CODE) {
                 // マウスボタンだった場合
                 bleKeyboard.mouse_release(press_key_list[i].key_id - MOUSE_CODE); // マウスボタンを離す
             } else {
@@ -646,7 +653,12 @@ void AzKeyboard::mouse_loop_pad() {
                 start_touch_x = x;
                 start_touch_y = y;
             } else if (send_x != 0 || send_y != 0) {
-                bleKeyboard.mouse_move(send_x, send_y, 0, 0);
+                if (mouse_scroll_flag) {
+                    // スクロールボタン押している最中
+                    bleKeyboard.mouse_move(0, 0, send_x, send_y);
+                } else {
+                    bleKeyboard.mouse_move(send_x, send_y, 0, 0);
+                }
                 touch_send_count++;
             }
             start_touch_x = x;
@@ -749,6 +761,11 @@ void AzKeyboard::loop_exec(void) {
     if (mouse_pad_status == 1) { // マウスパッド操作の時
         mouse_loop_pad();
     } else if (mouse_pad_status == 2) { // ジョイスティック操作の時
+        if (mouse_scroll_flag) {
+            mouse_loop_pad(); // スクロールボタン押している最中はマウスパッド
+        } else {
+            mouse_loop_joy();
+        }
         mouse_loop_joy();
     } else if (mouse_pad_setting.mouse_type == mouse_pad_status) { // 操作なし設定で操作なしの時
         mouse_loop_none();

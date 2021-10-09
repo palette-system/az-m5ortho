@@ -13,7 +13,7 @@ mst.key_language_list = [
 ];
 
 // キーボードのタイプデフォルト
-mst.key_pattern_default = "az_macro";
+mst.key_pattern_default = "az_m5ortho";
 
 // 各キーボード別の設定
 if (!mst.key_pattern_list) mst.key_pattern_list = {};
@@ -136,6 +136,7 @@ mst.key_list = [
 	{"key": "16385", "char": "LCk", "value": "Left Click"},
 	{"key": "16386", "char": "RCk", "value": "Right Click"},
 	{"key": "16388", "char": "MCk", "value": "Middle Click"},
+	{"key": "16389", "char": "MScl", "value": "Mouse Scroll"},
 
 	{"key": "224", "char": "LCtrl", "value": "Left Ctrl"},
 	{"key": "225", "char": "LShift", "value": "Left Shift"},

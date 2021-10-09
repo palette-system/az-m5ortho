@@ -103,6 +103,9 @@ press_key_data press_key_list[PRESS_KEY_MAX];
 // 押している最中のマウス移動
 press_mouse_data press_mouse_list[PRESS_MOUSE_MAX];
 
+// マウスのスクロールボタンが押されているか
+bool mouse_scroll_flag;
+
 // リスタート用のフラグ
 int8_t restart_flag;
 int8_t restart_index;
@@ -210,6 +213,8 @@ void AzCommon::common_start() {
 
     // マウスパッドステータス
     mouse_pad_status = 0;
+    // マウスのスクロールボタンが押されているか
+    mouse_scroll_flag = false;
     // リスタートフラグ
     restart_flag = -1;
     restart_index = -1;

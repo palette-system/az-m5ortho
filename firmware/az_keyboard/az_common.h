@@ -315,6 +315,9 @@ extern press_key_data press_key_list[PRESS_KEY_MAX];
 // 押している最中のマウス移動
 extern press_mouse_data press_mouse_list[PRESS_MOUSE_MAX];
 
+// マウスのスクロールボタンが押されているか
+extern bool mouse_scroll_flag;
+
 // オールクリア送信フラグ
 extern int press_key_all_clear;
 
