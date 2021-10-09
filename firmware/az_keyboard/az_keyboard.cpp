@@ -605,7 +605,12 @@ void AzKeyboard::mouse_loop_joy() {
                 start_touch_y = y;
                 // M5.Lcd.drawRoundRect(x, y, 17, 17, 3, TFT_RED);
             } else if (send_x != 0 || send_y != 0) {
-                bleKeyboard.mouse_move(send_x, send_y, 0, 0);
+                if (mouse_scroll_flag) {
+                    // スクロールボタン押している最中はスクロール
+                    bleKeyboard.mouse_move(0, 0, ((send_y / 5) * -1), (send_x / 5));
+                } else {
+                    bleKeyboard.mouse_move(send_x, send_y, 0, 0);
+                }
                 touch_send_count++;
             }
             last_touch_x = x;
@@ -655,7 +660,7 @@ void AzKeyboard::mouse_loop_pad() {
             } else if (send_x != 0 || send_y != 0) {
                 if (mouse_scroll_flag) {
                     // スクロールボタン押している最中
-                    bleKeyboard.mouse_move(0, 0, send_x, send_y);
+                    bleKeyboard.mouse_move(0, 0, ((send_y / 3) * -1), (send_x / 3));
                 } else {
                     bleKeyboard.mouse_move(send_x, send_y, 0, 0);
                 }
@@ -761,12 +766,7 @@ void AzKeyboard::loop_exec(void) {
     if (mouse_pad_status == 1) { // マウスパッド操作の時
         mouse_loop_pad();
     } else if (mouse_pad_status == 2) { // ジョイスティック操作の時
-        if (mouse_scroll_flag) {
-            mouse_loop_pad(); // スクロールボタン押している最中はマウスパッド
-        } else {
-            mouse_loop_joy();
-        }
-        mouse_loop_joy();
+          mouse_loop_joy();
     } else if (mouse_pad_setting.mouse_type == mouse_pad_status) { // 操作なし設定で操作なしの時
         mouse_loop_none();
     }
