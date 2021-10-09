@@ -7,8 +7,9 @@
 <table>
   <tr>
     <td><img src="/images/azm5ortho/mon_3.jpg" width="500"><br><img src="/images/azm5ortho/mon_4.jpg" width="500"></td>
-    <td>
-      待ち受け画面上で、長押しタップ(指を移動させない)すると設定メニューが開かれます。
+    <td valign="top">
+      待ち受け画面上で、長押しタップ(指を移動させない)すると設定メニューが開かれます。<br><br>
+      ※ 待ち受け画像はWiFiアクセスした設定画面から好きな画像に変更できます。
     </td>
   </tr>
 </table>
