@@ -6,7 +6,8 @@
   
 - [入っている物](/docs/azm5ortho/builtin_parts/)
 - [作成マニュアル](/docs/azm5ortho/build_guide/)
-- [初期設定](/docs/azm5ortho/Initial_setting/)
+- [初期設定マニュアル](/docs/azm5ortho/Initial_setting/)
+- [液晶画面設定メニュー](/docs/azm5ortho/moniter_setting/)
 <br><br>
 
 ## M5Stack Japan Creativity Contest 2021 3位入賞
