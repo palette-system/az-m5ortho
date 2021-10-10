@@ -310,7 +310,7 @@
 					"press": {
 						"action_type": 1,
 						"key": [
-							16386
+							16389
 						],
 						"repeat_interval": "51"
 					},
@@ -321,7 +321,7 @@
 					"press": {
 						"action_type": 1,
 						"key": [
-							40
+							16386
 						],
 						"repeat_interval": "51"
 					},
