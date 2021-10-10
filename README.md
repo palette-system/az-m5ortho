@@ -8,7 +8,13 @@
 - [作成マニュアル](/docs/azm5ortho/build_guide/)
 - [初期設定マニュアル](/docs/azm5ortho/Initial_setting/)
 - [液晶画面設定メニュー](/docs/azm5ortho/moniter_setting/)
+- [WiFi設定メニュー](/docs/azm5ortho/wifi_setting/)
 <br><br>
+
+## デフォルトキーマップ
+
+![デフォルトキーマップ](/images/azm5ortho/keymap_def.jpg)
+
 
 ## M5Stack Japan Creativity Contest 2021 3位入賞
 
