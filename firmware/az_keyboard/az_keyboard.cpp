@@ -326,8 +326,10 @@ void AzKeyboard::key_down_action(int key_num) {
         memcpy(&normal_input, key_set.data, sizeof(setting_normal_input));
         for (i=0; i<normal_input.key_length; i++) {
             if (normal_input.repeat_interval < 0 || normal_input.repeat_interval > 50) {
+              Serial.printf("down: %x\n", normal_input.key[i]);
                 if (normal_input.key[i] == 0x4005) {
                     // マウススクロールボタン
+              Serial.printf("mouse_scroll_flag: true\n");
                     mouse_scroll_flag = true;
                 } else if (normal_input.key[i] & MOUSE_CODE) {
                     // マウスボタンだった場合
@@ -443,9 +445,11 @@ void AzKeyboard::key_up_action(int key_num) {
         }
         if (action_type == 1) {
             // 通常入力
+              Serial.printf("up: %x\n", press_key_list[i].key_id);
             if (press_key_list[i].key_id == 0x4005) {
                 // マウススクロールボタン
                 mouse_scroll_flag = false;
+              Serial.printf("mouse_scroll_flag: false\n");
             } else if (press_key_list[i].key_id & MOUSE_CODE) {
                 // マウスボタンだった場合
                 bleKeyboard.mouse_release(press_key_list[i].key_id - MOUSE_CODE); // マウスボタンを離す
@@ -738,6 +742,11 @@ void AzKeyboard::loop_exec(void) {
   n = millis();
   while (true) {
 
+    // 入力モードが変わっていたら変更
+    if (bleKeyboard.keyboard_language != keyboard_language) {
+        bleKeyboard.set_keyboard_language(keyboard_language);
+    }
+
     // 現在のキーの状態を取得
     common_cls.key_read();
 
@@ -750,6 +759,9 @@ void AzKeyboard::loop_exec(void) {
     // キー連打処理
     key_repeat_exec();
 
+    // マウス移動処理
+    move_mouse_loop();
+    
     // キー入力クリア処理
     press_data_clear();
 
@@ -787,7 +799,7 @@ void AzKeyboard::loop_exec(void) {
     // リスタート用ループ処理
     common_cls.restart_loop();
 
-    delay(8);
+    delay(7);
 
   }
 }

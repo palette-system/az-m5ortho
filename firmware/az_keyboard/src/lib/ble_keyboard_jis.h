@@ -24,7 +24,6 @@
 #define MOUSE_BUTTON_MIDDLE 0x04
 #define MOUSE_BUTTON_BACK   0x08
 
-
 // メディアキー構造
 typedef uint8_t MediaKeyReport[2];
 
@@ -40,6 +39,10 @@ typedef struct
 #define REPORT_KEYBOARD_ID 0x01
 #define REPORT_MEDIA_KEYS_ID 0x02
 #define REPORT_MOUSE_ID 0x03
+#define INPUT_REP_REF_RAW_ID 0x04
+
+#define INPUT_REPORT_RAW_MAX_LEN 32
+#define OUTPUT_REPORT_RAW_MAX_LEN 32
 
 
 // HID レポートデフォルト
@@ -72,10 +75,10 @@ const uint8_t _hidReportDescriptorDefault[] PROGMEM = {
   REPORT_COUNT(1),    0x06,          //   REPORT_COUNT (6) ; 6 bytes (Keys)
   REPORT_SIZE(1),     0x08,          //   REPORT_SIZE(8)
   LOGICAL_MINIMUM(1), 0x00,          //   LOGICAL_MINIMUM(0)
-  LOGICAL_MAXIMUM(1), 0xEF,          //   LOGICAL_MAXIMUM(0x65) ; 101 keys
+  LOGICAL_MAXIMUM(1), 0x65,          //   LOGICAL_MAXIMUM(0x65) ; 101 keys
   USAGE_PAGE(1),      0x07,          //   USAGE_PAGE (Kbrd/Keypad)
   USAGE_MINIMUM(1),   0x00,          //   USAGE_MINIMUM (0)
-  USAGE_MAXIMUM(1),   0xEF,          //   USAGE_MAXIMUM (0x65)
+  USAGE_MAXIMUM(1),   0x65,          //   USAGE_MAXIMUM (0x65)
   HIDINPUT(1),        0x00,          //   INPUT (Data,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
   END_COLLECTION(0),                 // END_COLLECTION
   // ------------------------------------------------- Media Keys
@@ -147,6 +150,29 @@ const uint8_t _hidReportDescriptorDefault[] PROGMEM = {
   HIDINPUT(1),         0x06, //     INPUT (Data, Var, Rel)
   END_COLLECTION(0),         //   END_COLLECTION
   END_COLLECTION(0)          // END_COLLECTION
+
+  // ------------------------------------------------- remap
+        ,
+        0x06, 0x60, 0xFF,
+        0x09, 0x61,
+        0xa1, 0x01,
+        0x85, INPUT_REP_REF_RAW_ID,
+        
+        0x09, 0x62, 
+        0x15, 0x00, 
+        0x26, 0xFF, 0x00, 
+        0x95, INPUT_REPORT_RAW_MAX_LEN,
+        0x75, 0x08, 
+        0x81, 0x06, 
+      
+        0x09, 0x63, 
+        0x15, 0x00, 
+        0x26, 0xFF, 0x00, 
+        0x95, OUTPUT_REPORT_RAW_MAX_LEN, //REPORT_COUNT(32)
+        0x75, 0x08, //REPORT_SIZE(8)
+        0x91, 0x83, 
+        0xC0             // End Collection (Application)
+
 };
 
 // 
@@ -350,6 +376,10 @@ class BleKeyboardJIS
     NimBLEDescriptor* pDesc3; // HID input 2 (メディアキーコード送信)
     NimBLECharacteristic* pInputCharacteristic3; // HID input 3 (マウス送信)
     NimBLEDescriptor* pDesc4; // HID input 3 (マウス送信)
+    NimBLECharacteristic* pInputCharacteristic4; // HID input 4 (REMAP 送信)
+    NimBLEDescriptor* pDesc5; // HID input 4 (REMAP 送信)
+    NimBLECharacteristic* pOutputCharacteristic2; // HID output 4 (REMAP 情報取得)
+    NimBLEDescriptor* pDesc6; // HID input 4 (REMAP 情報取得)
     NimBLEService* pBatteryService; // バッテリーサービス
     NimBLECharacteristic* pBatteryLevelCharacteristic; // バッテリーサービス レベル
     NimBLE2904* pBatteryLevelDescriptor; // バッテリーサービス レベル

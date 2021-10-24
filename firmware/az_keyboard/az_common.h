@@ -40,7 +40,7 @@
 
 
 // ファームウェアのバージョン文字
-#define FIRMWARE_VERSION   "000001"
+#define FIRMWARE_VERSION   "000002"
 
 // EEPROMに保存しているデータのバージョン文字列
 #define EEP_DATA_VERSION    "AZM020"
@@ -193,6 +193,9 @@ class AzCommon
         String http_request(char *url, const JsonObject &prm); // httpリクエスト送信
         bool create_setting_json(); // デフォルトの設定json作成
         void load_setting_json(); // jsonデータロード
+        void clear_keymap(); // キーマップ用に確保しているメモリを解放
+        void get_keymap(JsonObject setting_obj); // JSONデータからキーマップの情報を読み込む
+        void remap_save_setting_json(); // REMAPで受け取ったデータをJSONデータに書き込む
         void get_keyboard_type_int(String t); // キーボードのタイプ番号を取得
         void get_option_type_int(JsonObject setting_obj); // オプションタイプの番号を取得
         int read_file(char *file_path, String &read_data); // ファイルからデータを読み出す
@@ -342,6 +345,12 @@ extern AXP192 power;
 // キーが押された時の設定
 extern uint16_t setting_length;
 extern setting_key_press *setting_press;
+
+// remapに送る用のデータ
+extern uint8_t  *setting_remap;
+extern uint16_t  layer_max;
+extern uint16_t  key_max;
+
 
 // リスタート用のフラグ
 extern int8_t restart_flag;
