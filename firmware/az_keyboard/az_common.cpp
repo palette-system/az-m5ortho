@@ -606,21 +606,23 @@ void AzCommon::clear_keymap() {
     int i;
     setting_normal_input normal_input;
     for (i=0; i<setting_length; i++) {
-        if (setting_press[i].action_type == 1) {
+        if (setting_press[i].action_type == 1) { // 通常キー
             memcpy(&normal_input, setting_press[i].data, sizeof(setting_normal_input));
             delete[] normal_input.key;
             delete setting_press[i].data;
-        } else if (setting_press[i].action_type == 2) {
+        } else if (setting_press[i].action_type == 2) { // テキスト入力
             delete[] setting_press[i].data;
-        } else if (setting_press[i].action_type == 3) {
+        } else if (setting_press[i].action_type == 3) { // レイヤー切り替え
             delete setting_press[i].data;
-        } else if (setting_press[i].action_type == 4) {
+        } else if (setting_press[i].action_type == 4) { // WEBフック
             delete[] setting_press[i].data;
-        } else if (setting_press[i].action_type == 5) {
+        } else if (setting_press[i].action_type == 5) { // マウス移動
             delete setting_press[i].data;
-        } else if (setting_press[i].action_type == 6) {
+        } else if (setting_press[i].action_type == 6) { // 暗記ボタン
             delete[] setting_press[i].data;
-        } else if (setting_press[i].action_type == 7) {
+        } else if (setting_press[i].action_type == 7) { // LED設定ボタン
+            delete setting_press[i].data;
+        } else if (setting_press[i].action_type == 8) { // 打鍵設定ボタン
             delete setting_press[i].data;
         }
     }
@@ -639,6 +641,7 @@ void AzCommon::get_keymap(JsonObject setting_obj) {
     JsonObject press_obj;
     String text_str;
     setting_normal_input normal_input;
+    setting_layer_move layer_move_input;
     setting_mouse_move mouse_move_input;
     // まずはキー設定されている数を取得
     layers = setting_obj["layers"].as<JsonObject>();
@@ -688,8 +691,11 @@ void AzCommon::get_keymap(JsonObject setting_obj) {
                 text_str.toCharArray(setting_press[i].data, m);
             } else if (setting_press[i].action_type == 3) {
                 // レイヤー切り替え
-                setting_press[i].data = new char;
-                *setting_press[i].data = press_obj["layer"].as<signed int>();
+                layer_move_input.layer_id = press_obj["layer"].as<signed int>();
+                layer_move_input.layer_type = press_obj["layer_type"].as<signed int>();
+                if (layer_move_input.layer_type == 0) layer_move_input.layer_type = 0x51; // 切り替え方法の指定が無かった場合はMO(押している間切り替わる)
+                setting_press[i].data = (char *)new setting_layer_move;
+                memcpy(setting_press[i].data, &layer_move_input, sizeof(setting_layer_move));
             } else if (setting_press[i].action_type == 4) {
                 // WEBフック
                 text_str = "";
@@ -777,8 +783,11 @@ void AzCommon::get_keymap(JsonObject setting_obj) {
             setting_remap[m + 1] = s & 0xff;
         } else if (at == 3) {
             // レイヤー切り替え
-            setting_remap[m] = 0x51;
-            setting_remap[m + 1] = *setting_press[i].data;
+            memcpy(&layer_move_input, setting_press[i].data, sizeof(setting_layer_move));
+            s = layer_move_input.layer_type; // 切り替えのタイプ
+            if (s != 0x50 && s != 0x51 && s != 0x52 && s != 0x53 && s != 0x54 && s != 0x58) s = 0x51; // 不明な指定はMOと判定
+            setting_remap[m] = s;
+            setting_remap[m + 1] = layer_move_input.layer_id;
         } else if (at == 5) {
             // マウス移動
             memcpy(&mouse_move_input, setting_press[i].data, sizeof(setting_mouse_move));
@@ -854,9 +863,10 @@ void AzCommon::remap_save_setting_json() {
                 keyarray_obj = setting_obj["layers"][lname]["keys"][kname]["press"].createNestedArray("key");
                 keyarray_obj.add(k);
             } else if ((h == 0x50 || h == 0x51 || h == 0x52 || h == 0x53 || h == 0x54 || h == 0x58) && l < layer_max) {
-                // レイヤー切り替え(全てMO)
+                // レイヤー切り替え
                 press_obj["action_type"] = 3;
                 press_obj["layer"] = l;
+                press_obj["layer_type"] = h;
             } else if (k == 0xF0 || k == 0xF1 || k == 0xF2 || k == 0xF3) { // マウス移動↑↓←→
                 press_obj["action_type"] = 5;
                 move_obj = setting_obj["layers"][lname]["keys"][kname]["press"].createNestedObject("move");

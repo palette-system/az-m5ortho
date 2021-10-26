@@ -297,7 +297,7 @@ void AzKeyboard::send_string(char *send_char) {
 
 // キーが押された時の動作
 void AzKeyboard::key_down_action(int key_num) {
-    int i, m, k, r, lid;
+    int i, m, k, r;
     // キーの設定取得
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
     setting_key_press key_set = common_cls.get_key_setting(select_layer_no, key_num);
@@ -351,16 +351,22 @@ void AzKeyboard::key_down_action(int key_num) {
         press_key_list_push(action_type, key_num, -1, select_layer_no, -1);
 
     } else if (action_type == 3) {
-        // マウス移動リストクリア
+        setting_layer_move layer_move_input;
+        // マウス移動リストクリア(移動中にレイヤーが切り替わると移動したままになってしまうので)
         press_mouse_list_clean();
         // レイヤーの切り替え
-        lid = *key_set.data;
-        select_layer_no = lid;
-        // 最後に押されたレイヤーボタン設定
-        last_select_layer_key = key_num;
+        memcpy(&layer_move_input, key_set.data, sizeof(setting_layer_move));
+        Serial.printf("dw: %d %d %02x %d\n", select_layer_no, key_num, layer_move_input.layer_type, layer_move_input.layer_id);
+        m = select_layer_no; // 元のレイヤー番号保持
+        select_layer_no = layer_move_input.layer_id; // レイヤー切り替え
+        last_select_layer_key = key_num; // 最後に押されたレイヤーボタン設定
+        if (layer_move_input.layer_type == 0x50 || layer_move_input.layer_type == 0x52) {
+            // TO、DF はデフォルトレイヤーも切り替える
+            default_layer_no = layer_move_input.layer_id;
+        }
         // キー押したよリストに追加
-        press_key_list_push(action_type, key_num, -1, select_layer_no, -1);
-        ESP_LOGD(LOG_TAG, "key press layer : %D %D\r\n", key_num, lid);
+        press_key_list_push(action_type, key_num, -1, m, -1);
+        ESP_LOGD(LOG_TAG, "key press layer : %D %02x %D\r\n", key_num, layer_move_input.layer_type, layer_move_input.layer_id);
 
     } else if (action_type == 4) {
         // webフック
@@ -445,11 +451,9 @@ void AzKeyboard::key_up_action(int key_num) {
         }
         if (action_type == 1) {
             // 通常入力
-              Serial.printf("up: %x\n", press_key_list[i].key_id);
             if (press_key_list[i].key_id == 0x4005) {
                 // マウススクロールボタン
                 mouse_scroll_flag = false;
-              Serial.printf("mouse_scroll_flag: false\n");
             } else if (press_key_list[i].key_id & MOUSE_CODE) {
                 // マウスボタンだった場合
                 bleKeyboard.mouse_release(press_key_list[i].key_id - MOUSE_CODE); // マウスボタンを離す
@@ -460,12 +464,18 @@ void AzKeyboard::key_up_action(int key_num) {
             ESP_LOGD(LOG_TAG, "key release : %D\r\n", press_key_list[i].key_id);
         } else if (action_type == 3) {
             // レイヤー選択
-            // 最後に押されたレイヤーボタンならばレイヤーを解除
-            ESP_LOGD(LOG_TAG, "key release : last_select_layer_key : %D\r\n", last_select_layer_key);
-            if (last_select_layer_key == key_num) {
-                select_layer_no = default_layer_no;
-                last_select_layer_key = -1;
+            setting_key_press key_set = common_cls.get_key_setting(press_key_list[i].layer_id, key_num);
+            setting_layer_move layer_move_input;
+            memcpy(&layer_move_input, key_set.data, sizeof(setting_layer_move));
+            Serial.printf("up: %d %d %02x %d\n", press_key_list[i].layer_id, key_num, layer_move_input.layer_type, layer_move_input.layer_id);
+            if (layer_move_input.layer_type == 0x51 || layer_move_input.layer_type == 0x58) {
+                // MO(押している間)で最後に押されたレイヤーボタンならばレイヤーをデフォルトに戻す
+                if (last_select_layer_key == key_num) {
+                    select_layer_no = default_layer_no;
+                    last_select_layer_key = -1;
+                }
             }
+            // 最後に押されたレイヤーボタンならばレイヤーを解除
         } else if (action_type == 5) {
             // マウス移動ボタン
             press_mouse_list_remove(key_num); // 移動中リストから削除

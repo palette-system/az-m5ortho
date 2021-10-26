@@ -193,21 +193,28 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			remap_change_flag = 1;
 			break;
 		}
-		case id_dynamic_keymap_macro_get_buffer_size: { // 0x0D 
+		case id_dynamic_keymap_macro_get_buffer_size: { // 0x0D マクロキー用のバッファサイズ
 			// uint16_t size   = dynamic_keymap_macro_get_buffer_size();
-            remap_buf[1] = 0x00;
-            remap_buf[2] = 0x00;
+			m = 0;
+			remap_buf[1] = (m >> 8) & 0xFF;
+            remap_buf[2] = m & 0xFF;
 			break;
 		}
-        case id_dynamic_keymap_macro_get_count: { // 0x0C
+        case id_dynamic_keymap_macro_get_count: { // 0x0C マクロキーを登録できる数
             remap_buf[1] = 0x00; // dynamic_keymap_macro_get_count();
             break;
         }
-        case id_dynamic_keymap_macro_get_buffer: { // 0x0E
+        case id_dynamic_keymap_macro_get_buffer: { // 0x0E マクロキーデータを送る
             // uint16_t offset = (command_data[0] << 8) | command_data[1];
             // uint16_t size   = command_data[2];  // size <= 28
             // dynamic_keymap_macro_get_buffer(offset, size, &command_data[3]);
             remap_buf[4] = 0x00;
+            break;
+        }
+        case id_dynamic_keymap_macro_set_buffer: { // 0x0F マクロキーデータを保存
+            // uint16_t offset = (command_data[0] << 8) | command_data[1];
+            // uint16_t size   = command_data[2];  // size <= 28
+            // dynamic_keymap_macro_set_buffer(offset, size, &command_data[3]);
             break;
         }
 		case id_dynamic_keymap_get_layer_count: { // 0x11 レイヤー数を送る

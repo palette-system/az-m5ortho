@@ -283,3 +283,13 @@ mst.input_type_list = {
 	"8": "打鍵設定ボタン"
 };
 
+// レイヤー切り替えの種類
+mst.layer_move_type_list = [
+	{"key": 0x50, "value": "[TO]切り替え後デフォルトになる"},
+	{"key": 0x51, "value": "[MO]押している間切り替わる"},
+	{"key": 0x52, "value": "[DF]切り替え後デフォルトになる"},
+	{"key": 0x53, "value": "[TG]切り替わったままになる"},
+	{"key": 0x54, "value": "[OSL]非対応"},
+	{"key": 0x58, "value": "[TT]非対応"}
+];
+

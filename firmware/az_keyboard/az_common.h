@@ -40,7 +40,7 @@
 
 
 // ファームウェアのバージョン文字
-#define FIRMWARE_VERSION   "000002"
+#define FIRMWARE_VERSION   "000003"
 
 // EEPROMに保存しているデータのバージョン文字列
 #define EEP_DATA_VERSION    "AZM020"
@@ -160,6 +160,12 @@ struct setting_mouse_move {
     int16_t x;
     int16_t y;
     int16_t speed;
+};
+
+// レイヤー切り替え
+struct setting_layer_move {
+    int8_t layer_id;
+    int8_t layer_type;
 };
 
 // キーを押した時の設定

@@ -677,6 +677,15 @@ mst.set_layer_name = function(layer_no, layer_name) {
     mst.setting_data.layers["layer_" + layer_no].name = layer_name;
 };
 
+// レイヤー切り替えタイプの名前を取得
+mst.get_layer_type_name = function(layer_type) {
+    var i;
+    for (i in mst.layer_move_type_list) {
+        if (mst.layer_move_type_list[i].key == layer_type) return mst.layer_move_type_list[i].value;
+    }
+    return "";
+};
+
 // 入力タイプ選択(データが無い場合はここでデフォルトのデータを入れる)
 mst.select_input_type = function() {
     var i, l = [];
@@ -698,6 +707,7 @@ mst.select_input_type = function() {
         } else if (mst.key_edit_data.press.action_type == 3) {
             // レイヤー切り替え
             if (!("layer" in mst.key_edit_data.press)) mst.key_edit_data.press.layer = 0;
+            if (!("layer_type" in mst.key_edit_data.press)) mst.key_edit_data.press.layer_type = 0x51;
         } else if (mst.key_edit_data.press.action_type == 4) {
             // WEBフック
             if (!("webhook" in mst.key_edit_data.press)) mst.key_edit_data.press.webhook = {"url": "http://palette-system.com/ct/", "header": [], "post": "", "keyoutput": 0};
@@ -737,6 +747,14 @@ mst.select_input_key = function(num) {
 mst.select_change_layer = function() {
     mst.select_exec(mst.get_layer_list(), mst.key_edit_data.press.layer+"", function(select_key) {
         mst.key_edit_data.press.layer = parseInt(select_key);
+        mst.view_key_setting(mst.key_edit_kid);
+    });
+};
+
+// レイヤーの切り替え方選択
+mst.select_change_layer_type = function() {
+    mst.select_exec(mst.layer_move_type_list, mst.key_edit_data.press.layer_type, function(select_key) {
+        mst.key_edit_data.press.layer_type = parseInt(select_key);
         mst.view_key_setting(mst.key_edit_kid);
     });
 };
@@ -852,8 +870,10 @@ mst.view_key_setting = function(key_id) {
         s += "<b>レイヤー：</b><br><font style='font-size: 40px;'>"+mst.get_layer_name(pss.layer)+"</font></td><td align='right'>";
         s += "<a href='#' class='update_button' onClick='javascript:mst.select_change_layer(); return false;'>変更</a>";
         s += "</td></tr>";
-        s += "<tr><td colspan='2'>";
-        s += "<br><br><font style='font-size: 30px;'>※ このキーを押している間、指定したレイヤーの動作に切り替わります。</font><br><br>";
+        s += "<tr><td colspan='2' style='padding: 20px 0;'><hr style='"+hrst+"'></td></tr>";
+        s += "<tr><td>";
+        s += "<b>切り替え方：</b><br><font style='font-size: 20px;'>"+mst.get_layer_type_name(pss.layer_type)+"</font></td><td align='right'>";
+        s += "<a href='#' class='update_button' onClick='javascript:mst.select_change_layer_type(); return false;'>変更</a>";
         s += "</td></tr>";
     } else if (at == 4) {
         // WEBフック
@@ -1043,6 +1063,7 @@ mst.key_setting_btn_click = function(type_id) {
             s.text =  mst.key_edit_data.press.text;
         } else if (s.action_type == 3) { // レイヤー切り替え
             s.layer =  mst.key_edit_data.press.layer;
+            s.layer_type =  mst.key_edit_data.press.layer_type;
         } else if (s.action_type == 4) { // WEBフック
             mst.key_edit_data.press.webhook.url = $("url_text").value;
             mst.key_edit_data.press.webhook.post = $("webhook_post_text").value;
