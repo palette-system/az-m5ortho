@@ -155,11 +155,13 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
     uint8_t *command_id   = &(remap_buf[0]);
     uint8_t *command_data = &(remap_buf[1]);
 
+	/* REMAP から受け取ったデータデバッグ表示
 	Serial.printf("get: (%d) ", data_length);
 	for (i=0; i<data_length; i++) {
 		Serial.printf("%02x ", remap_buf[i]);
 	}
 	Serial.printf("\n");
+	*/
 
 	// 設定変更がされていて設定変更以外のコマンドが飛んできたら設定を保存
 	if (remap_change_flag && *command_id != 0x05) {
@@ -200,6 +202,9 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			setting_remap[m] = remap_buf[4];
 			setting_remap[m + 1] = remap_buf[5];
 			remap_change_flag = 1;
+			break;
+		}
+		case id_dynamic_keymap_reset: { // 0x06 キーマップリセット とりあえず何もしない
 			break;
 		}
 		case id_dynamic_keymap_macro_get_buffer_size: { // 0x0D マクロキー用のバッファサイズ
@@ -244,9 +249,11 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 		}
 	}
 
+	/* REMAPに送信するデータデバッグ表示
 	Serial.printf("put: (%d) ", data_length);
 	for (i=0; i<data_length; i++) Serial.printf("%02x ", remap_buf[i]);
 	Serial.printf("\n\n");
+	*/
 	delay(1);
 	this->sendRawData(remap_buf, data_length);
 	delay(1);
