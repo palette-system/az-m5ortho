@@ -151,7 +151,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 	uint8_t* data = (uint8_t*)(me->getValue().c_str());
 	size_t data_length = me->getDataLength();
 	memcpy(remap_buf, data, data_length);
-	int i, m;
+	int i, j, m;
     uint8_t *command_id   = &(remap_buf[0]);
     uint8_t *command_data = &(remap_buf[1]);
 
@@ -180,7 +180,16 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 					remap_buf[5] = 0x00;
 					break;
 				}
-				case id_switch_matrix_state: { // 0x03 スイッチの状態
+				case id_switch_matrix_state: { // 0x03 スイッチの状態(入力テスト用)
+					remap_buf[2] = 0x00;
+					remap_buf[3] = 0x00;
+					remap_buf[4] = 0x00;
+					remap_buf[5] = 0x00;
+					m = 3;
+					for (i=0; i<key_input_length; i++) {
+						remap_buf[m] |= common_cls.input_key[i] << (i % 8);
+						if ((i %8) == 7) m++;
+					}
 					break;
 				}
 			}
@@ -227,6 +236,10 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			for (i=0; i<r_size; i++) {
 				remap_buf[4 + i] = setting_remap[r_offset + i];
 			}
+			break;
+		}
+		default: {
+			remap_buf[0] = 0xFF;
 			break;
 		}
 	}

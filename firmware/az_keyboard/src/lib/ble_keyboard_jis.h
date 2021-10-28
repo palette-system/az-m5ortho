@@ -53,34 +53,46 @@ const uint8_t _hidReportDescriptorDefault[] PROGMEM = {
   // ------------------------------------------------- Keyboard
   REPORT_ID(1),       REPORT_KEYBOARD_ID,   //   REPORT_ID (1)
   USAGE_PAGE(1),      0x07,          //   USAGE_PAGE (Kbrd/Keypad)
-  USAGE_MINIMUM(1),   0xE0,          //   USAGE_MINIMUM (0xE0)
-  USAGE_MAXIMUM(1),   0xE7,          //   USAGE_MAXIMUM (0xE7)
+
+	// モデファイヤキー(修飾キー)
+	USAGE_MINIMUM(1),   0xE0,          //   USAGE_MINIMUM (0xE0)(左CTRLが0xe0)
+  USAGE_MAXIMUM(1),   0xE7,          //   USAGE_MAXIMUM (0xE7)(右GUIが0xe7)
   LOGICAL_MINIMUM(1), 0x00,          //   LOGICAL_MINIMUM (0)
   LOGICAL_MAXIMUM(1), 0x01,          //   Logical Maximum (1)
-  REPORT_SIZE(1),     0x01,          //   REPORT_SIZE (1)
-  REPORT_COUNT(1),    0x08,          //   REPORT_COUNT (8)
+  REPORT_COUNT(1),    0x08,          //   REPORT_COUNT (8)全部で8つ(左右4つずつ)。
+	REPORT_SIZE(1),     0x01,          //   REPORT_SIZE (1)
   HIDINPUT(1),        0x02,          //   INPUT (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-  REPORT_COUNT(1),    0x01,          //   REPORT_COUNT (1) ; 1 byte (Reserved)
-  REPORT_SIZE(1),     0x08,          //   REPORT_SIZE (8)
+
+	// 予約フィールド
+	REPORT_COUNT(1),    0x01,          //   REPORT_COUNT (1) ; 1 byte (Reserved)
+  REPORT_SIZE(1),     0x08,          //   REPORT_SIZE (8)1ビットが8つ。
   HIDINPUT(1),        0x01,          //   INPUT (Const,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
-  REPORT_COUNT(1),    0x05,          //   REPORT_COUNT (5) ; 5 bits (Num lock, Caps lock, Scroll lock, Compose, Kana)
-  REPORT_SIZE(1),     0x01,          //   REPORT_SIZE (1)
+
+	// LED状態のアウトプット
+	REPORT_COUNT(1),    0x05,          //   REPORT_COUNT (5) ; 5 bits (Num lock, Caps lock, Scroll lock, Compose, Kana)全部で5つ。
+  REPORT_SIZE(1),     0x01,          //   REPORT_SIZE (1)LEDにつき1ビット
   USAGE_PAGE(1),      0x08,          //   USAGE_PAGE (LEDs)
-  USAGE_MINIMUM(1),   0x01,          //   USAGE_MINIMUM (0x01) ; Num Lock
-  USAGE_MAXIMUM(1),   0x05,          //   USAGE_MAXIMUM (0x05) ; Kana
-  HIDOUTPUT(1),       0x02,          //   OUTPUT (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
-  REPORT_COUNT(1),    0x01,          //   REPORT_COUNT (1) ; 3 bits (Padding)
-  REPORT_SIZE(1),     0x03,          //   REPORT_SIZE (3)
-  HIDOUTPUT(1),       0x01,          //   OUTPUT (Const,Array,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
-  REPORT_COUNT(1),    0x06,          //   REPORT_COUNT (6) ; 6 bytes (Keys)
-  REPORT_SIZE(1),     0x08,          //   REPORT_SIZE(8)
-  LOGICAL_MINIMUM(1), 0x00,          //   LOGICAL_MINIMUM(0)
-  LOGICAL_MAXIMUM(1), 0x65,          //   LOGICAL_MAXIMUM(0x65) ; 101 keys
-  USAGE_PAGE(1),      0x07,          //   USAGE_PAGE (Kbrd/Keypad)
+  USAGE_MINIMUM(1),   0x01,          //   USAGE_MINIMUM (0x01) ; Num Lock(NumLock LEDが1)
+  USAGE_MAXIMUM(1),   0x05,          //   USAGE_MAXIMUM (0x05) ; Kana(KANA LEDが5)
+  HIDOUTPUT(1),       0x02,          //   OUTPUT (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)LED report
+
+	// LEDレポートのパディング
+	REPORT_COUNT(1),    0x01,          //   REPORT_COUNT (1) ; 3 bits (Padding)
+  REPORT_SIZE(1),     0x03,          //   REPORT_SIZE (3)残りの3ビットを埋める。
+  HIDOUTPUT(1),       0x03,          //   OUTPUT (Const,Array,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+
+	// 入力キーのインプット
+	REPORT_COUNT(1),    0x06,          //   REPORT_COUNT (6) ; 6 bytes (Keys)全部で6つ。
+  REPORT_SIZE(1),     0x08,          //   REPORT_SIZE(8)おのおの8ビットで表現
+  LOGICAL_MINIMUM(1), 0x00,          //   LOGICAL_MINIMUM(0)キーコードの範囲 開始
+  LOGICAL_MAXIMUM(1), 0x65,          //   LOGICAL_MAXIMUM(0x65) ; 101 keys キーコードの範囲 終了
+
+	USAGE_PAGE(1),      0x07,          //   USAGE_PAGE (Kbrd/Keypad)
   USAGE_MINIMUM(1),   0x00,          //   USAGE_MINIMUM (0)
-  USAGE_MAXIMUM(1),   0x65,          //   USAGE_MAXIMUM (0x65)
+  USAGE_MAXIMUM(1),   0xEF,          //   USAGE_MAXIMUM (0x65)
   HIDINPUT(1),        0x00,          //   INPUT (Data,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
-  END_COLLECTION(0),                 // END_COLLECTION
+
+	END_COLLECTION(0),                 // END_COLLECTION
   // ------------------------------------------------- Media Keys
   USAGE_PAGE(1),      0x0C,          // USAGE_PAGE (Consumer)
   USAGE(1),           0x01,          // USAGE (Consumer Control)

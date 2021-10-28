@@ -326,10 +326,8 @@ void AzKeyboard::key_down_action(int key_num) {
         memcpy(&normal_input, key_set.data, sizeof(setting_normal_input));
         for (i=0; i<normal_input.key_length; i++) {
             if (normal_input.repeat_interval < 0 || normal_input.repeat_interval > 50) {
-              Serial.printf("down: %x\n", normal_input.key[i]);
                 if (normal_input.key[i] == 0x4005) {
                     // マウススクロールボタン
-              Serial.printf("mouse_scroll_flag: true\n");
                     mouse_scroll_flag = true;
                 } else if (normal_input.key[i] & MOUSE_CODE) {
                     // マウスボタンだった場合
