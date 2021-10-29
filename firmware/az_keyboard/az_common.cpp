@@ -776,18 +776,18 @@ void AzCommon::get_keymap(JsonObject setting_obj) {
             if (normal_input.key_length < 1) continue;
             s = normal_input.key[0];
             if (s >= 0xE0 && s <= 0xE7 && normal_input.key_length > 1) {
-                // 1キー目がモデファイアで複数キーが登録してある場合 HOLD/TAP と判定
+                // 1キー目がモデファイアで複数キーが登録してある場合 同時押しと判定
                 s = 0;
                 for (j=0; j<normal_input.key_length; j++) {
                     k = normal_input.key[j];
-                    if (k == 0xE0) { s |= 0x6100; } // 左Ctrl 
-                    else if (k == 0xE1) { s |= 0x6200; } // 左Shift
-                    else if (k == 0xE2) { s |= 0x6400; } // 左Alt
-                    else if (k == 0xE3) { s |= 0x6800; } // 左GUI
-                    else if (k == 0xE4) { s |= 0x7100; } // 右Ctrl
-                    else if (k == 0xE5) { s |= 0x7200; } // 右Shift
-                    else if (k == 0xE6) { s |= 0x7400; } // 右Alt
-                    else if (k == 0xE7) { s |= 0x7800; } // 右GUI
+                    if (k == 0xE0) { s |= 0x0100; } // 左Ctrl 
+                    else if (k == 0xE1) { s |= 0x0200; } // 左Shift
+                    else if (k == 0xE2) { s |= 0x0400; } // 左Alt
+                    else if (k == 0xE3) { s |= 0x0800; } // 左GUI
+                    else if (k == 0xE4) { s |= 0x1100; } // 右Ctrl
+                    else if (k == 0xE5) { s |= 0x1200; } // 右Shift
+                    else if (k == 0xE6) { s |= 0x1400; } // 右Alt
+                    else if (k == 0xE7) { s |= 0x1800; } // 右GUI
                     else { s |= k & 0xFF; } // それ以外は通常キーとして下位8ビットに入れる
                 }
             } else {
@@ -883,17 +883,17 @@ void AzCommon::remap_save_setting_json() {
                 press_obj["repeat_interval"] = 51; // 連打無し
                 keyarray_obj = setting_obj["layers"][lname]["keys"][kname]["press"].createNestedArray("key");
                 keyarray_obj.add(k);
-            } else if ((h >= 0x61 && h <= 0x6F) || (h >= 0x71 && h <= 0x7F)) { // 左モデファイア || 右モデファイア
-                // HOLD/TAP (モデファイア)
+            } else if ((h >= 0x01 && h <= 0x0F) || (h >= 0x11 && h <= 0x1F)) { // 左モデファイア || 右モデファイア
+                // モデファイア 同時押し
                 press_obj["action_type"] = 1; // 通常キー
                 press_obj["repeat_interval"] = 51; // 連打無し
                 keyarray_obj = setting_obj["layers"][lname]["keys"][kname]["press"].createNestedArray("key");
-                if ((h >> 4) == 0x06) { // 左モデファイア
+                if ((h >> 4) == 0x00) { // 左モデファイア
                     if (h & 0x01) keyarray_obj.add(0xE0); // 左Ctrl
                     if (h & 0x02) keyarray_obj.add(0xE1); // 左Shift
                     if (h & 0x04) keyarray_obj.add(0xE2); // 左Alt
                     if (h & 0x08) keyarray_obj.add(0xE3); // 左GUI
-                } else if ((h >> 4) == 0x07) { // 右モデファイア
+                } else if ((h >> 4) == 0x01) { // 右モデファイア
                     if (h & 0x01) keyarray_obj.add(0xE4); // 右Ctrl
                     if (h & 0x02) keyarray_obj.add(0xE5); // 右Shift
                     if (h & 0x04) keyarray_obj.add(0xE6); // 右Alt

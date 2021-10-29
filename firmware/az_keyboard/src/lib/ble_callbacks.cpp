@@ -254,9 +254,9 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 	for (i=0; i<data_length; i++) Serial.printf("%02x ", remap_buf[i]);
 	Serial.printf("\n\n");
 	*/
-	delay(1);
+	delay(10);
 	this->sendRawData(remap_buf, data_length);
-	delay(1);
+	delay(10);
 	
 }
 
