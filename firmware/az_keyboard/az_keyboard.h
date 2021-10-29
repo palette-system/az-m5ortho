@@ -19,6 +19,7 @@ class AzKeyboard
         void send_string(char *send_char); // テキストを送信する
         void key_down_action(int key_num); // キーが押された時のアクション
         void key_up_action(int key_num); // キーが離された時のアクション
+        void tap_key_disable_all(); // tap / hold の単押しを無効化する
         void press_data_reset(); // 入力状態を全てクリアする
         void press_key_list_push(int action_type, int key_num, int key_id, int layer_id, int repeat_interval); // キーを押しましたリストに追加
         void press_mouse_list_clean(); // マウス移動中リストを空にする

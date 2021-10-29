@@ -210,6 +210,7 @@ void AzCommon::common_start() {
         press_key_list[i].key_num = -1;
         press_key_list[i].key_id = -1;
         press_key_list[i].layer_id = -1;
+        press_key_list[i].press_time = -1;
         press_key_list[i].unpress_time = -1;
     }
     last_touch_x = -1;
@@ -681,6 +682,11 @@ void AzCommon::get_keymap(JsonObject setting_obj) {
                 } else {
                     normal_input.repeat_interval = 51;
                 }
+                if (press_obj.containsKey("hold")) {
+                    normal_input.hold = press_obj["hold"].as<signed int>();
+                } else {
+                    normal_input.hold = 0;
+                }
                 setting_press[i].data = (char *)new setting_normal_input;
                 memcpy(setting_press[i].data, &normal_input, sizeof(setting_normal_input));
             } else if (setting_press[i].action_type == 2) {
@@ -775,7 +781,11 @@ void AzCommon::get_keymap(JsonObject setting_obj) {
             memcpy(&normal_input, setting_press[i].data, sizeof(setting_normal_input));
             if (normal_input.key_length < 1) continue;
             s = normal_input.key[0];
-            if (s >= 0xE0 && s <= 0xE7 && normal_input.key_length > 1) {
+            if (normal_input.hold) {
+                // holdが定義されていたら tap/hold
+                s = normal_input.hold << 8; // 上位8ビットはholdのキー
+                if (normal_input.key_length) s |= normal_input.key[0] & 0xFF; // 下位8ビットはタップのキー
+            } else if (s >= 0xE0 && s <= 0xE7 && normal_input.key_length > 1) {
                 // 1キー目がモデファイアで複数キーが登録してある場合 同時押しと判定
                 s = 0;
                 for (j=0; j<normal_input.key_length; j++) {
@@ -899,6 +909,13 @@ void AzCommon::remap_save_setting_json() {
                     if (h & 0x04) keyarray_obj.add(0xE6); // 右Alt
                     if (h & 0x08) keyarray_obj.add(0xE7); // 右GUI
                 }
+                keyarray_obj.add(l); // 下位8ビットを通常キー
+            } else if ((h >= 0x61 && h <= 0x6F) || (h >= 0x71 && h <= 0x7F) || (h >= 0x41 && h <= 0x4F) || h == 0x56) { // 左モデファイア || 右モデファイア || レイヤー || swap?
+                // Tap / Hold
+                press_obj["action_type"] = 1; // 通常キー
+                press_obj["repeat_interval"] = 51; // 連打無し
+                press_obj["hold"] = h; // モデファイア | レイヤー定義
+                keyarray_obj = setting_obj["layers"][lname]["keys"][kname]["press"].createNestedArray("key");
                 keyarray_obj.add(l); // 下位8ビットを通常キー
             } else if ((h == 0x50 || h == 0x51 || h == 0x52 || h == 0x53 || h == 0x54 || h == 0x58) && l < layer_max) {
                 // レイヤー切り替え

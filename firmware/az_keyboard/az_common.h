@@ -92,6 +92,7 @@ struct press_key_data {
     short layer_id; // キーを押した時のレイヤーID
     short key_num; // キー番号
     short key_id; // 送信した文字
+    short press_time; // キーを押してからどれくらい経ったか
     short unpress_time; // キーを離してからどれくらい経ったか
     short repeat_interval; // 連打の間隔
     short repeat_index; // 現在の連打カウント
@@ -152,6 +153,7 @@ using SpiRamJsonDocument = BasicJsonDocument<SpiRamAllocator>;
 struct setting_normal_input {
     uint8_t key_length;
     uint16_t *key;
+    uint16_t hold;
     short repeat_interval;
 };
 
