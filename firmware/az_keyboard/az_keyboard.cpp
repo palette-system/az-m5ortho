@@ -330,6 +330,7 @@ void AzKeyboard::key_down_action(int key_num) {
         if (normal_input.hold) {
             // hold の場合押した時にhold押したよを送信
             k = normal_input.hold >> 4;
+            m = select_layer_no;
             if (k == 0x06) { // 左モデファイア
                 if (normal_input.hold & 0x01) bleKeyboard.press_raw(0xE0); // 左Ctrl
                 if (normal_input.hold & 0x02) bleKeyboard.press_raw(0xE1); // 左Ctrl
@@ -344,7 +345,7 @@ void AzKeyboard::key_down_action(int key_num) {
                 select_layer_no = normal_input.hold & 0x0F;
                 last_select_layer_key = key_num; // 最後に押されたレイヤーボタン設定
             }
-            press_key_list_push(9, key_num, normal_input.hold, select_layer_no, -1); // アクションタイプは9:holdにする
+            press_key_list_push(9, key_num, normal_input.hold, m, -1); // アクションタイプは9:holdにする
         } else {
             // hold が無ければ通常のキー入力
             for (i=0; i<normal_input.key_length; i++) {
@@ -378,7 +379,6 @@ void AzKeyboard::key_down_action(int key_num) {
         press_mouse_list_clean();
         // レイヤーの切り替え
         memcpy(&layer_move_input, key_set.data, sizeof(setting_layer_move));
-        Serial.printf("dw: %d %d %02x %d\n", select_layer_no, key_num, layer_move_input.layer_type, layer_move_input.layer_id);
         m = select_layer_no; // 元のレイヤー番号保持
         select_layer_no = layer_move_input.layer_id; // レイヤー切り替え
         last_select_layer_key = key_num; // 最後に押されたレイヤーボタン設定
@@ -491,7 +491,6 @@ void AzKeyboard::key_up_action(int key_num) {
             key_set = common_cls.get_key_setting(press_key_list[i].layer_id, key_num);
             setting_layer_move layer_move_input;
             memcpy(&layer_move_input, key_set.data, sizeof(setting_layer_move));
-            Serial.printf("up: %d %d %02x %d\n", press_key_list[i].layer_id, key_num, layer_move_input.layer_type, layer_move_input.layer_id);
             if (layer_move_input.layer_type == 0x51 || layer_move_input.layer_type == 0x58) {
                 // MO(押している間)で最後に押されたレイヤーボタンならばレイヤーをデフォルトに戻す
                 if (last_select_layer_key == key_num) {

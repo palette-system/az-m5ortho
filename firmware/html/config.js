@@ -270,6 +270,41 @@ mst.key_list = [
 	{"key": "29", "char": "z", "value": "z"}
 ];
 
+// 長押しキーリスト
+mst.hold_list = [
+	{"key": 0x00, "value": "無し"},
+	{"key": 0x61, "value": "左 Ctrl"},
+	{"key": 0x62, "value": "左 Shift"},
+	{"key": 0x64, "value": "左 Alt"},
+	{"key": 0x68, "value": "左 GUI"},
+	{"key": 0x63, "value": "左 Ctrl+Shift"},
+	{"key": 0x65, "value": "左 Ctrl+Alt"},
+	{"key": 0x66, "value": "左 Shift+Alt"},
+	{"key": 0x67, "value": "左 Ctrl+Shift+Alt"},
+	{"key": 0x69, "value": "左 Ctrl+GUI"},
+	{"key": 0x6A, "value": "左 Shift+GUI"},
+	{"key": 0x6B, "value": "左 Ctrl+Shift+GUI"},
+	{"key": 0x6C, "value": "左 Alt+GUI"},
+	{"key": 0x6D, "value": "左 Ctrl+Alt+GUI"},
+	{"key": 0x6E, "value": "左 Shift+Alt+GUI"},
+	{"key": 0x6F, "value": "左 Ctrl+Shift+Alt+GUI"},
+	{"key": 0x71, "value": "右 Ctrl"},
+	{"key": 0x72, "value": "右 Shift"},
+	{"key": 0x74, "value": "右 Alt"},
+	{"key": 0x78, "value": "右 GUI"},
+	{"key": 0x73, "value": "右 Ctrl+Shift"},
+	{"key": 0x75, "value": "右 Ctrl+Alt"},
+	{"key": 0x76, "value": "右 Shift+Alt"},
+	{"key": 0x77, "value": "右 Ctrl+Shift+Alt"},
+	{"key": 0x79, "value": "右 Ctrl+GUI"},
+	{"key": 0x7A, "value": "右 Shift+GUI"},
+	{"key": 0x7B, "value": "右 Ctrl+Shift+GUI"},
+	{"key": 0x7C, "value": "右 Alt+GUI"},
+	{"key": 0x7D, "value": "右 Ctrl+Alt+GUI"},
+	{"key": 0x7E, "value": "右 Shift+Alt+GUI"},
+	{"key": 0x7F, "value": "右 Ctrl+Shift+Alt+GUI"}
+];
+
 // 入力タイプのリスト
 mst.input_type_list = {
 	"0": "動作無し",

@@ -660,7 +660,7 @@ void AzCommon::get_keymap(JsonObject setting_obj) {
     for (it_l=layers.begin(); it_l!=layers.end(); ++it_l) {
         sprintf(lkey, "%S", it_l->key().c_str());
         lnum = split_num(lkey);
-        if (layer_max < lnum) layer_max = lnum;
+        layer_max++;
         keys = setting_obj["layers"][lkey]["keys"].as<JsonObject>();
         for (it_k=keys.begin(); it_k!=keys.end(); ++it_k) {
             sprintf(kkey, "%S", it_k->key().c_str());
@@ -739,7 +739,6 @@ void AzCommon::get_keymap(JsonObject setting_obj) {
             i++;
         }
     }
-    layer_max++;
   
     // ログに出力して確認
     for (i=0; i<setting_length; i++) {
@@ -844,7 +843,6 @@ void AzCommon::remap_save_setting_json() {
     JsonObject setting_obj;
     int i, j, k, m, h, l, s;
     int buf_length = layer_max * key_max * 2;
-    int layer_len = layer_max - 1;
     JsonObject layer_obj;
     JsonObject keys_obj;
     JsonObject key_obj;
@@ -871,7 +869,7 @@ void AzCommon::remap_save_setting_json() {
 
     // キーマップ情報の配列を作成
     setting_obj["layers"].clear();
-    for (i=0; i<layer_len; i++) {
+    for (i=0; i<layer_max; i++) {
         sprintf(lname, "layer_%d", i);
         layer_obj = setting_obj["layers"].createNestedObject(lname);
         layer_obj["name"].set(lname);
