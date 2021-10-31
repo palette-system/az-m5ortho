@@ -1,6 +1,11 @@
 # AZ-M5ortho
 
 
+## 販売サイト
+
+- [BOOTH](https://booth.pm/ja/items/3329196)
+- [遊舎工房](https://shop.yushakobo.jp/collections/keyboard/products/2949)
+
 
 ## ドキュメント
   
