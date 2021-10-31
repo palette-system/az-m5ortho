@@ -9,6 +9,7 @@
 - [初期設定マニュアル](/docs/azm5ortho/Initial_setting/)
 - [液晶画面設定メニュー](/docs/azm5ortho/moniter_setting/)
 - [WiFi設定メニュー](/docs/azm5ortho/wifi_setting/)
+- [REMAP設定](/docs/azm5ortho/remap/)
 <br><br>
 
 ## デフォルトキーマップ
