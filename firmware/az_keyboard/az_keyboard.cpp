@@ -753,6 +753,12 @@ void AzKeyboard::mouse_loop_pad() {
         if (x > 20 && x < 220 && y > 20 && y < 300) {
             send_x = (( x - start_touch_x) * mouse_pad_setting.mouse_speed) / 50;
             send_y = ((y - start_touch_y) * mouse_pad_setting.mouse_speed) / 50;
+            //bleKeyboard.mouse_move関数の引数がsigned charのため、singed charの範囲内にクリッピングしなければならない。by Doi.
+            if(send_x>127) send_x = 127;
+            if(send_x<-128) send_x = -128;
+            if(send_y>127) send_y = 127;
+            if(send_y<-128) send_y = -128;
+            //
             if (last_touch_index == 0) {
                 start_touch_x = x;
                 start_touch_y = y;
