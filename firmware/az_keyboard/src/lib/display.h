@@ -50,6 +50,7 @@ bool my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data);
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
 void event_handler(lv_obj_t * obj, lv_event_t event);
 void lv_setup();
+extern uint8_t _disp_rotate; // 画面の向き
 
 
 // クラスの定義
@@ -74,7 +75,7 @@ class Display
 		uint8_t  _thermo_flag; // サーモ表示モードかどうか
 		uint8_t  _qr_flag; // 打鍵QRコード表示中かどうか
 		Display();   // コンストラクタ
-		void begin(); // 初期化
+		void begin(uint8_t disp_rotate); // 初期化
 		void view_full_image(uint8_t *image_data); // 画面いっぱいに画像を表示する
 		void view_full_black(); // 画面を真っ暗にする
 		void view_int(uint16_t x, uint16_t y, int v); // 数字を表示する

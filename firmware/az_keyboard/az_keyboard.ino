@@ -25,11 +25,12 @@ void setup() {
     common_cls.load_data();
     // 画面設定読み込み
     common_cls.moniterset_load();
-    // ディスプレイ初期化
-    disp = new Display();
-    disp->begin();
+    // common_cls.delete_all();
     // キーボードが選択されていなければキーボード選択画面表示
     if (strlen(eep_data.keyboard_type) == 0) {
+        // ディスプレイ初期化
+        disp = new Display();
+        disp->begin(1);
         disp->view_keyboard_setting(); // キーボード選択画面表示
         mouse_pad_status = -1;
         while (true) {
@@ -37,8 +38,14 @@ void setup() {
             common_cls.restart_loop(); // リスタート用ループ処理
         }
     }
+    // File fp = SPIFFS.open(SETTING_JSON_PATH);
+    // while (fp.available()) { Serial.write(fp.read()); }
+    // fp.close();
     // 設定jsonの読み込み
     common_cls.load_setting_json();
+    // ディスプレイ初期化
+    disp = new Display();
+    disp->begin(disp_rotation);
     // RGB_LEDクラス初期化
     if (rgb_pin > 0 && rgb_len > 0 && matrix_row > 0 && matrix_col > 0) {
         M5.Lcd.printf("RGB_LED: pin=%D len=%D row=%D col=%D\n", rgb_pin, rgb_len, matrix_row, matrix_col);

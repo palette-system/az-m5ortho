@@ -13,7 +13,7 @@ mst.key_language_list = [
 ];
 
 // キーボードのタイプデフォルト
-mst.key_pattern_default = "az_m5ortho";
+mst.key_pattern_default = "az_m5egg";
 
 // 各キーボード別の設定
 if (!mst.key_pattern_list) mst.key_pattern_list = {};
@@ -26,6 +26,7 @@ mst.key_pattern_list["az_m5ortho"] = {
 		"touch": [],
 		"ioxp": [32, 33, 34, 35]
 	},
+	"ioxp_pin": [26, 14],
 	"status_pin": -1,
 	"rgb_pin": 27,
 	"rgb_len": 59,
@@ -123,6 +124,45 @@ mst.key_pattern_list["az_m5ortho"] = {
 };
 
 
+// AZ M5egg
+mst.key_pattern_list["az_m5egg"] = {
+	"name": "AZ M5egg",
+	"keyboard_pin": {
+		"row": [],
+		"col": [],
+		"direct": [19, 27, 33, 32, 14, 13],
+		"touch": []
+	},
+	"ioxp_pin": [25, 26],
+	"status_pin": -1,
+	"rgb_pin": -1,
+	"rgb_len": -1,
+	"led_num": [],
+	"key_matrix": [],
+	"size": {"width": 460, "height": 340},
+	"keys": [
+		{"id": 0, "x": 11, "y": 35, "width": 115, "height": 115 },
+		{"id": 1, "x": 163, "y": 35, "width": 115, "height": 115 },
+		{"id": 2, "x": 317, "y": 35, "width": 115, "height": 115 },
+		{"id": 3, "x": 11, "y": 188, "width": 115, "height": 115 },
+		{"id": 4, "x": 163, "y": 188, "width": 115, "height": 115 },
+		{"id": 5, "x": 317, "y": 188, "width": 115, "height": 115 },
+	],
+	"parts": [
+		{
+			"type": "polygon",
+			"fill_color": "#666",
+			"fill": true, // 塗りつぶし
+			"path": [[2,2], [446,2], [446,338], [2,338]]
+		},
+		{
+			"type": "polygon",
+			"line_width": 4,
+			"line_color": "black",
+			"path": [[2,2], [446,2], [446,338], [2,338]]
+		},
+	]
+};
 
 
 // オプションのリスト

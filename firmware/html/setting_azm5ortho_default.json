@@ -3,12 +3,15 @@
 		"pass": ""
 	},
 	"wifi": [],
+	"vendorId": "0xe502",
+	"productId": "0xA111",
 	"status_pin": -1,
 	"keyboard_pin": {
 		"direct": [],
 		"touch": [],
 		"ioxp": [32, 33, 34, 35]
 	},
+	"ioxp_pin": [26, 14],
 	"rgb_pin": 27,
 	"rgb_len": 59,
 	"led_num": [
@@ -29,6 +32,7 @@
 	],
 	"matrix_row": 4,
 	"matrix_col": 15,
+	"disp_rotation": 0,
 	"keyboard_language": 0,
 	"keyboard_name": "AZ-M5ortho",
 	"keyboard_type": "az_m5ortho",

@@ -25,7 +25,7 @@
 
 
 // キーボード別のデフォルト設定ファイル
-#include "src/keyboard/setting_m5macro_default.h"
+#include "src/keyboard/setting_m5egg_default.h"
 #include "src/keyboard/setting_m5ortho_default.h"
 #include "src/keyboard/setting_m5orthow_default.h"
 
@@ -40,10 +40,14 @@
 
 
 // ファームウェアのバージョン文字
-#define FIRMWARE_VERSION   "000006"
+#define FIRMWARE_VERSION   "000100"
 
 // EEPROMに保存しているデータのバージョン文字列
-#define EEP_DATA_VERSION    "AZM020"
+#define EEP_DATA_VERSION    "AZM021"
+
+// vid pid のデフォルト値
+#define BLE_HID_VID  0xE502
+#define BLE_HID_PID  0xA111
 
 // JSON のファイルパス
 #define SETTING_JSON_PATH "/setting.json"
@@ -52,7 +56,7 @@
 #define  BOOT_COUNT_PATH  "/boot_count"
 
 // システム情報を保存するファイルのパス
-#define  SYSTEM_FILE_PATH  "/sys_data"
+#define  AZ_SYSTEM_FILE_PATH  "/sys_data"
 
 // 打鍵数を自動保存するかどうかの設定を保存するファイルパス
 #define  KEY_COUNT_AUTO_SAVE_PATH  "/key_count_auto_save"
@@ -62,9 +66,6 @@
 
 // 画面設定を保存するファイルのパス
 #define  MONITER_SETTING_PATH  "/moniter_data"
-
-// M5Stackの画面の向き(0 = 縦長 / 1 = 横長)
-#define  DISPLAY_ROTATION  0
 
 // メモリに保持するキーの数(メモリを確保するサイズ)
 #define KEY_INPUT_MAX  128
@@ -180,7 +181,7 @@ struct setting_key_press {
 };
 
 // WIFI設定
-struct setting_wifi {
+struct azsetting_wifi {
     char *ssid;
     char *pass;
 };
@@ -242,6 +243,9 @@ class AzCommon
 
 };
 
+// hid
+extern uint16_t hid_vid;
+extern uint16_t hid_pid;
 
 // ステータスLED今0-9
 extern int status_led_bit;
@@ -256,6 +260,9 @@ extern short touch_len;
 extern short *touch_list;
 extern short ioxp_len;
 extern short *ioxp_list;
+extern short ioxp_sda;
+extern short ioxp_scl;
+
 
 // 液晶表示用オブジェクト
 extern Display *disp;
@@ -277,6 +284,9 @@ extern char webhook_buf[WEBFOOK_BUF_SIZE];
 
 // 入力キーの数
 extern int key_input_length;
+
+// ディスプレイの向き
+extern uint8_t disp_rotation;
 
 // キーボードタイプの番号
 extern int keyboard_type_int;
@@ -369,7 +379,7 @@ extern bool menu_mode_flag;
 
 // wifi設定
 extern uint8_t wifi_data_length;
-extern setting_wifi *wifi_data;
+extern azsetting_wifi *wifi_data;
 
 // アクセスポイントパスワード
 extern char *ap_pass_char;

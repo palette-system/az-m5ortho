@@ -10,7 +10,7 @@ uint16_t  layer_max;
 uint16_t  key_max;
 // wifi設定
 uint8_t wifi_data_length;
-setting_wifi *wifi_data;
+azsetting_wifi *wifi_data;
 // アクセスポイントパスワード
 char *ap_pass_char;
 // RGBLED
@@ -23,6 +23,10 @@ int8_t *key_matrix;
 uint8_t led_num_length;
 uint8_t key_matrix_length;
 
+
+// hid
+uint16_t hid_vid;
+uint16_t hid_pid;
 
 // ステータスLED今0-9
 int status_led_bit = 0;
@@ -59,6 +63,9 @@ char webhook_buf[WEBFOOK_BUF_SIZE];
 
 // 入力キーの数
 int key_input_length;
+
+// ディスプレイの向き
+uint8_t disp_rotation;
 
 // キーボードタイプの番号
 int keyboard_type_int;
@@ -136,6 +143,8 @@ short *direct_list;
 short *touch_list;
 short ioxp_len;
 short *ioxp_list;
+short ioxp_sda;
+short ioxp_scl;
 
 // バッテリーオブジェクト
 AXP192 power;
@@ -216,6 +225,10 @@ void AzCommon::common_start() {
     last_touch_x = -1;
     last_touch_y = -1;
 
+    // ioエキスパンダピン
+    ioxp_sda = -1;
+    ioxp_scl = -1;
+
     // マウスパッドステータス
     mouse_pad_status = 0;
     // マウスのスクロールボタンが押されているか
@@ -227,6 +240,8 @@ void AzCommon::common_start() {
     menu_mode_flag = false;
     // LVGL表示インデックス
     lvgl_loop_index = 0;
+    // ディスプレイの向き
+    disp_rotation = 0;
 }
 
 // リスタート用ループ処理
@@ -490,6 +505,9 @@ void AzCommon::load_setting_json() {
         return;
     }
 
+    // ディスプレイの向き
+    disp_rotation = setting_obj["disp_rotation"].as<signed int>();
+
     // キーボードタイプの番号を取得する
     String ktype = setting_obj["keyboard_type"].as<String>();
     get_keyboard_type_int(setting_obj["keyboard_type"].as<String>());
@@ -506,6 +524,20 @@ void AzCommon::load_setting_json() {
         return;
     }
 
+    // HID 設定
+    String hidstr;
+    if (setting_obj.containsKey("vendorId")) {
+        hidstr = setting_obj["vendorId"].as<String>();
+        hid_vid = (uint16_t) strtol(&hidstr[2], NULL, 16);
+    } else {
+        hid_vid = BLE_HID_VID;
+    }
+    if (setting_obj.containsKey("productId")) {
+        hidstr = setting_obj["productId"].as<String>();
+        hid_pid = (uint16_t) strtol(&hidstr[2], NULL, 16);
+    } else {
+        hid_pid = BLE_HID_PID;
+    }
     
     // デフォルトのレイヤー番号設定
     default_layer_no = setting_obj["default_layer"].as<signed int>();
@@ -536,11 +568,20 @@ void AzCommon::load_setting_json() {
     for (i=0; i<ioxp_len; i++) {
         ioxp_list[i] = setting_obj["keyboard_pin"]["ioxp"][i].as<signed int>();
     }
+    // IOエキスパンダピン
+    if (setting_obj.containsKey("ioxp_pin") && setting_obj["ioxp_pin"].size() == 2) {
+        ioxp_sda = setting_obj["ioxp_pin"][0].as<signed int>();
+        ioxp_scl = setting_obj["ioxp_pin"][1].as<signed int>();
+    } else {
+        ioxp_sda = -1;
+        ioxp_scl = -1;
+    }
+    
     // key_input_length = 16 * ioxp_len;
     // キーの設定を取得
     // まずは設定の数を取得
     layer_max = 0;
-    key_max = 16 * ioxp_len;
+    key_max = (16 * ioxp_len) + direct_len + touch_len;
     this->get_keymap(setting_obj);
 
 
@@ -548,7 +589,7 @@ void AzCommon::load_setting_json() {
     // wifiの設定読み出し
     String ssid, pass;
     wifi_data_length = setting_obj["wifi"].size(); // wifiの設定数
-    wifi_data = new setting_wifi[wifi_data_length];
+    wifi_data = new azsetting_wifi[wifi_data_length];
     for (i=0; i<wifi_data_length; i++) {
         ssid = setting_obj["wifi"][i]["ssid"].as<String>();
         pass = setting_obj["wifi"][i]["pass"].as<String>();
@@ -657,6 +698,7 @@ void AzCommon::get_keymap(JsonObject setting_obj) {
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
     // キー設定読み込み
     i = 0;
+    layer_max = 0;
     for (it_l=layers.begin(); it_l!=layers.end(); ++it_l) {
         sprintf(lkey, "%S", it_l->key().c_str());
         lnum = split_num(lkey);
@@ -1145,8 +1187,8 @@ bool AzCommon::create_setting_json() {
     }
     // 書込み
     int i;
-    if (strcmp(eep_data.keyboard_type, "az_m5macro") == 0) {
-        i = json_file.print(setting_azm5macro_default_min_json_bin); // AZ-M5orthoのデフォルト設定
+    if (strcmp(eep_data.keyboard_type, "az_m5egg") == 0) {
+        i = json_file.print(setting_azm5egg_default_min_json_bin); // AZ-M5eggのデフォルト設定
     } else if (strcmp(eep_data.keyboard_type, "az_m5ortho") == 0) {
         i = json_file.print(setting_azm5ortho_default_min_json_bin); // AZ-M5orthoのデフォルト設定
     } else if (strcmp(eep_data.keyboard_type, "az_m5orthow") == 0) {
@@ -1165,31 +1207,40 @@ bool AzCommon::create_setting_json() {
 // キーの入力ピンの初期化
 void AzCommon::pin_setup() {
     
-  // I2C初期化
-  if (Wire.begin(26, 14)) {
-      Wire.setClock(1700000);
-      M5.Lcd.printf("Wire1 begin ok\n");
-  } else {
-      M5.Lcd.printf("Wire1 begin ng\n");
-  }
-
-  // IOエキスパンダ初期化
   int i, j;
-  M5.Lcd.printf("Adafruit_MCP23X17 %D\n", ioxp_len);
-  iomcp = new Adafruit_MCP23X17[ioxp_len];
-  for (i=0; i<ioxp_len; i++) {
-      if (iomcp[i].begin_I2C(ioxp_list[i], &Wire)) {
-          M5.Lcd.printf("begin_I2C %D  %D OK\n", i, ioxp_list[i]);
-      } else {
-          M5.Lcd.printf("begin_I2C %D %D NG\n", i, ioxp_list[i]);
-          return;
-      }
-      for (j = 0; j < 16; j++) {
-          iomcp[i].pinMode(j, INPUT_PULLUP);
-      }
+
+  // direct(スイッチ直接続)で定義されているピンを全てinputにする
+  for (i=0; i<direct_len; i++) {
+      pinMode(direct_list[i], INPUT_PULLUP);
   }
 
-  key_input_length = 16 * ioxp_len;
+  // I2C初期化
+  if (ioxp_sda >= 0 && ioxp_scl >= 0) {
+
+    if (Wire.begin(ioxp_sda, ioxp_scl)) {
+        Wire.setClock(1700000);
+        M5.Lcd.printf("Wire1 begin ok\n");
+    } else {
+        M5.Lcd.printf("Wire1 begin ng\n");
+    }
+
+    // IOエキスパンダ初期化
+    M5.Lcd.printf("Adafruit_MCP23X17 %D\n", ioxp_len);
+    iomcp = new Adafruit_MCP23X17[ioxp_len];
+    for (i=0; i<ioxp_len; i++) {
+        if (iomcp[i].begin_I2C(ioxp_list[i], &Wire)) {
+            M5.Lcd.printf("begin_I2C %D  %D OK\n", i, ioxp_list[i]);
+        } else {
+            M5.Lcd.printf("begin_I2C %D %D NG\n", i, ioxp_list[i]);
+            return;
+        }
+        for (j = 0; j < 16; j++) {
+            iomcp[i].pinMode(j, INPUT_PULLUP);
+        }
+    }
+  }
+
+  key_input_length = (16 * ioxp_len) + direct_len;
   this->key_count_total = 0;
 }
 
@@ -1241,13 +1292,16 @@ void AzCommon::load_data() {
     // キーボードの種類
     strcpy(eep_data.keyboard_type, "");
     File fp;
-    if (!SPIFFS.exists(SYSTEM_FILE_PATH)) {
+    Serial.printf("load_data: a\n");
+    if (!SPIFFS.exists(AZ_SYSTEM_FILE_PATH)) {
         // ファイルが無い場合デフォルト値でファイルを作成
+    Serial.printf("load_data: b\n");
         save_data();
         return;
     }
     // ファイルがあればデータ読み込み
-    fp = SPIFFS.open(SYSTEM_FILE_PATH, "r");
+    Serial.printf("load_data: c\n");
+    fp = SPIFFS.open(AZ_SYSTEM_FILE_PATH, "r");
     if(!fp){
         ESP_LOGD(LOG_TAG, "file open error\n");
         return;
@@ -1256,9 +1310,12 @@ void AzCommon::load_data() {
         fp.read((uint8_t *)&eep_data, sizeof(mrom_data_set));
     }
     fp.close();
+    Serial.printf("load_data: check: %S\n", eep_data.check);
+    Serial.printf("load_data: uid: %S\n", eep_data.uid);
+    Serial.printf("load_data: keyboard_type: %S\n", eep_data.keyboard_type);
     // データのバージョンが変わっていたらファイルを消して再起動
     if (strcmp(eep_data.check, EEP_DATA_VERSION) != 0) {
-        SPIFFS.remove(SYSTEM_FILE_PATH);
+        SPIFFS.remove(AZ_SYSTEM_FILE_PATH);
         ESP.restart(); // ESP32再起動
     }
 }
@@ -1274,7 +1331,7 @@ void AzCommon::save_data() {
     ESP_LOGD(LOG_TAG, "keyboard_type: %S", eep_data.keyboard_type);
     ESP_LOGD(LOG_TAG, "data sizeof: %D", sizeof(mrom_data_set));
     // ファイルに書き込み
-    fp = SPIFFS.open(SYSTEM_FILE_PATH, "w");
+    fp = SPIFFS.open(AZ_SYSTEM_FILE_PATH, "w");
     fp.write((uint8_t *)&eep_data, sizeof(mrom_data_set));
     fp.close();
     delay(200);
@@ -1353,14 +1410,21 @@ void AzCommon::key_read(void) {
     unsigned long start_time;
     unsigned long end_time;
     int m[ioxp_len];
-    int i, j, n, c;
+    int i, j, n, c, p;
+    p = 0;
+    // ダイレクト入力の取得
+    for (i=0; i<direct_len; i++) {
+        input_key[p] = !digitalRead(direct_list[i]);
+        p++;
+    }
+    // IOエキスパンダ
     start_time = millis();
     for (i=0; i<ioxp_len; i++) m[i] = iomcp[i].readGPIOAB();
     for (i=0; i<16; i++) {
         c = 1 << i;
         n = 0;
         for (j=0; j<ioxp_len; j++) {
-            input_key[i + n] = (!(m[j] & c));
+            input_key[i + n + p] = (!(m[j] & c));
             n += 16;
         }
     }

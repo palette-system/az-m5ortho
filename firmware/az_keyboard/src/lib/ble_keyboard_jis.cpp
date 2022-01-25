@@ -78,10 +78,8 @@ void BleKeyboardJIS::taskServer(void* pvParameter)
     bleKeyboardInstance->pDeviceInfoService = bleKeyboardInstance->pServer->createService("180A"); // <-デバイスインフォのUUID
     bleKeyboardInstance->pPnpCharacteristic = bleKeyboardInstance->pDeviceInfoService->createCharacteristic("2A50", NIMBLE_PROPERTY::READ);
     uint8_t sig = 0x02;
-    uint16_t vid = 0xe502;
-    uint16_t pid = 0xa111;
     uint16_t version = 0x0210; 
-    uint8_t pnp[] = { sig, (uint8_t) (vid >> 8), (uint8_t) vid, (uint8_t) (pid >> 8), (uint8_t) pid, (uint8_t) (version >> 8), (uint8_t) version };
+    uint8_t pnp[] = { sig, (uint8_t) (hid_vid >> 8), (uint8_t) hid_vid, (uint8_t) (hid_pid >> 8), (uint8_t) hid_pid, (uint8_t) (version >> 8), (uint8_t) version };
     bleKeyboardInstance->pPnpCharacteristic->setValue(pnp, sizeof(pnp));
     bleKeyboardInstance->pPnpCharacteristic->setCallbacks(&chrCallbacks);
 

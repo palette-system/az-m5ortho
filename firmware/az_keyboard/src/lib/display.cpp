@@ -14,6 +14,7 @@ LV_IMG_DECLARE(stimg_default);
 
 lv_img_dsc_t stimg_obj;
 bool stimg_load_fl;
+uint8_t _disp_rotate; // 画面の向き
 
 
 
@@ -50,8 +51,19 @@ bool my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data){
   } else {
     data->state = LV_INDEV_STATE_PR; 
     /*Set the coordinates*/
-    data->point.x = 240 - pos.y;
-    data->point.y = pos.x;
+	if (_disp_rotate == 0) {
+      data->point.x = 240 - pos.y; // 左が上
+      data->point.y = pos.x;
+	} else if (_disp_rotate == 1) { // 上が上
+      data->point.x = pos.x;
+      data->point.y = pos.y;
+	} else if (_disp_rotate == 2) { // 右が上
+      data->point.x = pos.y;
+      data->point.y = 320 - pos.x;
+	} else if (_disp_rotate == 3) { // 下が上
+      data->point.x = 320 - pos.x;
+      data->point.y = 240 - pos.y;
+	}
   }
   return false; 
 //Return `false` because we are not buffering and no more data to read
@@ -79,7 +91,7 @@ void close_setting(lv_obj_t * obj, lv_event_t event) {
 
 void lv_setup() {
   lvtft.begin();
-  lvtft.setRotation(0);
+  lvtft.setRotation(_disp_rotate);
 	/*
   M5.Axp.SetLcdVoltage(2800);
   M5.Axp.SetLcdVoltage(3300);
@@ -104,8 +116,19 @@ void lv_setup() {
   /*Initialize the display*/
   lv_disp_drv_t disp_drv;
   lv_disp_drv_init(&disp_drv);
-  disp_drv.hor_res  = 240;
-  disp_drv.ver_res  = 320;
+  if (_disp_rotate == 0) { // 左が上
+    disp_drv.hor_res  = 240;
+    disp_drv.ver_res  = 320;
+  } else if (_disp_rotate == 1) { // 上が上
+    disp_drv.hor_res  = 320;
+    disp_drv.ver_res  = 240;
+  } else if (_disp_rotate == 2) { // 右が上
+    disp_drv.hor_res  = 240;
+    disp_drv.ver_res  = 320;
+  } else if (_disp_rotate == 3) { // 下が上
+    disp_drv.hor_res  = 320;
+    disp_drv.ver_res  = 240;
+  }
   disp_drv.flush_cb = my_disp_flush;
   disp_drv.buffer   = &disp_buf;
   lv_disp_drv_register(&disp_drv);
@@ -174,8 +197,8 @@ void view_keyboard_select_exec(lv_obj_t * obj, lv_event_t event) {
 		// 選択した
 		bool change_flag = false;
 		int select_no = lv_dropdown_get_selected(lv_drop_down_obj);
-		if (select_no == 0 && strcmp(eep_data.keyboard_type, "az_m5macro") != 0) {
-			strcpy(eep_data.keyboard_type, "az_m5macro");
+		if (select_no == 0 && strcmp(eep_data.keyboard_type, "az_m5egg") != 0) {
+			strcpy(eep_data.keyboard_type, "az_m5egg");
 			change_flag = true;
 		} else if (select_no == 1 && strcmp(eep_data.keyboard_type, "az_m5ortho") != 0) {
 			strcpy(eep_data.keyboard_type, "az_m5ortho");
@@ -215,10 +238,10 @@ void view_keyboard_select(int select_mode) {
 
 	// セレクトメニュー表示
 	lv_drop_down_obj = lv_dropdown_create(win, NULL);
-	lv_dropdown_set_options(lv_drop_down_obj, "AZ-M5macro\nAZ-M5ortho\nAZ-M5orthoW");
+	lv_dropdown_set_options(lv_drop_down_obj, "AZ-M5egg\nAZ-M5ortho\nAZ-M5orthoW");
 	lv_obj_set_size(lv_drop_down_obj, 200, 34);
 	int selected_num = 0;
-	if (strcmp(eep_data.keyboard_type, "az_m5macro") == 0) selected_num = 0;
+	if (strcmp(eep_data.keyboard_type, "az_m5egg") == 0) selected_num = 0;
 	if (strcmp(eep_data.keyboard_type, "az_m5ortho") == 0) selected_num = 1;
 	if (strcmp(eep_data.keyboard_type, "az_m5orthow") == 0) selected_num = 2;
 	lv_dropdown_set_selected(lv_drop_down_obj, selected_num);
@@ -660,7 +683,7 @@ Display::Display() {
 }
 
 // 液晶制御初期化
-void Display::begin() {
+void Display::begin(uint8_t disp_rotate) {
 	this->_info_spot = 0;
 	this->dakagi_last_view = -1;
 	this->_wait_index = 0;
@@ -669,6 +692,10 @@ void Display::begin() {
 	this->_qr_flag = 0;
 	this->_last_view_type = 255;
 	this->_last_view_info = 255;
+	_disp_rotate = 0;
+	if (disp_rotate >= 0 && disp_rotate <= 3) {
+	  _disp_rotate = disp_rotate;
+	}
 	lv_setup();
 	view_mouse_page();
 }

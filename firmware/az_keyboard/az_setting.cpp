@@ -99,7 +99,7 @@ bool handleUrl(String path) {
 
     } else if (path.indexOf("/firmware_version") == 0) {
         // ファームウェアのバージョン教えて
-        sprintf(scmd, "{\"v\": \"%S\", \"d\": %D}", FIRMWARE_VERSION, DISPLAY_ROTATION);
+        sprintf(scmd, "{\"v\": \"%S\", \"d\": %D}", FIRMWARE_VERSION, disp_rotation);
         server.send(200,"text/html", scmd);
         return true;
 

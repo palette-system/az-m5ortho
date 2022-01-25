@@ -3,20 +3,24 @@
 		"pass": ""
 	},
 	"wifi": [],
+	"vendorId": "0xe502",
+	"productId": "0xA211",
 	"rgb_pin": -1,
 	"rgb_len": -1,
 	"led_num": [],
 	"key_matrix": [],
 	"matrix_row": -1,
 	"matrix_col": -1,
+	"disp_rotation": 1,
 	"keyboard_language": 0,
-	"keyboard_name": "AZ-M5macro",
-	"keyboard_type": "az_m5macro",
+	"keyboard_name": "AZ-M5egg",
+	"keyboard_type": "az_m5egg",
 	"keyboard_pin": {
 		"direct": [19, 27, 33, 32, 14, 13],
 		"touch": [],
 		"ioxp": []
 	},
+	"ioxp_pin": [25, 26],
 	"default_layer": 0,
 	"layers": {
 		"layer_0": {
