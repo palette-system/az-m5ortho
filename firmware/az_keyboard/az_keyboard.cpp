@@ -98,6 +98,7 @@ void AzKeyboard::key_action_exec() {
               // M5.Lcd.printf("[%D,down]", i);
                 // キーが押された
                 key_down_action(i); // 押された時の動作
+                sound_cls.daken_down(i); // サウンドクラスに押したよを送る
                 rgb_led_cls.set_led_buf(i, 1); // LED に押したよを送る
                 ankeycls.key_down(i); // 暗記クラスに押したよを送る(暗記用)
                 // 打鍵数カウントアップ
@@ -911,7 +912,7 @@ void AzKeyboard::loop_exec(void) {
     // リスタート用ループ処理
     common_cls.restart_loop();
 
-    delay(7);
+    vTaskDelay(7);
 
   }
 }

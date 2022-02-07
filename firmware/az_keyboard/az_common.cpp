@@ -49,6 +49,9 @@ Display *disp;
 // rgb_led制御用クラス
 Neopixel rgb_led_cls = Neopixel();
 
+// サウンド制御用クラス
+Sound sound_cls = Sound();
+
 //timer オブジェクト
 hw_timer_t *timer = NULL;
 
@@ -145,6 +148,7 @@ short ioxp_len;
 short *ioxp_list;
 short ioxp_sda;
 short ioxp_scl;
+bool ioxp_enable[8];
 
 // バッテリーオブジェクト
 AXP192 power;
@@ -193,6 +197,16 @@ void getRandomNumbers(int le, char *cbuf) {
     cbuf[i] = '\0';
 }
 
+static void background_loop(void* arg) {
+  while (true) {
+    unsigned long start_time = millis();
+    // サウンドを制御する定期処理
+    sound_cls.loop_exec();
+    unsigned long work_time = millis() - start_time;
+    if (work_time < 20) { vTaskDelay(20 - work_time); }
+  }
+}
+
 // コンストラクタ
 AzCommon::AzCommon() {
 }
@@ -228,6 +242,10 @@ void AzCommon::common_start() {
     // ioエキスパンダピン
     ioxp_sda = -1;
     ioxp_scl = -1;
+    // ioエキスパンダフラグ
+    for (i=0; i<8; i++) {
+      ioxp_enable[i] = false;
+    }
 
     // マウスパッドステータス
     mouse_pad_status = 0;
@@ -242,6 +260,8 @@ void AzCommon::common_start() {
     lvgl_loop_index = 0;
     // ディスプレイの向き
     disp_rotation = 0;
+    // 再生用バック処理
+    xTaskCreatePinnedToCore(background_loop, "bgloop", 2048, NULL, 20, NULL, 0);
 }
 
 // リスタート用ループ処理
@@ -1231,12 +1251,17 @@ void AzCommon::pin_setup() {
         if (iomcp[i].begin_I2C(ioxp_list[i], &Wire)) {
             M5.Lcd.printf("begin_I2C %D  %D OK\n", i, ioxp_list[i]);
         } else {
-            M5.Lcd.printf("begin_I2C %D %D NG\n", i, ioxp_list[i]);
-            return;
+            M5.Lcd.printf("begin_I2C %D  %D NG\n", i, ioxp_list[i]);
+            delay(500);
+            continue;
         }
+        delay(10);
         for (j = 0; j < 16; j++) {
             iomcp[i].pinMode(j, INPUT_PULLUP);
+            delay(1);
         }
+        delay(50);
+        ioxp_enable[i] = true;
     }
   }
 
@@ -1292,15 +1317,12 @@ void AzCommon::load_data() {
     // キーボードの種類
     strcpy(eep_data.keyboard_type, "");
     File fp;
-    Serial.printf("load_data: a\n");
     if (!SPIFFS.exists(AZ_SYSTEM_FILE_PATH)) {
         // ファイルが無い場合デフォルト値でファイルを作成
-    Serial.printf("load_data: b\n");
         save_data();
         return;
     }
     // ファイルがあればデータ読み込み
-    Serial.printf("load_data: c\n");
     fp = SPIFFS.open(AZ_SYSTEM_FILE_PATH, "r");
     if(!fp){
         ESP_LOGD(LOG_TAG, "file open error\n");
@@ -1310,9 +1332,6 @@ void AzCommon::load_data() {
         fp.read((uint8_t *)&eep_data, sizeof(mrom_data_set));
     }
     fp.close();
-    Serial.printf("load_data: check: %S\n", eep_data.check);
-    Serial.printf("load_data: uid: %S\n", eep_data.uid);
-    Serial.printf("load_data: keyboard_type: %S\n", eep_data.keyboard_type);
     // データのバージョンが変わっていたらファイルを消して再起動
     if (strcmp(eep_data.check, EEP_DATA_VERSION) != 0) {
         SPIFFS.remove(AZ_SYSTEM_FILE_PATH);
@@ -1419,7 +1438,13 @@ void AzCommon::key_read(void) {
     }
     // IOエキスパンダ
     start_time = millis();
-    for (i=0; i<ioxp_len; i++) m[i] = iomcp[i].readGPIOAB();
+    for (i=0; i<ioxp_len; i++) {
+        if (ioxp_enable[i]) {
+            m[i] = iomcp[i].readGPIOAB();
+        } else {
+            m[i] = 0x00;
+        }
+    }
     for (i=0; i<16; i++) {
         c = 1 << i;
         n = 0;

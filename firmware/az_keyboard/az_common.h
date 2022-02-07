@@ -21,6 +21,7 @@
 
 #include "src/lib/neopixel.h"
 #include "src/lib/display.h"
+#include "src/lib/sound.h"
 #include "src/lib/HTTPClient_my.h"
 
 
@@ -40,10 +41,10 @@
 
 
 // ファームウェアのバージョン文字
-#define FIRMWARE_VERSION   "000100"
+#define FIRMWARE_VERSION   "000200"
 
 // EEPROMに保存しているデータのバージョン文字列
-#define EEP_DATA_VERSION    "AZM021"
+#define EEP_DATA_VERSION    "AZM022"
 
 // vid pid のデフォルト値
 #define BLE_HID_VID  0xE502
@@ -262,6 +263,7 @@ extern short ioxp_len;
 extern short *ioxp_list;
 extern short ioxp_sda;
 extern short ioxp_scl;
+extern bool ioxp_enable[8];
 
 
 // 液晶表示用オブジェクト
@@ -269,6 +271,9 @@ extern Display *disp;
 
 // rgb_led制御用クラス
 extern Neopixel rgb_led_cls;
+
+// サウンド制御用クラス
+extern Sound sound_cls;
 
 //timer オブジェクト
 extern hw_timer_t *timer;

@@ -16,7 +16,6 @@ Neopixel::Neopixel() {
 // LED制御初期化
 void Neopixel::begin(short data_pin, short led_length, short row_size, short col_size, int *select_layer, int8_t *led_num, short led_num_len, int8_t *key_matrix, short key_matrix_len) {
 	int i;
-	this->_data_pin = data_pin;
 	this->_led_length = led_length;
 	this->_row_size = row_size;
 	this->_col_size = col_size;
@@ -36,10 +35,11 @@ void Neopixel::begin(short data_pin, short led_length, short row_size, short col
 	// 常に光らせるキー
     this->select_key_cler();
     // RGB_LEDピン用の初期化
-    if (this->_data_pin >= 0 && this->_led_length > 0) {
-        this->rgb_led = new Adafruit_NeoPixel(this->_led_length, this->_data_pin, NEO_GRB + NEO_KHZ800);
+    if (data_pin >= 0 && this->_led_length > 0) {
+        this->rgb_led = new Adafruit_NeoPixel(this->_led_length, data_pin, NEO_GRB + NEO_KHZ400);
     	hide_all();
     }
+	this->_data_pin = data_pin;
 }
 
 // 設定ファイルの読み込み

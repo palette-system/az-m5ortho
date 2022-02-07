@@ -51,6 +51,8 @@ void setup() {
         M5.Lcd.printf("RGB_LED: pin=%D len=%D row=%D col=%D\n", rgb_pin, rgb_len, matrix_row, matrix_col);
         rgb_led_cls.begin( rgb_pin, rgb_len, matrix_row, matrix_col, &select_layer_no, led_num, led_num_length, key_matrix, key_matrix_length);
     }
+    // サウンドクラス初期化
+    sound_cls.begin();
     // キーの入力ピンの初期化
     common_cls.pin_setup();
     // 起動回数を読み込み
