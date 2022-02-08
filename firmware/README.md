@@ -40,5 +40,9 @@ AZ-M5ortho で使用しているファームウェアソースです。<br>
 - [NimBLE-Arduino](https://github.com/h2zero/NimBLE-Arduino)
 - [qrcode](https://github.com/ricmoo/qrcode/)
 
+## こちらの素材を使用させて頂いています
+
+- [効果音ラボ](https://soundeffect-lab.info/)
+
 ※ NimBLEはZIPファイルでライブラリ追加
 
