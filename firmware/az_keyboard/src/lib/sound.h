@@ -7,6 +7,7 @@
 #include "FS.h"
 #include "SPIFFS.h"
 
+#include "AudioFileSourceSPIFFS.h"
 #include "AudioFileSourcePROGMEM.h"
 #include "AudioGeneratorWAV.h"
 #include "AudioOutputI2S.h"
@@ -23,6 +24,9 @@
 
 // 音量デフォルト
 #define SOUND_VOLUME_DEFAULT  128
+
+// 打鍵ファイルのパス
+#define SOUND_DAKEN_WAV_PATH  "/daken.wav"
 
 // 設定ファイルのパス
 #define SOUND_SETTING_PATH  "/sound.dat"
@@ -41,10 +45,12 @@ class Sound
     public:
         AudioGeneratorWAV *_wav[SOUND_CH_MAX];
         AudioFileSourcePROGMEM *_file[SOUND_CH_MAX];
+        AudioFileSourceSPIFFS *_spifile;
         AudioOutputI2S *_out;
         AudioOutputMixer *_mixer;
         AudioOutputMixerStub *_stub[SOUND_CH_MAX];
 		sound_setting _setting; // 設定
+        uint8_t *_daken_wav_bin; // 打鍵音データ
         float _volgain; // gainに設定する数字
         bool _play_flag[SOUND_CH_MAX]; // 再生中かどうかのフラグ
         uint8_t _last_ch; // 最後に再生したチャンネル
@@ -53,6 +59,7 @@ class Sound
         void setting_load(); // 設定ファイルの読み込み
         void setting_save(); // 設定ファイルに保存
         int _get_chnum(); // 空いているチャンネルを取得
+        void wav_SPIFFS(); // SPIFFS 上のファイルを再生
         void wav_PROGMEM(const void *sound_data, uint32_t sound_len); // メモリ上のwavを再生
         void stop(int ch); // サウンド停止
         void set_enable(uint8_t en); // ON/OFF設定(0=OFF / 1=ON)

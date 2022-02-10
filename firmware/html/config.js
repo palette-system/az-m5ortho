@@ -368,3 +368,17 @@ mst.layer_move_type_list = [
 	{"key": 0x58, "value": "[TT]非対応"}
 ];
 
+// サウンドタイプの種類
+mst.sound_type_list = [
+	"なし",
+	"カスタム音",
+	"type 1",
+	"type 2",
+	"type 3",
+	"type 4",
+	"type 5",
+	"type 6",
+	"type 7",
+	"type 8"
+];
+

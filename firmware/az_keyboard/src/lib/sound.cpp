@@ -97,6 +97,18 @@ int Sound::_get_chnum() {
     return i;
 }
 
+// SPIFFS 上のファイルを再生
+void Sound::wav_SPIFFS() {
+    if (!this->_setting.sound_enable) return;
+    int c;
+    c = this->_get_chnum(); // 再生するチャンネルを取得
+    this->_spifile = new AudioFileSourceSPIFFS(SOUND_DAKEN_WAV_PATH);
+    this->_stub[c]->SetGain(this->_volgain);
+    this->_wav[c] = new AudioGeneratorWAV();
+    this->_wav[c]->begin(this->_spifile, this->_stub[c]);
+    this->_play_flag[c] = 1;
+}
+
 // メモリ上のwavを再生
 void Sound::wav_PROGMEM(const void *sound_data, uint32_t sound_len) {
     if (!this->_setting.sound_enable) return;
@@ -153,18 +165,20 @@ void Sound::set_type_default(uint16_t tp) {
 void Sound::daken_down(int key_num) {
     if (!this->_setting.sound_enable) return;
     if (this->_setting.type_default == 1) {
-        this->wav_PROGMEM(daken_01_wav_bin, sizeof(daken_01_wav_bin));
+        this->wav_SPIFFS();
     } else if (this->_setting.type_default == 2) {
-        this->wav_PROGMEM(daken_02_wav_bin, sizeof(daken_02_wav_bin));
+        this->wav_PROGMEM(daken_01_wav_bin, sizeof(daken_01_wav_bin));
     } else if (this->_setting.type_default == 3) {
-        this->wav_PROGMEM(daken_03_wav_bin, sizeof(daken_03_wav_bin));
+        this->wav_PROGMEM(daken_02_wav_bin, sizeof(daken_02_wav_bin));
     } else if (this->_setting.type_default == 4) {
-        this->wav_PROGMEM(cursor_01_wav_bin, sizeof(cursor_01_wav_bin));
+        this->wav_PROGMEM(daken_03_wav_bin, sizeof(daken_03_wav_bin));
     } else if (this->_setting.type_default == 5) {
-        this->wav_PROGMEM(cursor_02_wav_bin, sizeof(cursor_02_wav_bin));
+        this->wav_PROGMEM(cursor_01_wav_bin, sizeof(cursor_01_wav_bin));
     } else if (this->_setting.type_default == 6) {
-        this->wav_PROGMEM(cursor_03_wav_bin, sizeof(cursor_03_wav_bin));
+        this->wav_PROGMEM(cursor_02_wav_bin, sizeof(cursor_02_wav_bin));
     } else if (this->_setting.type_default == 7) {
+        this->wav_PROGMEM(cursor_03_wav_bin, sizeof(cursor_03_wav_bin));
+    } else if (this->_setting.type_default == 8) {
         this->wav_PROGMEM(wav_toh, sizeof(wav_toh));
     }
 }

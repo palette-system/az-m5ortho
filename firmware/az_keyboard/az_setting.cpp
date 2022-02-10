@@ -162,8 +162,20 @@ bool handleUrl(String path) {
         }
         return true;
         
+    } else if (path.indexOf("/exists_file_") == 0) {
+        // 指定したファイルの有無を0/1で返す ( /exists_file_{ファイル名} でアクセス)
+        // パスの後ろがファイル名
+        String file_path = "/" + path.substring(13);
+        // 読み込んで返す
+        if(SPIFFS.exists(file_path)){
+            server.send(200,"text/plan", "1");
+        } else {
+            server.send(200,"text/plan", "0");
+        }
+        return true;
+        
     } else if (path.indexOf("/delete_file_") == 0) {
-        // 指定されたファイルを削除( /delete_file?{ファイル名} でアクセス)
+        // 指定されたファイルを削除( /delete_file_{ファイル名} でアクセス)
         // パスの後ろがファイル名
         String file_path = "/" + path.substring(13);
         // 削除処理

@@ -295,6 +295,19 @@ mst.file_send = function(url_path, file_name, blob_data, cb_func) {
     xhr.send(fd);
 };
 
+// 指定したファイルの有無を確認する
+// file_name = 確認したいファイルのパス
+// cb_func = コールバック関数
+mst.exists_file = function(file_name, cb_func) {
+    ajax("exists_file_" + file_name, "text", function(stat, res) {
+        if (stat && res == "1") {
+            cb_func(stat, true);
+        } else {
+            cb_func(stat, false);
+        }
+    });
+};
+
 // 指定したファイルを削除する
 mst.file_delete = function(file_name, cb_func) {
     ajax("delete_file_" + file_name, "text", cb_func);
@@ -1505,6 +1518,135 @@ mst.moniter_setting_btn_click = function(save_flag) {
     }
 };
 
+
+// サウンド設定画面表示
+mst.view_sound_setting = function() {
+    var i;
+    mst.sound_setting = {};
+    mst.sound_setting.change_flag = 0;
+    var s = "";
+    s += "<b style='font-size: 30px;'>サウンド設定</b><br><br><br><br>";
+    s += "<b>再生タイプ：</b><br>";
+    s += "<select id='sound_type_select' style='font-size: 30px; border: 3px solid black;'>";
+    for (i in mst.sound_type_list) {
+        s += "<option value='" + i + "'>　" + mst.sound_type_list[i] + "　</option>";
+    }
+    s += "</select>";
+    s += "<br><br>";
+    s += "<b>カスタム音：</b><br>";
+    s += "<input id='moniter_stimg_file' type='file' accept='audio/wav' onChange='javascript:mst.sound_wav_change(this, \"sound_wav_test\");'><br>";
+    s += "<div id='sound_wav_test'></div>";
+    s += "<br><br>";
+    s += "<div id='sound_setting_info'></div>";
+    s += "<br><br>";
+    s += "<center><div id='sound_setting_btn_box'>";
+    s += "<a href='#' class='button' onClick='javascript:mst.sound_setting_btn_click(1);return false;'>決定</a>　　";
+    s += "<a href='#' class='button' onClick='javascript:mst.sound_setting_btn_click(0);return false;'>キャンセル</a>";
+    s += "</div></center>";
+    set_html("setting_box", s);
+    set_html("info_box", "");
+    mst.view_box(["info_box", "setting_box"]);
+    // サウンド設定読み込み
+    mst.load_sound_setting();
+    // カスタム音が登録されていれば再生ボタン表示
+    mst.exists_file("daken.wav", function(stat, res) {
+        if (!res) return;
+        mst.audio_wav = new Audio();
+        mst.audio_wav.pause();
+        mst.audio_wav.src = "/read_file_daken.wav";
+        var s = "";
+        s += "<input type='button' value='＞ 再生' onClick='javascript:mst.audio_wav.play();'>　";
+        s += "<input type='button' value='× 削除' onClick='javascript:mst.sound_wav_delete();'>";
+        set_html("sound_wav_test", s);
+    });
+};
+
+// サウンド設定を読み込み
+mst.load_sound_setting = function() {
+    ajax("read_file_sound.dat", "arraybuffer", function(stat, res) {
+        if (!stat) {
+            // ファイル無しなら何もしない
+            return;
+        }
+        var sound_data = new Uint8Array(res);
+        mst.sound_setting.sound_enable = sound_data[0];
+        mst.sound_setting.volume = sound_data[1];
+        mst.sound_setting.type_default = sound_data[2] + (sound_data[3] * 256);
+        $("sound_type_select").value = mst.sound_setting.type_default + "";
+    });
+};
+
+// サウンドwavファイル変更
+mst.sound_wav_change = function(obj, div_id) {
+    var set_file = obj.files[0];
+    if (set_file.size > (1024 * 500)) { // 500KBを超えるファイルはアラート
+        set_html(div_id, "ファイルサイズは500KBまでです");
+        return;
+    }
+    // テスト再生用に DataURL でデータ取得
+    mst.audio_wav = new Audio();
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        mst.audio_wav = new Audio();
+        mst.audio_wav.pause();
+        mst.audio_wav.src = reader.result;
+        var s = "";
+        s += "<input type='button' value='＞ 再生' onClick='javascript:mst.audio_wav.play();'>　";
+        s += "<input type='button' value='× 削除' onClick='javascript:mst.sound_wav_delete();'>";
+        set_html(div_id, s);
+    };
+    reader.readAsDataURL(set_file);
+    // ファイル保存用に ArrayBuffer でデータ取得
+    const reader_b = new FileReader();
+    reader_b.onload = (e) => {
+        mst.sound_setting.wav_data = reader_b.result;
+        mst.sound_setting.change_flag = 1;
+    };
+    reader_b.readAsArrayBuffer(set_file);
+};
+
+// カスタム音削除
+mst.sound_wav_delete = function() {
+    set_html("sound_wav_test", "");
+    mst.sound_setting.wav_data = [];
+    mst.sound_setting.change_flag = 2;
+};
+
+// サウンド設定画面閉じるボタン
+mst.sound_setting_btn_click = function(save_flag) {
+    var btn_list = ["sound_setting_btn_box"];
+    // キャンセルなら何もしない | 元の設定から変更が無ければ何もしない
+    if (!save_flag) {
+        mst.view_detail_setting();
+        return;
+    }
+    var save_data = [
+        mst.sound_setting.sound_enable,
+        mst.sound_setting.volume,
+        (mst.sound_setting.type_default & 0xff),
+        ((mst.sound_setting.type_default >> 8) & 0xff)
+    ];
+    mst.save_file_exec(save_data, "sound.dat", "sound_setting_info", "設定データ", btn_list, function(stat, res) {
+        if (mst.sound_setting.change_flag == 1) {
+            // カスタム音変更
+            mst.save_file_exec(mst.sound_setting.wav_data, "daken.wav", "sound_setting_info", "カスタム音", btn_list, function(stat, res) {
+                if (!stat) return;
+                mst.view_detail_setting();
+            });
+            return;
+        } else if (mst.moniter_setting.change_flag == 2) {
+            // 待ち受け画像削除
+            mst.remove_file_exec("daken.wav", "sound_setting_info", "カスタム音", btn_list, function(stat, res) {
+                if (!stat) return;
+                mst.view_detail_setting();
+            });
+        } else {
+            mst.view_detail_setting();
+        }
+    });
+};
+
+
 // SPIFFSにファイルを保存する
 // save_data = 保存するデータ
 // file_name = 保存するファイル名
@@ -1971,6 +2113,7 @@ mst.view_detail_setting = function() {
     s += "<a href='#' class='update_button' "+bs+" onClick='javascript:mst.view_language_setting();return false;'>日本語/US 切り替え</a><br><br>";
     s += "<a href='#' class='update_button' "+bs+" onClick='javascript:mst.view_keytype_setting();return false;'>キーボードの種類</a><br><br>";
     s += "<a href='#' class='update_button' "+bs+" onClick='javascript:mst.view_moniter_setting();return false;'>モニタ設定</a><br><br>";
+    s += "<a href='#' class='update_button' "+bs+" onClick='javascript:mst.view_sound_setting();return false;'>サウンド設定</a><br><br>";
     s += "<a href='#' class='update_button' "+bs+" onClick='javascript:mst.view_option_setting();return false;'>ユニット設定</a><br><br>";
     s += "<a href='#' class='update_button' "+bs+" onClick='javascript:mst.view_switch_check();return false;'>スイッチ接触確認</a><br><br>";
     s += "<a href='#' class='update_button' "+bs+" onClick='javascript:mst.view_wifi_setting();return false;'>WIFI設定</a><br><br>";
