@@ -203,7 +203,7 @@ static void background_loop(void* arg) {
     // サウンドを制御する定期処理
     sound_cls.loop_exec();
     unsigned long work_time = millis() - start_time;
-    if (work_time < 20) { vTaskDelay(20 - work_time); }
+    if (work_time < 10) { vTaskDelay(10 - work_time); }
   }
 }
 

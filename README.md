@@ -42,6 +42,7 @@ https://protopedia.net/event/22
 - [液晶画面設定メニュー](/docs/azm5ortho/moniter_setting/)
 - [WiFi設定メニュー](/docs/azm5ortho/wifi_setting/)
 - [REMAP設定](/docs/azm5ortho/remap_setting/)
+- [M5StackCore2 を購入時の状態に戻す](https://w-tori.net/wp/m5stack-core2-reset/)
 <br><br>
 
 ## デフォルトキーマップ

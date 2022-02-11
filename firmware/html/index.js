@@ -1526,13 +1526,6 @@ mst.view_sound_setting = function() {
     mst.sound_setting.change_flag = 0;
     var s = "";
     s += "<b style='font-size: 30px;'>サウンド設定</b><br><br><br><br>";
-    s += "<b>再生タイプ：</b><br>";
-    s += "<select id='sound_type_select' style='font-size: 30px; border: 3px solid black;'>";
-    for (i in mst.sound_type_list) {
-        s += "<option value='" + i + "'>　" + mst.sound_type_list[i] + "　</option>";
-    }
-    s += "</select>";
-    s += "<br><br>";
     s += "<b>カスタム音：</b><br>";
     s += "<input id='moniter_stimg_file' type='file' accept='audio/wav' onChange='javascript:mst.sound_wav_change(this, \"sound_wav_test\");'><br>";
     s += "<div id='sound_wav_test'></div>";
@@ -1546,8 +1539,6 @@ mst.view_sound_setting = function() {
     set_html("setting_box", s);
     set_html("info_box", "");
     mst.view_box(["info_box", "setting_box"]);
-    // サウンド設定読み込み
-    mst.load_sound_setting();
     // カスタム音が登録されていれば再生ボタン表示
     mst.exists_file("daken.wav", function(stat, res) {
         if (!res) return;
@@ -1620,30 +1611,22 @@ mst.sound_setting_btn_click = function(save_flag) {
         mst.view_detail_setting();
         return;
     }
-    var save_data = [
-        mst.sound_setting.sound_enable,
-        mst.sound_setting.volume,
-        (mst.sound_setting.type_default & 0xff),
-        ((mst.sound_setting.type_default >> 8) & 0xff)
-    ];
-    mst.save_file_exec(save_data, "sound.dat", "sound_setting_info", "設定データ", btn_list, function(stat, res) {
-        if (mst.sound_setting.change_flag == 1) {
-            // カスタム音変更
-            mst.save_file_exec(mst.sound_setting.wav_data, "daken.wav", "sound_setting_info", "カスタム音", btn_list, function(stat, res) {
-                if (!stat) return;
-                mst.view_detail_setting();
-            });
-            return;
-        } else if (mst.moniter_setting.change_flag == 2) {
-            // 待ち受け画像削除
-            mst.remove_file_exec("daken.wav", "sound_setting_info", "カスタム音", btn_list, function(stat, res) {
-                if (!stat) return;
-                mst.view_detail_setting();
-            });
-        } else {
+    if (mst.sound_setting.change_flag == 1) {
+        // カスタム音変更
+        mst.save_file_exec(mst.sound_setting.wav_data, "daken.wav", "sound_setting_info", "カスタム音", btn_list, function(stat, res) {
+            if (!stat) return;
             mst.view_detail_setting();
-        }
-    });
+        });
+        return;
+    } else if (mst.moniter_setting.change_flag == 2) {
+        // 待ち受け画像削除
+        mst.remove_file_exec("daken.wav", "sound_setting_info", "カスタム音", btn_list, function(stat, res) {
+            if (!stat) return;
+            mst.view_detail_setting();
+        });
+    } else {
+        mst.view_detail_setting();
+    }
 };
 
 

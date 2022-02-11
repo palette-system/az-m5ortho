@@ -26,6 +26,13 @@ Sound::Sound() {
     // 最後に再生したチャンネル
     this->_last_ch = 0;
 
+    // 再生中に押されたキー
+    this->_stack_keynum = -1;
+
+    // フェードアウト用インデックス
+    this->_feed_out_index = 0;
+    this->_feed_out_ch = 0;
+
     this->_volgain = (float)SOUND_VOLUME_DEFAULT / 255;
 }
 
@@ -65,6 +72,7 @@ void Sound::setting_load() {
 		int i = fp.read((uint8_t *)&this->_setting, sizeof(sound_setting));
 		fp.close();
 	}
+    this->_volgain = (float)this->_setting.volume / 255;
     if (this->_setting.sound_enable) {
         M5.Axp.SetSpkEnable(true);
     } else {
@@ -89,19 +97,12 @@ int Sound::_get_chnum() {
             return i;
         }
     }
-    // 全部埋まっていたら古いチャンネルから停止して返す
-    i = this->_last_ch + 1;
-    if (i >= SOUND_CH_MAX) i = 0;
-    this->stop(i); // 停止
-    this->_last_ch = i;
-    return i;
+    return -1;
 }
 
 // SPIFFS 上のファイルを再生
-void Sound::wav_SPIFFS() {
+void Sound::wav_SPIFFS(int c) {
     if (!this->_setting.sound_enable) return;
-    int c;
-    c = this->_get_chnum(); // 再生するチャンネルを取得
     this->_spifile = new AudioFileSourceSPIFFS(SOUND_DAKEN_WAV_PATH);
     this->_stub[c]->SetGain(this->_volgain);
     this->_wav[c] = new AudioGeneratorWAV();
@@ -110,10 +111,8 @@ void Sound::wav_SPIFFS() {
 }
 
 // メモリ上のwavを再生
-void Sound::wav_PROGMEM(const void *sound_data, uint32_t sound_len) {
+void Sound::wav_PROGMEM(const void *sound_data, uint32_t sound_len, int c) {
     if (!this->_setting.sound_enable) return;
-    int c;
-    c = this->_get_chnum(); // 再生するチャンネルを取得
     this->_file[c] = new AudioFileSourcePROGMEM( sound_data, sound_len );
     this->_stub[c]->SetGain(this->_volgain);
     this->_wav[c] = new AudioGeneratorWAV();
@@ -126,6 +125,7 @@ void Sound::stop(int ch) {
     if (this->_play_flag[ch]) {
         this->_wav[ch]->stop();
         this->_stub[ch]->stop();
+        this->_out->stop();
         this->_play_flag[ch] = 0;
     }
 }
@@ -164,22 +164,32 @@ void Sound::set_type_default(uint16_t tp) {
 // キーDOWN音再生
 void Sound::daken_down(int key_num) {
     if (!this->_setting.sound_enable) return;
+    int c;
+    c = this->_get_chnum(); // 再生するチャンネルを取得
+    // 全部埋まってたら停止後に鳴らす
+    if (c < 0) {
+        this->_stack_keynum = key_num;
+        this->_feed_out_index = 1; // フェードアウトインデックス(これを1にするとフェードアウトして止まる)
+        this->_feed_out_ch = this->_last_ch + 1;
+        if (this->_feed_out_ch >= SOUND_CH_MAX) this->_feed_out_ch = 0;
+        return;
+    }
     if (this->_setting.type_default == 1) {
-        this->wav_SPIFFS();
+        this->wav_SPIFFS(c);
     } else if (this->_setting.type_default == 2) {
-        this->wav_PROGMEM(daken_01_wav_bin, sizeof(daken_01_wav_bin));
+        this->wav_PROGMEM(daken_01_wav_bin, sizeof(daken_01_wav_bin), c);
     } else if (this->_setting.type_default == 3) {
-        this->wav_PROGMEM(daken_02_wav_bin, sizeof(daken_02_wav_bin));
+        this->wav_PROGMEM(daken_02_wav_bin, sizeof(daken_02_wav_bin), c);
     } else if (this->_setting.type_default == 4) {
-        this->wav_PROGMEM(daken_03_wav_bin, sizeof(daken_03_wav_bin));
+        this->wav_PROGMEM(daken_03_wav_bin, sizeof(daken_03_wav_bin), c);
     } else if (this->_setting.type_default == 5) {
-        this->wav_PROGMEM(cursor_01_wav_bin, sizeof(cursor_01_wav_bin));
+        this->wav_PROGMEM(cursor_01_wav_bin, sizeof(cursor_01_wav_bin), c);
     } else if (this->_setting.type_default == 6) {
-        this->wav_PROGMEM(cursor_02_wav_bin, sizeof(cursor_02_wav_bin));
+        this->wav_PROGMEM(cursor_02_wav_bin, sizeof(cursor_02_wav_bin), c);
     } else if (this->_setting.type_default == 7) {
-        this->wav_PROGMEM(cursor_03_wav_bin, sizeof(cursor_03_wav_bin));
+        this->wav_PROGMEM(cursor_03_wav_bin, sizeof(cursor_03_wav_bin), c);
     } else if (this->_setting.type_default == 8) {
-        this->wav_PROGMEM(wav_toh, sizeof(wav_toh));
+        this->wav_PROGMEM(wav_toh, sizeof(wav_toh), c);
     }
 }
 
@@ -188,6 +198,23 @@ int Sound::loop_exec() {
     if (!this->_setting.sound_enable) return 0;
     int i;
     int r = 0;
+    // フェードアウト
+    if (this->_feed_out_index == 1) {
+        this->_stub[this->_feed_out_ch]->SetGain(this->_volgain * 0.8);
+        this->_feed_out_index++;
+    } else if (this->_feed_out_index == 2) {
+        this->_stub[this->_feed_out_ch]->SetGain(this->_volgain * 0.6);
+        this->_feed_out_index++;
+    } else if (this->_feed_out_index == 3) {
+        this->_stub[this->_feed_out_ch]->SetGain(this->_volgain * 0.3);
+        this->_feed_out_index++;
+    } else if (this->_feed_out_index == 4) {
+        this->stop(this->_feed_out_ch);
+        this->daken_down(this->_stack_keynum);
+        this->_stack_keynum = -1;
+        this->_feed_out_index = 0;
+    }
+    // 各チャンネル再生
     for (i=0; i<SOUND_CH_MAX; i++) {
         if (this->_play_flag[i] && this->_wav[i]->isRunning()) {
             if (!this->_wav[i]->loop()) {

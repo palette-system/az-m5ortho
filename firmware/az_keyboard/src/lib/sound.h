@@ -53,14 +53,17 @@ class Sound
         uint8_t *_daken_wav_bin; // 打鍵音データ
         float _volgain; // gainに設定する数字
         bool _play_flag[SOUND_CH_MAX]; // 再生中かどうかのフラグ
+        int _stack_keynum; // 再生中に押されたキー
+        uint8_t _feed_out_index; // フェードアウト停止する場合のインデックス
+        uint8_t _feed_out_ch; // フェードアウト停止するチャンネル
         uint8_t _last_ch; // 最後に再生したチャンネル
         Sound();   // コンストラクタ
         void begin(); // サウンド初期化
         void setting_load(); // 設定ファイルの読み込み
         void setting_save(); // 設定ファイルに保存
         int _get_chnum(); // 空いているチャンネルを取得
-        void wav_SPIFFS(); // SPIFFS 上のファイルを再生
-        void wav_PROGMEM(const void *sound_data, uint32_t sound_len); // メモリ上のwavを再生
+        void wav_SPIFFS(int c); // SPIFFS 上のファイルを再生
+        void wav_PROGMEM(const void *sound_data, uint32_t sound_len, int c); // メモリ上のwavを再生
         void stop(int ch); // サウンド停止
         void set_enable(uint8_t en); // ON/OFF設定(0=OFF / 1=ON)
         void set_volume(uint8_t vl); // 音量設定(0-255)
