@@ -491,24 +491,22 @@ void AzCommon::load_setting_json() {
 
     // ファイルが無い場合はデフォルトファイル作成
     if (!SPIFFS.exists(SETTING_JSON_PATH)) {
-        if (!create_setting_json()) return;
+        create_setting_json();
+        ESP.restart(); // ESP32再起動
+        return;
     }
     // ファイルオープン
     File json_file = SPIFFS.open(SETTING_JSON_PATH);
     if(!json_file){
         // ファイルが開けなかった場合はデフォルトファイル作り直して再起動
-        ESP_LOGD(LOG_TAG, "json file open error\n");
-        create_setting_json();
-        delay(1000);
+        delete_all(); // 全てのファイルを削除
         ESP.restart(); // ESP32再起動
         return;
     }
     // 読み込み＆パース
     DeserializationError err = deserializeJson(setting_doc, json_file);
     if (err) {
-        ESP_LOGD(LOG_TAG, "load_setting_json deserializeJson error\n");
-        create_setting_json();
-        delay(1000);
+        delete_all(); // 全てのファイルを削除
         ESP.restart(); // ESP32再起動
         return;
     }
@@ -518,9 +516,7 @@ void AzCommon::load_setting_json() {
 
     // キーボードタイプは必須なので項目が無ければ設定ファイル作り直し(設定ファイル壊れた時用)
     if (!setting_obj.containsKey("keyboard_type")) {
-        ESP_LOGD(LOG_TAG, "json not keyboard_type error\n");
-        create_setting_json();
-        delay(1000);
+        delete_all(); // 全てのファイルを削除
         ESP.restart(); // ESP32再起動
         return;
     }
@@ -538,8 +534,7 @@ void AzCommon::load_setting_json() {
     // キーボードのタイプがeep_dataと一致しなければ現在選択しているキーボードと、設定ファイルのキーボードが一致していないので
     // 現在選択しているキーボードのデフォルト設定ファイルを作成して再起動
     if (!ktype.equals(eep_data.keyboard_type)) {
-        create_setting_json();
-        delay(1000);
+        delete_all(); // 全てのファイルを削除
         ESP.restart(); // ESP32再起動
         return;
     }
@@ -1335,6 +1330,7 @@ void AzCommon::load_data() {
     // データのバージョンが変わっていたらファイルを消して再起動
     if (strcmp(eep_data.check, EEP_DATA_VERSION) != 0) {
         SPIFFS.remove(AZ_SYSTEM_FILE_PATH);
+        delay(300);
         ESP.restart(); // ESP32再起動
     }
 }
