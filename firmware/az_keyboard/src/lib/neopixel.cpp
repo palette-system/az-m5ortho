@@ -36,7 +36,7 @@ void Neopixel::begin(short data_pin, short led_length, short row_size, short col
     this->select_key_cler();
     // RGB_LEDピン用の初期化
     if (data_pin >= 0 && this->_led_length > 0) {
-        this->rgb_led = new Adafruit_NeoPixel(this->_led_length, data_pin, NEO_GRB + NEO_KHZ400);
+        this->rgb_led = new Adafruit_NeoPixel(this->_led_length, data_pin, NEO_GRB + NEO_KHZ800);
     	hide_all();
     }
 	this->_data_pin = data_pin;

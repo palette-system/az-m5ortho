@@ -41,7 +41,7 @@
 
 
 // ファームウェアのバージョン文字
-#define FIRMWARE_VERSION   "000201"
+#define FIRMWARE_VERSION   "000202"
 
 // EEPROMに保存しているデータのバージョン文字列
 #define EEP_DATA_VERSION    "AZM022"
@@ -297,7 +297,7 @@ extern uint8_t disp_rotation;
 extern int keyboard_type_int;
 
 // キーボードの名前
-extern const char *keyboard_name_str;
+extern char keyboard_name_str[32];
 
 // キーボードの言語(日本語=0/ US=1 / 日本語(US記号) = 2)
 extern uint8_t keyboard_language;

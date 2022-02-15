@@ -74,7 +74,7 @@ uint8_t disp_rotation;
 int keyboard_type_int;
 
 // キーボードの名前
-const char *keyboard_name_str;
+char keyboard_name_str[32];
 
 // キーボードの言語(日本語=0/ US=1 / 日本語(US記号) = 2)
 uint8_t keyboard_language;
@@ -529,7 +529,9 @@ void AzCommon::load_setting_json() {
     get_keyboard_type_int(setting_obj["keyboard_type"].as<String>());
 
     // キーボードの名前を取得する
-    keyboard_name_str = setting_obj["keyboard_name"].as<const char*>();
+    String keynamestr;
+    keynamestr = setting_obj["keyboard_name"].as<String>();
+    keynamestr.toCharArray(keyboard_name_str, 31);
 
     // キーボードのタイプがeep_dataと一致しなければ現在選択しているキーボードと、設定ファイルのキーボードが一致していないので
     // 現在選択しているキーボードのデフォルト設定ファイルを作成して再起動
@@ -588,8 +590,16 @@ void AzCommon::load_setting_json() {
         ioxp_sda = setting_obj["ioxp_pin"][0].as<signed int>();
         ioxp_scl = setting_obj["ioxp_pin"][1].as<signed int>();
     } else {
-        ioxp_sda = -1;
-        ioxp_scl = -1;
+        if (keyboard_type_int == 2) { // AZ-M5ortho
+            ioxp_sda = 26;
+            ioxp_scl = 14;
+        } else if (keyboard_type_int == 3) { // AZ-M5egg
+            ioxp_sda = 25;
+            ioxp_scl = 26;
+        } else {
+            ioxp_sda = -1;
+            ioxp_scl = -1;
+        }
     }
     
     // key_input_length = 16 * ioxp_len;
@@ -1015,6 +1025,7 @@ void AzCommon::remap_save_setting_json() {
 void AzCommon::get_keyboard_type_int(String t) {
     if (t.equals("custom")) { keyboard_type_int = 1; } // カスタム
     else if (t.equals("az_m5ortho")) { keyboard_type_int = 2; } // AZ-M5ortho
+	else if (t.equals("az_m5egg")) { keyboard_type_int = 3; } // AZ-M5egg
     else { keyboard_type_int = 0; } // 不明なキーボード
 }
 
