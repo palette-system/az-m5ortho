@@ -47,6 +47,7 @@ void Sound::begin() {
     this->_out = new AudioOutputI2S(0, 0);
     this->_out->SetPinout(SOUND_BCLK_PIN, SOUND_LRCK_PIN, SOUND_SADTA_PIN);
     this->_out->SetOutputModeMono(true);
+    this->_out->stop();
     this->_mixer = new AudioOutputMixer(32, this->_out);
 
     // チャンネル初期化

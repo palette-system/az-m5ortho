@@ -1447,6 +1447,22 @@ mst.keytype_setting_btn_click = function(save_flag, select_type) {
     mst.end_setting(2);
 };
 
+// モニターの向きを取得 ( 0=縦長 / 1=横長)
+mst.get_moniter_rotate = function() {
+    if (mst.setting_data.disp_rotation == 0 || mst.setting_data.disp_rotation == 2) {
+        return 0;
+    }
+    return 1;
+}
+
+// モニターのサイズを取得( 縦長={"width": 240, "height": 320} / 横長={"width": 320, "height": 240})
+mst.get_moniter_size = function() {
+    if (mst.get_moniter_rotate()) {
+        return {"width": 320, "height": 240};
+    }
+    return {"width": 240, "height": 320};
+}
+
 // モニター設定画面表示
 mst.view_moniter_setting = function() {
     mst.moniter_setting = {};
@@ -1454,7 +1470,7 @@ mst.view_moniter_setting = function() {
     var s = "";
     s += "<b style='font-size: 30px;'>モニター設定</b><br><br><br><br>";
     s += "<b>待ち受け画像：</b><br>";
-    s += "<input id='moniter_stimg_file' type='file' accept='image/*' onChange='javascript:mst.moniter_stimg_change(this, {\"width\": 240, \"height\": 320}, \"moniter_stimg_canvas\");'><br>";
+    s += "<input id='moniter_stimg_file' type='file' accept='image/*' onChange='javascript:mst.moniter_stimg_change(this, \"moniter_stimg_canvas\");'><br>";
     s += "<canvas id='moniter_stimg_canvas' width='0' height='0'></canvas>";
     s += "<br><br>";
     s += "<a href='#' id='moniter_stimg_ch' class='update_button' onClick='javascript:mst.stimg_check(mst.moniter_setting.stimg_data, \"moniter_setting_info\", \"待ち受け画像\", function() {});return false;'>確認</a>　";
@@ -1470,12 +1486,18 @@ mst.view_moniter_setting = function() {
     set_html("info_box", "");
     mst.view_box(["info_box", "setting_box"]);
     // 待ち受け画像が登録されていれば表示
-    mst.view_imgdata("moniter_stimg_canvas", "stimg.bin", {"width": 240, "height": 320});
+    if (mst.get_moniter_rotate()) {
+        // 横長
+        mst.view_imgdata("moniter_stimg_canvas", "stimg_w.bin", {"width": 320, "height": 240});
+    } else {
+        // 縦長
+        mst.view_imgdata("moniter_stimg_canvas", "stimg.bin", {"width": 240, "height": 320});
+    }
 };
 
 // 待ち受け画像ファイル変更
-mst.moniter_stimg_change = function(obj, max_size, canvas_id) {
-    var r = mst.image_change(obj, max_size, canvas_id, function(img_data) {
+mst.moniter_stimg_change = function(obj, canvas_id) {
+    var r = mst.image_change(obj, mst.get_moniter_size(), canvas_id, function(img_data) {
         console.log(img_data);
         mst.moniter_setting.stimg_data = img_data;
         mst.moniter_setting.change_flag = 1;
@@ -1495,6 +1517,7 @@ mst.moniter_stimg_delete = function() {
 // モニター設定画面閉じるボタン
 mst.moniter_setting_btn_click = function(save_flag) {
     var btn_list = ["moniter_stimg_ch", "moniter_stimg_del", "wifi_setting_btn_box"];
+    var stimg_file_name = (mst.get_moniter_rotate())? "stimg_w.bin": "stimg.bin"; // モニタの縦長と横長で保存するファイル名を変える
     // キャンセルなら何もしない | 元の設定から変更が無ければ何もしない
     if (!save_flag) {
         mst.view_detail_setting();
@@ -1502,14 +1525,14 @@ mst.moniter_setting_btn_click = function(save_flag) {
     }
     if (mst.moniter_setting.change_flag == 1) {
         // 待ち受け画像変更
-        mst.save_file_exec(mst.moniter_setting.stimg_data, "stimg.bin", "moniter_setting_info", "待ち受け画像", btn_list, function(stat, res) {
+        mst.save_file_exec(mst.moniter_setting.stimg_data, stimg_file_name, "moniter_setting_info", "待ち受け画像", btn_list, function(stat, res) {
             if (!stat) return;
             mst.view_detail_setting();
         });
         return;
     } else if (mst.moniter_setting.change_flag == 2) {
         // 待ち受け画像削除
-        mst.remove_file_exec("stimg.bin", "moniter_setting_info", "待ち受け画像", btn_list, function(stat, res) {
+        mst.remove_file_exec(stimg_file_name, "moniter_setting_info", "待ち受け画像", btn_list, function(stat, res) {
             if (!stat) return;
             mst.view_detail_setting();
         });

@@ -8,8 +8,14 @@
 // LogoTypeGothic ロゴたいぷゴシック 07LogoTypeGothic7.ttf
 // コンバーター： https://lvgl.io/tools/fontconverter
 
+// 画像
+// Color format：true color
+// array： C array
+// コンバーター：https://lvgl.io/tools/imageconverter
+
 LV_IMG_DECLARE(setting_img);
 LV_IMG_DECLARE(stimg_default);
+LV_IMG_DECLARE(m5egg_logo);
 
 
 lv_img_dsc_t stimg_obj;
@@ -210,7 +216,9 @@ void view_keyboard_select_exec(lv_obj_t * obj, lv_event_t event) {
 		}
 		if (change_flag) {
 			// 変更があれば保存して再起動
+			common_cls.delete_all(); // 全てのファイルを削除
 			common_cls.save_data(); // eep_data保存
+			common_cls.create_setting_json(); // 設定ファイル作成
 			lv_obj_clean(lv_scr_act()); // 画面上のオブジェクト全て削除
 			restart_flag = 0; // キーボードモードで再起動
 			restart_index = 0; // カウント用のインデックス0
@@ -287,16 +295,26 @@ void view_setting_menu_fnc() {
 	// 設定画面用の画面の明るさに設定
 	common_cls.moniter_brightness(1);
 
-	// テキスト
-    lv_obj_t * txt = lv_label_create(lv_scr_act(), NULL);
-    lv_label_set_text(txt, "設定メニュー");
-    lv_obj_align(txt, NULL, LV_ALIGN_IN_TOP_MID, 0, 5);
 
-	lv_list_obj = lv_list_create(lv_scr_act(), NULL);
-	lv_obj_set_size(lv_list_obj, 230, 280);
-	lv_obj_align(lv_list_obj, NULL, LV_ALIGN_CENTER, 0, 10);
+	if (_disp_rotate == 0 || _disp_rotate == 2) { // 縦長
+	    // テキスト
+        lv_obj_t * txt = lv_label_create(lv_scr_act(), NULL);
+        lv_label_set_text(txt, "設定メニュー");
+        lv_obj_align(txt, NULL, LV_ALIGN_IN_TOP_MID, 0, 5);
+
+        // リスト
+    	lv_list_obj = lv_list_create(lv_scr_act(), NULL);
+		lv_obj_set_size(lv_list_obj, 230, 280);
+	    lv_obj_align(lv_list_obj, NULL, LV_ALIGN_CENTER, 0, 10);
+
+	} else { // 横長
+		// リスト
+    	lv_list_obj = lv_list_create(lv_scr_act(), NULL);
+		lv_obj_set_size(lv_list_obj, 280, 230);
+	    lv_obj_align(lv_list_obj, NULL, LV_ALIGN_CENTER, 0, 0);
+	}
 	
-	
+	// リストにデータ追加
 	lv_obj_t * btn;
     btn = lv_list_add_btn(lv_list_obj, NULL, "キーボード選択");
     lv_obj_set_event_cb(btn, view_keyboard_select_event);
@@ -621,11 +639,17 @@ void view_mouse_page() {
 	common_cls.moniter_brightness(0);
 
 	// 待ち受け画像表示
-	if (SPIFFS.exists("/stimg.bin")) {
+	char stimg_file_name[32];
+	if (_disp_rotate == 0 || _disp_rotate == 2) { // 縦長
+	    strcpy(stimg_file_name, "/stimg.bin");
+	} else { // 横長
+	    strcpy(stimg_file_name, "/stimg_w.bin");
+	}
+	if (SPIFFS.exists(stimg_file_name)) {
 		if (!stimg_load_fl) {
 			stimg_obj.header.always_zero = 0;
 			stimg_obj.header.cf = LV_IMG_CF_TRUE_COLOR;
-			File fp = SPIFFS.open("/stimg.bin", FILE_READ);
+			File fp = SPIFFS.open(stimg_file_name, FILE_READ);
 			fp.read((unsigned char*)head_data, 4);
 			stimg_obj.header.w = (head_data[1] >> 2) | ((head_data[2] & 0x1F) << 6);
 			stimg_obj.header.h = ((head_data[2] & 0xE0) >> 5) | (head_data[3] << 3);
@@ -643,7 +667,11 @@ void view_mouse_page() {
 	} else {
 		// ファイルが無ければデフォルトの画像表示
 		lv_obj_t * icon = lv_img_create(lv_scr_act(), NULL);
-		lv_img_set_src(icon, &stimg_default);
+		if (keyboard_type_int == 3) { // M5egg
+			lv_img_set_src(icon, &m5egg_logo); // M5egg logo
+		} else {
+    		lv_img_set_src(icon, &stimg_default); // パレットシステムロゴ (たて)
+		}
 		lv_obj_align(icon, NULL, LV_ALIGN_CENTER, 0, 0);
 	}
 
