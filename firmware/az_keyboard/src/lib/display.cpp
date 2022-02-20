@@ -247,7 +247,7 @@ void view_keyboard_select(int select_mode) {
 
 	// セレクトメニュー表示
 	lv_drop_down_obj = lv_dropdown_create(win, NULL);
-	lv_dropdown_set_options(lv_drop_down_obj, "AZ-M5egg\nAZ-M5ortho\nAZ-M5orthoW");
+	lv_dropdown_set_options(lv_drop_down_obj, "えむごっち\nAZ-M5ortho\nAZ-M5orthoW");
 	lv_obj_set_size(lv_drop_down_obj, 200, 34);
 	int selected_num = 0;
 	if (strcmp(eep_data.keyboard_type, "az_m5egg") == 0) selected_num = 0;
