@@ -142,6 +142,9 @@ mst.delete_file_list = [];
 // モニター設定データ
 mst.moniter_setting = {};
 
+// サウンドオブジェクト
+mst.audio_wav = {};
+
 // 初期処理
 mst.init = function() {
     // スマホなら画面を90度回転
@@ -300,7 +303,7 @@ mst.file_send = function(url_path, file_name, blob_data, cb_func) {
 // cb_func = コールバック関数
 mst.exists_file = function(file_name, cb_func) {
     ajax("exists_file_" + file_name, "text", function(stat, res) {
-        if (stat && res == "1") {
+    if (stat && res == "1") {
             cb_func(stat, true);
         } else {
             cb_func(stat, false);
@@ -1544,14 +1547,22 @@ mst.moniter_setting_btn_click = function(save_flag) {
 
 // サウンド設定画面表示
 mst.view_sound_setting = function() {
-    var i;
+    var k;
     mst.sound_setting = {};
-    mst.sound_setting.change_flag = 0;
+    mst.sound_setting.wav_data = {};
+    mst.sound_setting.change_flag = {"sndef":0, "snent":0};
+    mst.sound_file_list = {"sndef": "daken.wav", "snent": "daken_ent.wav"};
+    mst.sound_id_list = Object.keys(mst.sound_file_list);
+    mst.sound_load_list = Object.keys(mst.sound_file_list);
     var s = "";
     s += "<b style='font-size: 30px;'>サウンド設定</b><br><br><br><br>";
-    s += "<b>カスタム音：</b><br>";
-    s += "<input id='moniter_stimg_file' type='file' accept='audio/wav' onChange='javascript:mst.sound_wav_change(this, \"sound_wav_test\");'><br>";
-    s += "<div id='sound_wav_test'></div>";
+    s += "<b>カスタム音(デフォルト)：</b><br>";
+    s += "<input id='sound_default_file' type='file' accept='audio/wav' onChange='javascript:mst.sound_wav_change(this, \"sndef\");'><br>";
+    s += "<div id='sndef'></div>";
+    s += "<br><br>";
+    s += "<b>カスタム音(エンダー)：</b><br>";
+    s += "<input id='sound_enter_file' type='file' accept='audio/wav' onChange='javascript:mst.sound_wav_change(this, \"snent\");'><br>";
+    s += "<div id='snent'></div>";
     s += "<br><br>";
     s += "<div id='sound_setting_info'></div>";
     s += "<br><br>";
@@ -1563,17 +1574,28 @@ mst.view_sound_setting = function() {
     set_html("info_box", "");
     mst.view_box(["info_box", "setting_box"]);
     // カスタム音が登録されていれば再生ボタン表示
-    mst.exists_file("daken.wav", function(stat, res) {
-        if (!res) return;
-        mst.audio_wav = new Audio();
-        mst.audio_wav.pause();
-        mst.audio_wav.src = "/read_file_daken.wav";
-        var s = "";
-        s += "<input type='button' value='＞ 再生' onClick='javascript:mst.audio_wav.play();'>　";
-        s += "<input type='button' value='× 削除' onClick='javascript:mst.sound_wav_delete();'>";
-        set_html("sound_wav_test", s);
-    });
+    mst.sound_load();
 };
+
+mst.sound_load = function() {
+    if (!mst.sound_load_list.length) return;
+    var div_id = mst.sound_load_list.pop();
+    mst.exists_file(mst.sound_file_list[div_id], function(stat, res) {
+        if (!res) {
+            set_html(div_id, "");
+            mst.sound_load();
+            return;
+        }
+        mst.audio_wav[div_id] = new Audio();
+        mst.audio_wav[div_id].pause();
+        mst.audio_wav[div_id].src = "/read_file_"+mst.sound_file_list[div_id];
+        var s = "";
+        s += "<input type='button' value='＞ 再生' onClick='javascript:mst.audio_wav[\""+div_id+"\"].play();'>　";
+        s += "<input type='button' value='× 削除' onClick='javascript:mst.sound_wav_delete(\""+div_id+"\");'>";
+        set_html(div_id, s);
+        mst.sound_load();
+    });
+}
 
 // サウンド設定を読み込み
 mst.load_sound_setting = function() {
@@ -1598,32 +1620,32 @@ mst.sound_wav_change = function(obj, div_id) {
         return;
     }
     // テスト再生用に DataURL でデータ取得
-    mst.audio_wav = new Audio();
+    mst.audio_wav[div_id] = new Audio();
     const reader = new FileReader();
     reader.onload = (e) => {
-        mst.audio_wav = new Audio();
-        mst.audio_wav.pause();
-        mst.audio_wav.src = reader.result;
+        mst.audio_wav[div_id] = new Audio();
+        mst.audio_wav[div_id].pause();
+        mst.audio_wav[div_id].src = reader.result;
         var s = "";
-        s += "<input type='button' value='＞ 再生' onClick='javascript:mst.audio_wav.play();'>　";
-        s += "<input type='button' value='× 削除' onClick='javascript:mst.sound_wav_delete();'>";
+        s += "<input type='button' value='＞ 再生' onClick='javascript:mst.audio_wav[\""+div_id+"\"].play();'>　";
+        s += "<input type='button' value='× 削除' onClick='javascript:mst.sound_wav_delete(\""+div_id+"\");'>";
         set_html(div_id, s);
     };
     reader.readAsDataURL(set_file);
     // ファイル保存用に ArrayBuffer でデータ取得
     const reader_b = new FileReader();
     reader_b.onload = (e) => {
-        mst.sound_setting.wav_data = reader_b.result;
-        mst.sound_setting.change_flag = 1;
+        mst.sound_setting.wav_data[div_id] = reader_b.result;
+        mst.sound_setting.change_flag[div_id] = 1;
     };
     reader_b.readAsArrayBuffer(set_file);
 };
 
 // カスタム音削除
-mst.sound_wav_delete = function() {
+mst.sound_wav_delete = function(div_id) {
     set_html("sound_wav_test", "");
-    mst.sound_setting.wav_data = [];
-    mst.sound_setting.change_flag = 2;
+    mst.sound_setting.wav_data[div_id] = [];
+    mst.sound_setting.change_flag[div_id] = 2;
 };
 
 // サウンド設定画面閉じるボタン
@@ -1634,21 +1656,35 @@ mst.sound_setting_btn_click = function(save_flag) {
         mst.view_detail_setting();
         return;
     }
-    if (mst.sound_setting.change_flag == 1) {
+    if (!mst.sound_id_list.length) {
+        mst.view_detail_setting();
+        return;
+    }
+    var div_id = mst.sound_id_list.pop();
+
+    if (mst.sound_setting.change_flag[div_id] == 1) {
         // カスタム音変更
-        mst.save_file_exec(mst.sound_setting.wav_data, "daken.wav", "sound_setting_info", "カスタム音", btn_list, function(stat, res) {
-            if (!stat) return;
-            mst.view_detail_setting();
+        mst.save_file_exec(mst.sound_setting.wav_data[div_id], mst.sound_file_list[div_id], "sound_setting_info", "カスタム音["+div_id+"]", btn_list, function(stat, res) {
+            if (!stat) {
+                mst.sound_id_list = Object.keys(mst.sound_file_list);
+                set_html("sound_setting_info", "カスタム音保存失敗");
+                return;
+            }
+            mst.sound_setting_btn_click(1);
         });
         return;
-    } else if (mst.moniter_setting.change_flag == 2) {
+    } else if (mst.sound_setting.change_flag[div_id] == 2) {
         // 待ち受け画像削除
-        mst.remove_file_exec("daken.wav", "sound_setting_info", "カスタム音", btn_list, function(stat, res) {
-            if (!stat) return;
-            mst.view_detail_setting();
+        mst.remove_file_exec(mst.sound_file_list[div_id], "sound_setting_info", "カスタム音["+div_id+"]", btn_list, function(stat, res) {
+            if (!stat) {
+                mst.sound_id_list = Object.keys(mst.sound_file_list);
+                set_html("sound_setting_info", "カスタム音削除失敗");
+                return;
+            }
+            mst.sound_setting_btn_click(1);
         });
     } else {
-        mst.view_detail_setting();
+        mst.sound_setting_btn_click(1);
     }
 };
 

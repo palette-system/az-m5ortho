@@ -102,9 +102,13 @@ int Sound::_get_chnum() {
 }
 
 // SPIFFS 上のファイルを再生
-void Sound::wav_SPIFFS(int c) {
+void Sound::wav_SPIFFS(int c, int key_num) {
     if (!this->_setting.sound_enable) return;
-    this->_spifile = new AudioFileSourceSPIFFS(SOUND_DAKEN_WAV_PATH);
+    if (key_num == 1) {
+        this->_spifile = new AudioFileSourceSPIFFS(SOUND_DAKEN_ENT_PATH); // エンターの時
+    } else {
+        this->_spifile = new AudioFileSourceSPIFFS(SOUND_DAKEN_WAV_PATH);
+    }
     this->_stub[c]->SetGain(this->_volgain);
     this->_wav[c] = new AudioGeneratorWAV();
     this->_wav[c]->begin(this->_spifile, this->_stub[c]);
@@ -176,7 +180,7 @@ void Sound::daken_down(int key_num) {
         return;
     }
     if (this->_setting.type_default == 1) {
-        this->wav_SPIFFS(c);
+        this->wav_SPIFFS(c, key_num);
     } else if (this->_setting.type_default == 2) {
         this->wav_PROGMEM(daken_01_wav_bin, sizeof(daken_01_wav_bin), c);
     } else if (this->_setting.type_default == 3) {

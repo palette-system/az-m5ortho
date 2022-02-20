@@ -130,15 +130,15 @@ mst.key_pattern_list["az_m5egg"] = {
 	"keyboard_pin": {
 		"row": [],
 		"col": [],
-		"direct": [19, 27, 33, 32, 14, 13],
+		"direct": [34, 19, 27, 13, 36, 35],
 		"touch": []
 	},
 	"ioxp_pin": [25, 26],
 	"status_pin": -1,
-	"rgb_pin": -1,
-	"rgb_len": -1,
-	"led_num": [],
-	"key_matrix": [],
+	"rgb_pin": 14,
+	"rgb_len": 10,
+	"led_num": [0, 1, 2, 3, 4, 5],
+	"key_matrix": [0, 1, 2, 3, 4, 5],
 	"size": {"width": 460, "height": 340},
 	"keys": [
 		{"id": 0, "x": 11, "y": 35, "width": 115, "height": 115 },

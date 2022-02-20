@@ -98,7 +98,6 @@ void AzKeyboard::key_action_exec() {
               // M5.Lcd.printf("[%D,down]", i);
                 // キーが押された
                 key_down_action(i); // 押された時の動作
-                sound_cls.daken_down(i); // サウンドクラスに押したよを送る
                 rgb_led_cls.set_led_buf(i, 1); // LED に押したよを送る
                 ankeycls.key_down(i); // 暗記クラスに押したよを送る(暗記用)
                 // 打鍵数カウントアップ
@@ -307,6 +306,7 @@ void AzKeyboard::key_down_action(int key_num) {
     // キーの押された時の設定があるか確認
     if (key_set.layer < 0 || key_set.key_num < 0 || key_set.action_type < 0) {
         // 設定が無ければ何もしない
+        sound_cls.daken_down(0); // サウンドクラスに押したよを送る
         return;
     }
     // tap / hold を押している最中だったら tap を無効化する
@@ -319,10 +319,15 @@ void AzKeyboard::key_down_action(int key_num) {
         press_key_list_push(-1, key_num, -1, select_layer_no, -1);
         // 拡張メソッド実行
         my_function.key_press(key_num, key_set);
+        sound_cls.daken_down(0); // サウンドクラスに押したよを送る
         return;
     }
     // 打鍵QRコード表示中は何もしない
-    if (common_cls.on_tft_unit() && disp->_qr_flag) return;
+    if (common_cls.on_tft_unit() && disp->_qr_flag) {
+        sound_cls.daken_down(0); // サウンドクラスに押したよを送る
+        return;
+    }
+    int sound_type = 0;
     // 動作タイプ別の動作
     if (action_type == 1) {
         // 通常キー入力
@@ -360,6 +365,7 @@ void AzKeyboard::key_down_action(int key_num) {
                     } else {
                         // キーコードだった場合
                         bleKeyboard.press_raw(normal_input.key[i]); // キーを押す
+                        if (normal_input.key[i] == 40) sound_type = 1; // キーコードがエンターだったら鳴らす音をエンターにする
                     }
                 }
                 // キー押したよリストに追加
@@ -454,6 +460,9 @@ void AzKeyboard::key_down_action(int key_num) {
 
     // 拡張メソッド実行
     my_function.key_press(key_num, key_set);
+
+    // サウンドクラスに押したよを送る
+    sound_cls.daken_down(sound_type);
     
 }
 

@@ -27,6 +27,7 @@
 
 // 打鍵ファイルのパス
 #define SOUND_DAKEN_WAV_PATH  "/daken.wav"
+#define SOUND_DAKEN_ENT_PATH  "/daken_ent.wav"
 
 // 設定ファイルのパス
 #define SOUND_SETTING_PATH  "/sound.dat"
@@ -62,7 +63,7 @@ class Sound
         void setting_load(); // 設定ファイルの読み込み
         void setting_save(); // 設定ファイルに保存
         int _get_chnum(); // 空いているチャンネルを取得
-        void wav_SPIFFS(int c); // SPIFFS 上のファイルを再生
+        void wav_SPIFFS(int c, int key_num); // SPIFFS 上のファイルを再生
         void wav_PROGMEM(const void *sound_data, uint32_t sound_len, int c); // メモリ上のwavを再生
         void stop(int ch); // サウンド停止
         void set_enable(uint8_t en); // ON/OFF設定(0=OFF / 1=ON)
