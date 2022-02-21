@@ -104,7 +104,7 @@ int Sound::_get_chnum() {
 // SPIFFS 上のファイルを再生
 void Sound::wav_SPIFFS(int c, int key_num) {
     if (!this->_setting.sound_enable) return;
-    if (key_num == 1) {
+    if (key_num == 40) {
         this->_spifile = new AudioFileSourceSPIFFS(SOUND_DAKEN_ENT_PATH); // エンターの時
     } else {
         this->_spifile = new AudioFileSourceSPIFFS(SOUND_DAKEN_WAV_PATH);

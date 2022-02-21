@@ -21,11 +21,17 @@ void Neopixel::begin(short data_pin, short led_length, short row_size, short col
 	this->_col_size = col_size;
 	this->_select_layer_no = select_layer;
 	this->led_buf = new int8_t[key_matrix_len];
-	for (i=0; i<this->_led_length; i++) { this->led_buf[i] = 0; }
+	for (i=0; i<key_matrix_len; i++) { this->led_buf[i] = 0; }
 	this->led_num = led_num;
 	this->_led_num_len = led_num_len;
 	this->key_matrix = key_matrix;
 	this->_key_matrix_len = key_matrix_len;
+	// キーに割り当てられていないLEDをtrueにする
+	this->_back_flag = new bool[this->_led_length];
+	for (i=0; i<this->_led_length; i++) { this->_back_flag[i] = true; } // 一旦全てtrue
+	for (i=0; i<this->_key_matrix_len; i++) {
+		if (this->key_matrix[i] >= 0) this->_back_flag[i] = false; // キーに割り当てられてる所をfalseにする
+	}
 	// 消灯フラグ(最初は１回消灯させる)
 	this->_hide_flag = 1;
 	// 設定ファイル読み込み
@@ -439,6 +445,11 @@ void Neopixel::rgb_led_loop_type_3() {
             this->rgb_led->setPixelColor(this->led_num[this->key_matrix[i]], this->get_lotate_color((i + this->lotate_index) % 255));
         }
     }
+	// キー割り当てのないLEDに色をつける
+    for (i=0; i<this->_led_length; i++) {
+		if (!this->_back_flag[i]) continue;
+		this->rgb_led->setPixelColor(i, this->get_lotate_color((i + this->lotate_index) % 255));
+	}
 	// ローテーションインデックス更新
 	if (this->lotate_index >= 254) {
 		this->lotate_index = 0;

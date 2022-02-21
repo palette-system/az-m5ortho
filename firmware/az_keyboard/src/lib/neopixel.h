@@ -58,9 +58,10 @@ class Neopixel
 		short _key_matrix_len; // キーマトリックスのサイズ
 		int8_t _hide_flag; // 消灯フラグ
 		int8_t *led_buf;
-		int8_t *led_num;
-		int8_t *key_matrix;
-		int *_select_layer_no;
+		int8_t *led_num; // キーのIDにLEDのIDを紐づけたデータ
+		int8_t *key_matrix; // マトリックス上にどうキーが並んでいるかデータ
+		int *_select_layer_no; // 今選択中のキーレイヤー
+		bool *_back_flag; // キーに割り当てられていないLEDかどうかのフラグ(後ろ向きのLEDとか)
 		neo_select_key select_key[NEO_SELECT_KEY_MAX]; // 常に光らせるキー
 		neo_setting _setting; // 光らせ方の設定
 		int8_t  setting_change; // 設定変更フラグ

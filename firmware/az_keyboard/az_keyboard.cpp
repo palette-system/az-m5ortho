@@ -365,7 +365,7 @@ void AzKeyboard::key_down_action(int key_num) {
                     } else {
                         // キーコードだった場合
                         bleKeyboard.press_raw(normal_input.key[i]); // キーを押す
-                        if (normal_input.key[i] == 40) sound_type = 1; // キーコードがエンターだったら鳴らす音をエンターにする
+                        sound_type = normal_input.key[i]; // サウンドクラスに渡すキーコードを指定(最後の１キーのみ)
                     }
                 }
                 // キー押したよリストに追加
