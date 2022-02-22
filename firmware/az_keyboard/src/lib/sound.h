@@ -25,6 +25,9 @@
 // 音量デフォルト
 #define SOUND_VOLUME_DEFAULT  128
 
+// 打鍵ファイル最大数
+#define SPIFFS_FILE_LENGTH 16
+
 // 打鍵ファイルのパス
 #define SOUND_DAKEN_WAV_PATH  "/daken.wav"
 #define SOUND_DAKEN_ENT_PATH  "/daken_ent.wav"
@@ -54,6 +57,7 @@ class Sound
         uint8_t *_daken_wav_bin; // 打鍵音データ
         float _volgain; // gainに設定する数字
         bool _play_flag[SOUND_CH_MAX]; // 再生中かどうかのフラグ
+        bool _spiffs_file_flag[SPIFFS_FILE_LENGTH]; // ファイル有無のフラグ
         int _stack_keynum; // 再生中に押されたキー
         uint8_t _feed_out_index; // フェードアウト停止する場合のインデックス
         uint8_t _feed_out_ch; // フェードアウト停止するチャンネル

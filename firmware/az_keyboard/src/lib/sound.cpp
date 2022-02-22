@@ -56,6 +56,13 @@ void Sound::begin() {
         this->_stub[i]->SetGain(this->_volgain); // 音量
     }
 
+    for (i=0; i<SPIFFS_FILE_LENGTH; i++) {
+        this->_spiffs_file_flag[i] = false;
+    }
+    this->_spiffs_file_flag[0] = SPIFFS.exists(SOUND_DAKEN_WAV_PATH);
+    this->_spiffs_file_flag[1] = SPIFFS.exists(SOUND_DAKEN_ENT_PATH);
+    
+
     // 設定ファイル読み込み
     this->setting_load();
 
@@ -104,10 +111,12 @@ int Sound::_get_chnum() {
 // SPIFFS 上のファイルを再生
 void Sound::wav_SPIFFS(int c, int key_num) {
     if (!this->_setting.sound_enable) return;
-    if (key_num == 40) {
+    if (key_num == 40 && this->_spiffs_file_flag[1]) {
         this->_spifile = new AudioFileSourceSPIFFS(SOUND_DAKEN_ENT_PATH); // エンターの時
-    } else {
+    } else if (this->_spiffs_file_flag[0]) {
         this->_spifile = new AudioFileSourceSPIFFS(SOUND_DAKEN_WAV_PATH);
+    } else {
+        return;
     }
     this->_stub[c]->SetGain(this->_volgain);
     this->_wav[c] = new AudioGeneratorWAV();
