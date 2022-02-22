@@ -23,6 +23,10 @@ Ankey ankeycls = Ankey();
 // 打鍵カウントクラス
 Dakey dakeycls = Dakey();
 
+// マウス移動用バッファ
+int send_move_x_buf;
+int send_move_y_buf;
+int send_move_index;
 
 // コンストラクタ
 AzKeyboard::AzKeyboard() {
@@ -75,7 +79,11 @@ void AzKeyboard::start_keyboard() {
 
     // 液晶は待ち受け画像
     // disp->view_standby_image();
-  
+
+    // マウス移動用バッファ
+    send_move_x_buf = 0;
+    send_move_y_buf = 0;
+    send_move_index = 0;
 }
 
 // 各ユニットの初期化
@@ -799,13 +807,15 @@ void AzKeyboard::mouse_loop_pad() {
                     // スクロールボタン押している最中
                     bleKeyboard.mouse_move(0, 0, ((send_y / 3) * -1), (send_x / 3));
                 } else {
-                    bleKeyboard.mouse_move(send_x, send_y, 0, 0);
+                    send_move_x_buf += send_x;
+                    send_move_y_buf += send_y;
                 }
                 touch_send_count++;
             }
             start_touch_x = x;
             start_touch_y = y;
             last_touch_index++;
+            // マウス移動無しの長押しだった場合設定メニュー表示
             if (touch_send_count == 0 && last_touch_index > 70) {
                 M5.Axp.SetLDOEnable(3, true);
                 delay(100);
@@ -825,6 +835,12 @@ void AzKeyboard::mouse_loop_pad() {
             bleKeyboard.mouse_release(1);
         }
         last_touch_index = -1;
+    }
+    if (send_move_x_buf != 0 || send_move_y_buf != 0) send_move_index++;
+    if (send_move_index > 3) {
+        bleKeyboard.mouse_move(send_move_x_buf, send_move_y_buf, 0, 0);
+        send_move_x_buf = 0;
+        send_move_y_buf = 0;
     }
 }
 
