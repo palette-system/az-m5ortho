@@ -13,8 +13,8 @@
 	"matrix_col": 3,
 	"disp_rotation": 1,
 	"keyboard_language": 0,
-	"keyboard_name": "AZ-M5egg",
-	"keyboard_type": "az_m5egg",
+	"keyboard_name": "az_emugotch",
+	"keyboard_type": "az_emugotch",
 	"keyboard_pin": {
 		"direct": [34, 19, 27, 13, 36, 35],
 		"touch": [],

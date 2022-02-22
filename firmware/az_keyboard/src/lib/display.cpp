@@ -15,7 +15,7 @@
 
 LV_IMG_DECLARE(setting_img);
 LV_IMG_DECLARE(stimg_default);
-LV_IMG_DECLARE(m5egg_logo);
+LV_IMG_DECLARE(emugotch_logo_320);
 
 
 lv_img_dsc_t stimg_obj;
@@ -204,8 +204,8 @@ void view_keyboard_select_exec(lv_obj_t * obj, lv_event_t event) {
 		// 選択した
 		bool change_flag = false;
 		int select_no = lv_dropdown_get_selected(lv_drop_down_obj);
-		if (select_no == 0 && strcmp(eep_data.keyboard_type, "az_m5egg") != 0) {
-			strcpy(eep_data.keyboard_type, "az_m5egg");
+		if (select_no == 0 && strcmp(eep_data.keyboard_type, "az_emugotch") != 0) {
+			strcpy(eep_data.keyboard_type, "az_emugotch");
 			change_flag = true;
 		} else if (select_no == 1 && strcmp(eep_data.keyboard_type, "az_m5ortho") != 0) {
 			strcpy(eep_data.keyboard_type, "az_m5ortho");
@@ -250,7 +250,7 @@ void view_keyboard_select(int select_mode) {
 	lv_dropdown_set_options(lv_drop_down_obj, "えむごっち\nAZ-M5ortho\nAZ-M5orthoW");
 	lv_obj_set_size(lv_drop_down_obj, 200, 34);
 	int selected_num = 0;
-	if (strcmp(eep_data.keyboard_type, "az_m5egg") == 0) selected_num = 0;
+	if (strcmp(eep_data.keyboard_type, "az_emugotch") == 0) selected_num = 0;
 	if (strcmp(eep_data.keyboard_type, "az_m5ortho") == 0) selected_num = 1;
 	if (strcmp(eep_data.keyboard_type, "az_m5orthow") == 0) selected_num = 2;
 	lv_dropdown_set_selected(lv_drop_down_obj, selected_num);
@@ -667,8 +667,8 @@ void view_mouse_page() {
 	} else {
 		// ファイルが無ければデフォルトの画像表示
 		lv_obj_t * icon = lv_img_create(lv_scr_act(), NULL);
-		if (keyboard_type_int == 3) { // M5egg
-			lv_img_set_src(icon, &m5egg_logo); // M5egg logo
+		if (keyboard_type_int == 3) { // えむごっち
+			lv_img_set_src(icon, &emugotch_logo_320); // えむごっち logo
 		} else {
     		lv_img_set_src(icon, &stimg_default); // パレットシステムロゴ (たて)
 		}

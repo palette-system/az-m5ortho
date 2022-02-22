@@ -13,7 +13,7 @@ mst.key_language_list = [
 ];
 
 // キーボードのタイプデフォルト
-mst.key_pattern_default = "az_m5egg";
+mst.key_pattern_default = "az_emugotch";
 
 // 各キーボード別の設定
 if (!mst.key_pattern_list) mst.key_pattern_list = {};
@@ -124,9 +124,9 @@ mst.key_pattern_list["az_m5ortho"] = {
 };
 
 
-// AZ M5egg
-mst.key_pattern_list["az_m5egg"] = {
-	"name": "AZ M5egg",
+// えむごっち
+mst.key_pattern_list["az_emugotch"] = {
+	"name": "えむごっち",
 	"keyboard_pin": {
 		"row": [],
 		"col": [],

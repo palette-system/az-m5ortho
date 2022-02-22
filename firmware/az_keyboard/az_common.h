@@ -26,7 +26,7 @@
 
 
 // キーボード別のデフォルト設定ファイル
-#include "src/keyboard/setting_m5egg_default.h"
+#include "src/keyboard/setting_emugotch_default.h"
 #include "src/keyboard/setting_m5ortho_default.h"
 #include "src/keyboard/setting_m5orthow_default.h"
 

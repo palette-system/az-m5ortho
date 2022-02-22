@@ -593,7 +593,7 @@ void AzCommon::load_setting_json() {
         if (keyboard_type_int == 2) { // AZ-M5ortho
             ioxp_sda = 26;
             ioxp_scl = 14;
-        } else if (keyboard_type_int == 3) { // AZ-M5egg
+        } else if (keyboard_type_int == 3) { // えむごっち
             ioxp_sda = 25;
             ioxp_scl = 26;
         } else {
@@ -1025,7 +1025,7 @@ void AzCommon::remap_save_setting_json() {
 void AzCommon::get_keyboard_type_int(String t) {
     if (t.equals("custom")) { keyboard_type_int = 1; } // カスタム
     else if (t.equals("az_m5ortho")) { keyboard_type_int = 2; } // AZ-M5ortho
-	else if (t.equals("az_m5egg")) { keyboard_type_int = 3; } // AZ-M5egg
+	else if (t.equals("az_emugotch")) { keyboard_type_int = 3; } // えむごっち
     else { keyboard_type_int = 0; } // 不明なキーボード
 }
 
@@ -1213,8 +1213,8 @@ bool AzCommon::create_setting_json() {
     }
     // 書込み
     int i;
-    if (strcmp(eep_data.keyboard_type, "az_m5egg") == 0) {
-        i = json_file.print(setting_azm5egg_default_min_json_bin); // AZ-M5eggのデフォルト設定
+    if (strcmp(eep_data.keyboard_type, "az_emugotch") == 0) {
+        i = json_file.print(setting_azemugotch_default_min_json_bin); // えむごっちのデフォルト設定
     } else if (strcmp(eep_data.keyboard_type, "az_m5ortho") == 0) {
         i = json_file.print(setting_azm5ortho_default_min_json_bin); // AZ-M5orthoのデフォルト設定
     } else if (strcmp(eep_data.keyboard_type, "az_m5orthow") == 0) {

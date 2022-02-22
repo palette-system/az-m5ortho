@@ -1560,7 +1560,7 @@ mst.view_sound_setting = function() {
     s += "<input id='sound_default_file' type='file' accept='audio/wav' onChange='javascript:mst.sound_wav_change(this, \"sndef\");'><br>";
     s += "<div id='sndef'></div>";
     s += "<br><br>";
-    s += "<b>カスタム音(エンダー)：</b><br>";
+    s += "<b>カスタム音(エンター)：</b><br>";
     s += "<input id='sound_enter_file' type='file' accept='audio/wav' onChange='javascript:mst.sound_wav_change(this, \"snent\");'><br>";
     s += "<div id='snent'></div>";
     s += "<br><br>";
