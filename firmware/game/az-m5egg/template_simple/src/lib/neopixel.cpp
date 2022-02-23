@@ -75,7 +75,7 @@ void Neopixel::rgb_led_loop_exec() {
     // LEDを点灯
     for (i=0; i<this->_led_length; i++) {
     	if ((this->lotate_index % 10) == i) {
-            this->rgb_led->setPixelColor(i, this->rgb_led->Color(0, 0, 10));
+            this->rgb_led->setPixelColor(i, this->rgb_led->Color(0, 0, 0));
     	} else {
             this->rgb_led->setPixelColor(i, this->rgb_led->Color(0, 0, 0));
     	}

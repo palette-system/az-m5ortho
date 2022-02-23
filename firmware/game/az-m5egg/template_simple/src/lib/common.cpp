@@ -22,6 +22,8 @@ Sound sound_cls = Sound();
 int8_t input_key[KEY_PIN_LENGTH];
 int8_t input_key_last[KEY_PIN_LENGTH];
 
+// 表示ループを実行したくない時のフラグ
+bool  disp_stop_flag;
 
 // NeoPixcel、サウンドループ処理
 static void background_loop(void* arg) {
@@ -40,6 +42,10 @@ static void background_loop(void* arg) {
 static void display_loop(void* arg) {
   while (true) {
     unsigned long start_time = millis();
+    if (disp_stop_flag) {
+        vTaskDelay(40);
+        continue;
+    }
   	disp_cls->loop_exec();
     unsigned long work_time = millis() - start_time;
     	if (work_time < 40) { vTaskDelay(40 - work_time); }
@@ -79,6 +85,8 @@ void Common::common_start() {
         input_key[i] = 0;
         input_key_last[i] = 0;
     }
+    // 表示したくない時のフラグ
+    disp_stop_flag = false;
     // サウンド、Neopixcel用バック処理
     xTaskCreatePinnedToCore(background_loop, "bgloop", 2048, NULL, 20, NULL, 0);
     // 画面用バック処理

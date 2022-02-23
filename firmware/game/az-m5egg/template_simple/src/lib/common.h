@@ -56,6 +56,8 @@ extern Sound sound_cls;
 extern int8_t input_key[KEY_PIN_LENGTH];
 extern int8_t input_key_last[KEY_PIN_LENGTH];
 
+// 表示ループを実行したくない時のフラグ
+extern bool  disp_stop_flag;
 
 
 class Common
