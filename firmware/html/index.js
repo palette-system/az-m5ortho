@@ -101,6 +101,7 @@ mst.setting_data = {
             }
         }
     },
+    "soft_layers": {},
     "option_set": {"type": ""}
 };
 
@@ -118,6 +119,7 @@ mst.wifi_edit_kid = -1;
 mst.wifi_edit_data = null;
 
 // キー設定編集中のデータ
+mst.key_edit_type = 0; // 0=通常キー / 1=ソフトウェアキー
 mst.key_edit_kid = -1;
 mst.key_edit_data = null;
 
@@ -209,6 +211,7 @@ mst.get_setting_json = function() {
         set_html("info_box", "キー設定 読み込み 完了 ");
         // 必須項目が無い場合はここで追加
         if (!mst.setting_data.option_set) mst.setting_data.option_set = {"type": ""};
+        if (!mst.setting_data.soft_layers) mst.setting_data.soft_layers = {};
         // キーボードの設定を選ぶ
         if (mst.key_pattern_list[mst.setting_data.keyboard_type]) {
             mst.key_pattern = mst.key_pattern_list[mst.setting_data.keyboard_type];
@@ -332,6 +335,10 @@ mst.file_delete_list = function(file_list, cb_func) {
 
 };
 
+// 文字列をアンダーバーで区切って一番最後の数字を取得
+mst.str_id2num = function(id_str) {
+    return parseInt(id_str.split("_").pop())
+};
 
 // スマホ判定
 mst.is_mobile = function() {
@@ -605,6 +612,7 @@ mst.key_click = function(key_num) {
     if (mst.switch_check_mode) return;
     // キーの設定画面表示
     var kid = mst.key_pattern.keys[key_num].id;
+    mst.key_edit_type = 0;
     mst.view_key_setting(kid);
     set_html("info_box", "");
 };
@@ -705,7 +713,10 @@ mst.get_layer_type_name = function(layer_type) {
 mst.select_input_type = function() {
     var i, l = [];
     for (i in mst.input_type_list) {
-        if (i == 6 || i == 7 || i == 8) continue; // 暗記ボタン、LED設定ボタン、打鍵設定ボタンは一旦スキップ
+        // 通常キーの場合暗記ボタン、LED設定ボタン、打鍵設定ボタンは一旦スキップ
+        if (mst.key_edit_type == 0 && (i == 6 || i == 7 || i == 8)) continue;
+        // ソフトウェアキーキーの場合レイヤー切り替え、暗記ボタン、LED設定ボタン、打鍵設定ボタンは一旦スキップ
+        if (mst.key_edit_type == 1 && (i == 3 || i == 6 || i == 7 || i == 8)) continue;
         l.push({"key": i, "value": mst.input_type_list[i]});
     }
     mst.select_exec(l, mst.key_edit_data.press.action_type+"", function(select_key) {
@@ -871,7 +882,14 @@ mst.view_key_setting = function(key_id) {
     var f, i, k, s = "", st;
     var hrst = "border: 1px solid #9a9fe3;";
     s += "<table cellpadding='20' style='min-width: 520px;'>";
-    s += "<tr><td colspan='2'><b>キー番号：</b> <font style='font-size: 40px;'>" + mst.key_edit_kid + "</font></td></tr>";
+    if (mst.key_edit_type == 0) {
+        s += "<tr><td colspan='2'><b>キー番号：</b> <font style='font-size: 40px;'>" + mst.key_edit_kid + "</font></td></tr>";
+    } else if (mst.key_edit_type == 1) {
+        st = "font-size: 30px; width: 320px; border: 3px solid black;";
+        s += "<tr><td colspan='2'><b>表示名：</b> ";
+        s += "<input type='text' id='key_name_txt' style='"+st+"' value='" +  mst.key_edit_data.name + "'>";
+        s += "</td></tr>";
+    }
     s += "<tr><td colspan='2' style='padding: 20px 0;'><hr style='"+hrst+"'></td></tr>";
     s += "<tr><td><b>動作：</b><br><font style='font-size: 40px;'>" + mst.input_type_list[at] + "</font></td><td align='right'>";
     s += "<a href='#' class='update_button' onClick='javascript:mst.select_input_type(); return false;'>変更</a>";
@@ -900,17 +918,19 @@ mst.view_key_setting = function(key_id) {
         if (pss.repeat_interval === undefined) pss.repeat_interval = 51;
         if (pss.hold === undefined) pss.hold = 0;
         console.log(pss);
-        s += "<tr><td colspan='2' style='padding: 20px 0;'><hr style='"+hrst+"'></td></tr>";
-        s += "<tr><td colspan='2'>";
-        s += "<b>長押しキー：</b>　<font id='hold_key_val'>"+mst.get_hold_key_name(pss.hold)+"</font>";
-        s += "</td></tr><tr><td colspan='2' align='right'>";
-        s += "<a href='#' class='update_button' onClick='javascript:mst.select_hold_key(); return false;'>変更</a>";
-        s += "</td></tr>";
-        s += "<tr><td colspan='2' style='padding: 20px 0;'><hr style='"+hrst+"'></td></tr>";
-        s += "<tr><td colspan='2'>";
-        s += "<b>連打間隔：</b>　<font id='move_repeat_interval_val'></font><br><br>";
-        s += "<center><input type='range' id='move_repeat_interval' name='move_repeat_interval' min='0' max='51' style='width: 420px;' value='"+pss.repeat_interval+"' onChange='javascript:mst.view_move_input(\"repeat_interval\");'></center>";
-        s += "</td></tr>";
+        if (mst.key_edit_type == 0) { // 長押しと連打は通常キーのみ
+            s += "<tr><td colspan='2' style='padding: 20px 0;'><hr style='"+hrst+"'></td></tr>";
+            s += "<tr><td colspan='2'>";
+            s += "<b>長押しキー：</b>　<font id='hold_key_val'>"+mst.get_hold_key_name(pss.hold)+"</font>";
+            s += "</td></tr><tr><td colspan='2' align='right'>";
+            s += "<a href='#' class='update_button' onClick='javascript:mst.select_hold_key(); return false;'>変更</a>";
+            s += "</td></tr>";
+            s += "<tr><td colspan='2' style='padding: 20px 0;'><hr style='"+hrst+"'></td></tr>";
+            s += "<tr><td colspan='2'>";
+            s += "<b>連打間隔：</b>　<font id='move_repeat_interval_val'></font><br><br>";
+            s += "<center><input type='range' id='move_repeat_interval' name='move_repeat_interval' min='0' max='51' style='width: 420px;' value='"+pss.repeat_interval+"' onChange='javascript:mst.view_move_input(\"repeat_interval\");'></center>";
+            s += "</td></tr>";
+        }
         
     } else if (at == 2) {
         // テキスト入力
@@ -1009,7 +1029,7 @@ mst.view_key_setting = function(key_id) {
     set_html("setting_box", s);
     // テキストは後からvalueに値を入れる
     if (at == 1) {
-        mst.view_move_input("repeat_interval");
+        if (mst.key_edit_type == 0) mst.view_move_input("repeat_interval");
     } else if (at == 2) {
         $("key_text").value = pss.text;
     } else if (at == 4) {
@@ -1021,7 +1041,11 @@ mst.view_key_setting = function(key_id) {
     } else if (at == 8) {
         $("dakagi_settype").value = pss.dakagi_settype + "";
     }
-    mst.view_box(["info_box", "setting_box", "layer_box"]);
+    if (mst.key_edit_type == 0) {
+        mst.view_box(["info_box", "setting_box", "layer_box"]);
+    } else if (mst.key_edit_type == 1) {
+        mst.view_box(["info_box", "setting_box"]);
+    }
 };
 
 // マウス移動のバー情報を画面に反映
@@ -1109,15 +1133,26 @@ mst.add_input_key = function(num) {
 // キー設定ボタンイベント(type_id : 0=キャンセル / 1=決定)
 mst.key_setting_btn_click = function(type_id) {
     // 決定ならば設定データ更新
-    var s;
+    var s, n;
     if (type_id == 1) {
         s = {
-            "press": {"action_type": mst.key_edit_data.press.action_type, "hold": 0}
+            "press": {"action_type": mst.key_edit_data.press.action_type}
         };
+        // ソフトウェアキーは名前も入れる
+        if (mst.key_edit_type == 1) {
+            n = $("key_name_txt").value;
+            if (n.length > 6) {
+                set_html("info_box", "表示名は6文字までです");
+                return;
+            }
+            s.name = n;
+        }
         if (s.press.action_type == 1) { // 通常キー入力
             s.press.key =  mst.key_edit_data.press.key;
-            s.press.hold = mst.key_edit_data.press.hold;
-            s.press.repeat_interval = $("move_repeat_interval").value
+            if (mst.key_edit_type == 0) { // 通常キーの時のみ
+                s.press.hold = mst.key_edit_data.press.hold;
+                s.press.repeat_interval = $("move_repeat_interval").value
+            }
         } else if (s.press.action_type == 2) { // テキスト入力
             s.press.text =  mst.key_edit_data.press.text;
         } else if (s.press.action_type == 3) { // レイヤー切り替え
@@ -1137,13 +1172,25 @@ mst.key_setting_btn_click = function(type_id) {
         } else if (s.press.action_type == 8) { // 打鍵設定ボタン
             s.press.dakagi_settype = parseInt($("dakagi_settype").value);
         }
-        mst.setting_data.layers["layer_" + mst.edit_layer].keys["key_" + mst.key_edit_kid] = s;
+        if (mst.key_edit_type == 0) {
+            // 通常キーならばlayers に保存
+            mst.setting_data.layers["layer_" + mst.edit_layer].keys["key_" + mst.key_edit_kid] = s;
+        } else if (mst.key_edit_type == 1) {
+            // ソフトウェアキーならばsoft_layersに保存
+            mst.setting_data.soft_layers["layer_" + mst.edit_soft_layer].keys["key_" + mst.key_edit_kid] = s;
+        }
     }
     mst.key_edit_kid = -1;
     mst.key_edit_data = null;
-    mst.create_key_btn(); // キーのボタンオブジェクト作り直し
     set_html("info_box", "");
-    mst.view_box(["info_box", "layer_box", "layer_menu", "key_img_box", "top_menu_box", "menu_box"]);
+    if (mst.key_edit_type == 0) {
+        // 通常キーならばキー表示を作り直してメイン画面表示
+        mst.create_key_btn(); // キーのボタンオブジェクト作り直し
+        mst.view_box(["info_box", "layer_box", "layer_menu", "key_img_box", "top_menu_box", "menu_box"]);
+    } else if (mst.key_edit_type == 1) {
+        // ソフトウェアキーならばソフトウェアキー設定画面表示
+        mst.view_softkey_setting();
+    }
 };
 
 // 暗記ボタンとして設定されているかチェック
@@ -2152,6 +2199,7 @@ mst.view_detail_setting = function() {
     var s = "";
     var bs = "style='width: 450px;height: 70px; background: #78d3df; font-size: 35px; display: inline-block;'";
     s += "<b style='font-size: 30px;'>設定メニュー</b><br><br>";
+    s += "<a href='#' class='update_button' "+bs+" onClick='javascript:mst.view_softkey_setting();return false;'>ソフトウェアキー</a><br><br>";
     s += "<a href='#' class='update_button' "+bs+" onClick='javascript:mst.view_language_setting();return false;'>日本語/US 切り替え</a><br><br>";
     s += "<a href='#' class='update_button' "+bs+" onClick='javascript:mst.view_keytype_setting();return false;'>キーボードの種類</a><br><br>";
     s += "<a href='#' class='update_button' "+bs+" onClick='javascript:mst.view_moniter_setting();return false;'>モニタ設定</a><br><br>";

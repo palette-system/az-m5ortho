@@ -11,6 +11,7 @@
 #include "src/html/index_bin.h"
 #include "src/html/config_js_bin.h"
 #include "src/html/index_js_bin.h"
+#include "src/html/setting_menu_js_bin.h"
 
 
 
@@ -95,6 +96,11 @@ bool handleUrl(String path) {
     } else if (path.indexOf("/config.js") == 0) {
         // メインjs
         server.send(200,"text/js", config_js_bin);
+        return true;
+
+    } else if (path.indexOf("/setting_menu.js") == 0) {
+        // メインjs
+        server.send(200,"text/js", setting_menu_min_js_bin);
         return true;
 
     } else if (path.indexOf("/firmware_version") == 0) {

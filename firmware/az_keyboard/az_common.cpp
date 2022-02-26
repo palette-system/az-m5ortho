@@ -4,6 +4,9 @@
 // キーが押された時の設定
 uint16_t setting_length;
 setting_key_press *setting_press;
+// ソフトキーが押された時の設定
+uint16_t soft_setting_length;
+setting_key_press *soft_setting_press;
 // remapに送る用のデータ
 uint8_t  *setting_remap;
 uint16_t  layer_max;
@@ -606,9 +609,12 @@ void AzCommon::load_setting_json() {
     // キーの設定を取得
     // まずは設定の数を取得
     layer_max = 0;
+    setting_length = 0;
+    soft_setting_length = 0;
     key_max = (16 * ioxp_len) + direct_len + touch_len;
-    this->get_keymap(setting_obj);
-
+    this->get_keymap(setting_obj, "layers"); // 通常キー
+    this->get_keymap(setting_obj, "soft_layers"); // ソフトウェアキー
+    this->set_setting_remap(); // REMAPに送る用のデータ作成
 
 
     // wifiの設定読み出し
@@ -673,6 +679,7 @@ void AzCommon::clear_keymap() {
     int i;
     setting_normal_input normal_input;
     for (i=0; i<setting_length; i++) {
+        delete setting_press[i].key_name; // 表示名クリア
         if (setting_press[i].action_type == 1) { // 通常キー
             memcpy(&normal_input, setting_press[i].data, sizeof(setting_normal_input));
             delete[] normal_input.key;
@@ -697,11 +704,11 @@ void AzCommon::clear_keymap() {
 }
 
 // JSONデータからキーマップの情報を読み込む
-void AzCommon::get_keymap(JsonObject setting_obj) {
+void AzCommon::get_keymap(JsonObject setting_obj, char *key_name) {
     int i, j, k, m, at, s;
     char lkey[16];
     char kkey[16];
-    uint16_t lnum, knum;
+    uint16_t lnum, knum, slen, lmax;
     JsonObject::iterator it_l;
     JsonObject::iterator it_k;
     JsonObject layers, keys;
@@ -710,34 +717,50 @@ void AzCommon::get_keymap(JsonObject setting_obj) {
     setting_normal_input normal_input;
     setting_layer_move layer_move_input;
     setting_mouse_move mouse_move_input;
+    setting_key_press *setpt;
+    // 設定項目が存在しなければ何もしない
+    if (!setting_obj.containsKey(key_name)) return;
     // まずはキー設定されている数を取得
-    layers = setting_obj["layers"].as<JsonObject>();
-    setting_length = 0;
+    layers = setting_obj[key_name].as<JsonObject>();
+    slen = 0;
     for (it_l=layers.begin(); it_l!=layers.end(); ++it_l) {
-        setting_length += setting_obj["layers"][it_l->key().c_str()]["keys"].size();
+        if (!setting_obj[key_name][it_l->key().c_str()].containsKey("keys")) continue;
+        slen += setting_obj[key_name][it_l->key().c_str()]["keys"].size();
     }
-    ESP_LOGD(LOG_TAG, "setting total %D\n", setting_length);
+    ESP_LOGD(LOG_TAG, "setting total %D\n", slen);
+    // キー設定が存在しなければ何もしない
+    if (slen == 0) return;
     // 設定数分メモリ確保
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
-    setting_press = new setting_key_press[setting_length];
+    setpt = new setting_key_press[slen];
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
     // キー設定読み込み
     i = 0;
-    layer_max = 0;
+    lmax = 0;
     for (it_l=layers.begin(); it_l!=layers.end(); ++it_l) {
         sprintf(lkey, "%S", it_l->key().c_str());
         lnum = split_num(lkey);
-        layer_max++;
-        keys = setting_obj["layers"][lkey]["keys"].as<JsonObject>();
+        lmax++;
+        keys = setting_obj[key_name][lkey]["keys"].as<JsonObject>();
         for (it_k=keys.begin(); it_k!=keys.end(); ++it_k) {
             sprintf(kkey, "%S", it_k->key().c_str());
             knum = split_num(kkey);
             // ESP_LOGD(LOG_TAG, "layers %S %S [ %D %D ]\n", lkey, kkey, lnum, knum);
-            press_obj = setting_obj["layers"][lkey]["keys"][kkey]["press"].as<JsonObject>();
-            setting_press[i].layer = lnum;
-            setting_press[i].key_num = knum;
-            setting_press[i].action_type = press_obj["action_type"].as<signed int>();
-            if (setting_press[i].action_type == 1) {
+            press_obj = setting_obj[key_name][lkey]["keys"][kkey]["press"].as<JsonObject>();
+            setpt[i].layer = lnum;
+            setpt[i].key_num = knum;
+            if (setting_obj[key_name][lkey]["keys"][kkey].containsKey("name")) {
+                // 表示名があれば表示名取得
+                text_str = setting_obj[key_name][lkey]["keys"][kkey]["name"].as<String>();
+                m = text_str.length() + 1;
+                setpt[i].key_name = new char[m];
+                text_str.toCharArray(setpt[i].key_name, m);
+            } else {
+                // 表示名が無ければ空文字を設定
+                setpt[i].key_name = "";
+            }
+            setpt[i].action_type = press_obj["action_type"].as<signed int>();
+            if (setpt[i].action_type == 1) {
                 // 通常入力
                 normal_input.key_length = press_obj["key"].size();
                 normal_input.key = new uint16_t[normal_input.key_length];
@@ -754,60 +777,70 @@ void AzCommon::get_keymap(JsonObject setting_obj) {
                 } else {
                     normal_input.hold = 0;
                 }
-                setting_press[i].data = (char *)new setting_normal_input;
-                memcpy(setting_press[i].data, &normal_input, sizeof(setting_normal_input));
-            } else if (setting_press[i].action_type == 2) {
+                setpt[i].data = (char *)new setting_normal_input;
+                memcpy(setpt[i].data, &normal_input, sizeof(setting_normal_input));
+            } else if (setpt[i].action_type == 2) {
                 // テキスト入力
                 text_str = press_obj["text"].as<String>();
                 m = text_str.length() + 1;
-                setting_press[i].data = new char[m];
-                text_str.toCharArray(setting_press[i].data, m);
-            } else if (setting_press[i].action_type == 3) {
+                setpt[i].data = new char[m];
+                text_str.toCharArray(setpt[i].data, m);
+            } else if (setpt[i].action_type == 3) {
                 // レイヤー切り替え
                 layer_move_input.layer_id = press_obj["layer"].as<signed int>();
                 layer_move_input.layer_type = press_obj["layer_type"].as<signed int>();
                 if (layer_move_input.layer_type == 0) layer_move_input.layer_type = 0x51; // 切り替え方法の指定が無かった場合はMO(押している間切り替わる)
-                setting_press[i].data = (char *)new setting_layer_move;
-                memcpy(setting_press[i].data, &layer_move_input, sizeof(setting_layer_move));
-            } else if (setting_press[i].action_type == 4) {
+                setpt[i].data = (char *)new setting_layer_move;
+                memcpy(setpt[i].data, &layer_move_input, sizeof(setting_layer_move));
+            } else if (setpt[i].action_type == 4) {
                 // WEBフック
                 text_str = "";
                 serializeJson(press_obj["webhook"], text_str);
                 m = text_str.length() + 1;
-                setting_press[i].data = new char[m];
-                text_str.toCharArray(setting_press[i].data, m);
+                setpt[i].data = new char[m];
+                text_str.toCharArray(setpt[i].data, m);
                 
-            } else if (setting_press[i].action_type == 5) {
+            } else if (setpt[i].action_type == 5) {
                 // マウス移動
                 mouse_move_input.x = press_obj["move"]["x"].as<signed int>();
                 mouse_move_input.y = press_obj["move"]["y"].as<signed int>();
                 mouse_move_input.speed = press_obj["move"]["speed"].as<signed int>();
-                setting_press[i].data = (char *)new setting_mouse_move;
-                memcpy(setting_press[i].data, &mouse_move_input, sizeof(setting_mouse_move));
+                setpt[i].data = (char *)new setting_mouse_move;
+                memcpy(setpt[i].data, &mouse_move_input, sizeof(setting_mouse_move));
 
-            } else if (setting_press[i].action_type == 6) {
+            } else if (setpt[i].action_type == 6) {
                 // 暗記ボタン
                 text_str = press_obj["ankey_file"].as<String>();
                 m = text_str.length() + 1;
-                setting_press[i].data = new char[m];
-                text_str.toCharArray(setting_press[i].data, m);
+                setpt[i].data = new char[m];
+                text_str.toCharArray(setpt[i].data, m);
 
-            } else if (setting_press[i].action_type == 7) {
+            } else if (setpt[i].action_type == 7) {
                 // LED設定ボタン
-                setting_press[i].data = new char;
-                *setting_press[i].data = press_obj["led_setting_type"].as<signed int>();
+                setpt[i].data = new char;
+                *setpt[i].data = press_obj["led_setting_type"].as<signed int>();
                 
-            } else if (setting_press[i].action_type == 8) {
+            } else if (setpt[i].action_type == 8) {
                 // 打鍵設定ボタン
-                setting_press[i].data = new char;
-                *setting_press[i].data = press_obj["dakagi_settype"].as<signed int>();
+                setpt[i].data = new char;
+                *setpt[i].data = press_obj["dakagi_settype"].as<signed int>();
 
             }
             i++;
         }
     }
+    if (strcmp(key_name, "layers") == 0) { // 通常のキー設定
+        setting_press = setpt;
+        setting_length = slen;
+        layer_max = lmax;
+    } else if (strcmp(key_name, "soft_layers") == 0) { // ソフトウェアキー設定
+        soft_setting_press = setpt;
+        soft_setting_length = slen;
+    }
+    // setting_press = setpt;
   
     // ログに出力して確認
+    /*
     for (i=0; i<setting_length; i++) {
         if (setting_press[i].action_type == 1) {
             memcpy(&normal_input, setting_press[i].data, sizeof(setting_normal_input));
@@ -829,7 +862,16 @@ void AzCommon::get_keymap(JsonObject setting_obj) {
         }
     }
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
+    */
+}
 
+// REMAP に送る用のデータ作成
+void AzCommon::set_setting_remap() {
+
+    int i, j, k, m, at, s;
+    setting_normal_input normal_input;
+    setting_layer_move layer_move_input;
+    setting_mouse_move mouse_move_input;
     // Remapに送る用のデータ作成
     // Serial.printf("layer_max: %d    key_max: %d\n", layer_max, key_max);
     int buf_length = layer_max * key_max * 2;
@@ -1018,7 +1060,8 @@ void AzCommon::remap_save_setting_json() {
     this->clear_keymap();
 
     // 新しいキーマップをメモリ上に入れる
-    this->get_keymap(setting_obj);
+    this->get_keymap(setting_obj, "layers");
+    this->set_setting_remap(); // REMAPに送る用のデータ作成
 }
 
 // キーボードタイプの番号を取得する
@@ -1306,6 +1349,28 @@ setting_key_press AzCommon::get_key_setting(int layer_id, int key_num) {
     return r;
 }
 
+
+// レイヤーが存在するか確認
+bool AzCommon::soft_layers_exists(int layer_no) {
+    int i;
+    for (i=0; i<soft_setting_length; i++) {
+        if (soft_setting_press[i].layer == layer_no) return true;
+    }
+    return false;
+}
+
+// 指定したキーの入力設定オブジェクトを取得する
+setting_key_press AzCommon::get_soft_key_setting(int layer_id, int key_num) {
+    int i;
+    for (i=0; i<soft_setting_length; i++) {
+        if (soft_setting_press[i].layer == layer_id && soft_setting_press[i].key_num == key_num) return soft_setting_press[i];
+    }
+    setting_key_press r;
+    r.layer = -1;
+    r.key_num = -1;
+    r.action_type = -1;
+    return r;
+}
 
 //データをEEPROMから読み込む。保存データが無い場合デフォルトにする。
 void AzCommon::load_data() {

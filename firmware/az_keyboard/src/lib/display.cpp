@@ -44,6 +44,34 @@ void view_setting_sound(lv_obj_t * obj, lv_event_t event); // サウンド設定
 void view_setting_moniter(lv_obj_t * obj, lv_event_t event); // モニター設定画面表示
 void view_setting_menu_fnc(); // 設定メニュー表示
 
+void btmmtx_eve(lv_obj_t * obj, lv_event_t event) {
+        // const char * txt = lv_btnmatrix_get_active_btn_text(obj);
+		int ix = lv_btnmatrix_get_active_btn(obj);
+    if(event == LV_EVENT_VALUE_CHANGED) {
+	//	Serial.printf("LV_EVENT_VALUE_CHANGED: %d\n", ix);
+    // }else if(event == LV_EVENT_PRESSED) {
+	// 	Serial.printf("LV_EVENT_PRESSED: %d\n", ix);
+    // }else if(event == LV_EVENT_PRESSING) {
+	// 	Serial.printf("LV_EVENT_PRESSING: %d\n", ix);
+    // }else if(event == LV_EVENT_PRESS_LOST) {
+	//	Serial.printf("LV_EVENT_PRESS_LOST: %d\n", ix);
+    }else if(event == LV_EVENT_SHORT_CLICKED) {
+	 	Serial.printf("LV_EVENT_SHORT_CLICKED: %d\n", ix);
+    }else if(event == LV_EVENT_LONG_PRESSED) {
+		Serial.printf("LV_EVENT_LONG_PRESSED: %d\n", ix);
+    // }else if(event == LV_EVENT_LONG_PRESSED_REPEAT) {
+	//	Serial.printf("LV_EVENT_LONG_PRESSED_REPEAT: %d\n", ix);
+    }else if(event == LV_EVENT_CLICKED) {
+		Serial.printf("LV_EVENT_CLICKED: %d\n", ix);
+    // }else if(event == LV_EVENT_RELEASED) {
+	//	Serial.printf("LV_EVENT_RELEASED: %d\n", ix);
+    }
+}
+
+
+const char *btnm_map[16];
+
+
 //=====================================================================
 /*Read the touchpad*/
 bool my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data){
@@ -191,6 +219,39 @@ void reboot_setting_mode_alert(lv_obj_t * obj, lv_event_t event) {
     }
 }
 
+// マトリックスボタンテスト
+void view_btnmatrix(lv_obj_t * obj, lv_event_t event) {
+	// クリック以外のイベントは無視
+	if (event != LV_EVENT_CLICKED) return;
+
+	// 画面上のオブジェクト全て削除
+	lv_obj_clean(lv_scr_act());
+
+    int i, n;
+	n = 0;
+	for (i=0; i<soft_setting_length; i++) {
+		btnm_map[n] = soft_setting_press[i].key_name;
+		n++;
+		if ((i % 2) && (soft_setting_length - 1) > i) {
+			btnm_map[n] = "\n";
+			n++;
+		}
+	}
+	btnm_map[n] = "";
+    lv_obj_t * btnm1 = lv_btnmatrix_create(lv_scr_act(), NULL);
+    lv_btnmatrix_set_map(btnm1, btnm_map);
+    // lv_btnmatrix_set_btn_width(btnm1, 2, 2);        /*Make "Action1" twice as wide as "Action2"*/
+    // lv_btnmatrix_set_btn_ctrl(btnm1, 6, LV_BTNMATRIX_CTRL_CHECKABLE);
+    // lv_btnmatrix_set_btn_ctrl(btnm1, 7, LV_BTNMATRIX_CTRL_CHECK_STATE);
+	if (_disp_rotate == 0 || _disp_rotate == 2) {
+        lv_obj_set_size(btnm1, 240, 320);
+	} else {
+        lv_obj_set_size(btnm1, 320, 240);
+	}
+	lv_obj_align(btnm1, NULL, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_event_cb(btnm1, btmmtx_eve);
+}
+
 // キーボード変更画面クローズボタンイベント
 void view_keyboard_select_close(lv_obj_t * obj, lv_event_t event) {
 	if(event == LV_EVENT_CLICKED) { // クリック
@@ -328,6 +389,8 @@ void view_setting_menu_fnc() {
     lv_obj_set_event_cb(btn, view_setting_sound);
     btn = lv_list_add_btn(lv_list_obj, NULL, "設定モードで再起動");
     lv_obj_set_event_cb(btn, reboot_setting_mode_alert);
+    btn = lv_list_add_btn(lv_list_obj, NULL, "ボタンテスト");
+    lv_obj_set_event_cb(btn, view_btnmatrix);
     btn = lv_list_add_btn(lv_list_obj, "×", "閉じる");
     lv_obj_set_event_cb(btn, close_setting);
 
@@ -629,6 +692,8 @@ void view_setting_sound(lv_obj_t * obj, lv_event_t event) {
 }
 
 
+
+
 // マウスパッド操作画面
 void view_mouse_page() {
 	// 画面上のオブジェクト全て削除
@@ -675,6 +740,13 @@ void view_mouse_page() {
 		lv_obj_align(icon, NULL, LV_ALIGN_CENTER, 0, 0);
 	}
 
+	// 閉じるボタン
+	// lv_obj_t * btn5 = lv_btn_create(lv_scr_act(), NULL);
+	// lv_obj_set_size(btn5, 50, 50);
+	// lv_obj_align(btn5, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 10);
+	// // lv_obj_set_event_cb(btn5, view_setting_menu_ev);
+	// lv_obj_set_style_local_value_str(btn5, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "１");
+
 	// マウスパッド操作
 	mouse_pad_status = mouse_pad_setting.mouse_type;
 	// メニュー表示終了
@@ -683,6 +755,7 @@ void view_mouse_page() {
 	lvgl_loop_index = 2;
 	
 }
+
 
 // バックライト明るさアップ
 void moniter_menu_bright_ev(lv_obj_t * obj, lv_event_t event) {

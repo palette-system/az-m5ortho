@@ -176,6 +176,7 @@ struct setting_layer_move {
 struct setting_key_press {
     short layer; // どのレイヤーか
     short key_num; // どのキーか
+    char *key_name; // キーの名前
     short action_type; // 入力するタイプ
     short data_size; // データのサイズ
     char *data; // 入力データ
@@ -204,7 +205,8 @@ class AzCommon
         bool create_setting_json(); // デフォルトの設定json作成
         void load_setting_json(); // jsonデータロード
         void clear_keymap(); // キーマップ用に確保しているメモリを解放
-        void get_keymap(JsonObject setting_obj); // JSONデータからキーマップの情報を読み込む
+        void get_keymap(JsonObject setting_obj, char *key_name); // JSONデータからキーマップの情報を読み込む
+        void set_setting_remap(); // REMAP に送る用のデータ作成
         void remap_save_setting_json(); // REMAPで受け取ったデータをJSONデータに書き込む
         void get_keyboard_type_int(String t); // キーボードのタイプ番号を取得
         void get_option_type_int(JsonObject setting_obj); // オプションタイプの番号を取得
@@ -220,6 +222,8 @@ class AzCommon
         void pin_setup_sub_process(); // 入力ピン初期化のキーボード別の処理
         bool layers_exists(int layer_no); // レイヤーが存在するか確認
         setting_key_press get_key_setting(int layer_id, int key_num); // 指定したキーの入力設定を取得する
+        bool soft_layers_exists(int layer_no); // レイヤーが存在するか確認
+        setting_key_press get_soft_key_setting(int layer_id, int key_num); // 指定したキーの入力設定を取得する
         void load_data(); // EEPROMからデータをロードする
         void save_data(); // EEPROMに保存する
         void load_boot_count(); // 起動回数を取得してカウントアップする
@@ -368,6 +372,10 @@ extern AXP192 power;
 // キーが押された時の設定
 extern uint16_t setting_length;
 extern setting_key_press *setting_press;
+
+// ソフトキーが押された時の設定
+extern uint16_t soft_setting_length;
+extern setting_key_press *soft_setting_press;
 
 // remapに送る用のデータ
 extern uint8_t  *setting_remap;
