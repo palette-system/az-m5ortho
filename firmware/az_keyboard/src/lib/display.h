@@ -76,6 +76,7 @@ class Display
 		uint8_t  _qr_flag; // 打鍵QRコード表示中かどうか
 		Display();   // コンストラクタ
 		void begin(uint8_t disp_rotate); // 初期化
+		void view_top_page(); // 待ち受けページ表示
 		void view_full_image(uint8_t *image_data); // 画面いっぱいに画像を表示する
 		void view_full_black(); // 画面を真っ暗にする
 		void view_int(uint16_t x, uint16_t y, int v); // 数字を表示する

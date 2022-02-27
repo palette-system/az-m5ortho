@@ -4,9 +4,15 @@
 // キーが押された時の設定
 uint16_t setting_length;
 setting_key_press *setting_press;
+
 // ソフトキーが押された時の設定
 uint16_t soft_setting_length;
 setting_key_press *soft_setting_press;
+
+// ソフトキーが押された時入る変数(押されてない間は-1)
+int16_t soft_click_layer;
+int16_t soft_click_key;
+
 // remapに送る用のデータ
 uint8_t  *setting_remap;
 uint16_t  layer_max;
@@ -263,6 +269,9 @@ void AzCommon::common_start() {
     lvgl_loop_index = 0;
     // ディスプレイの向き
     disp_rotation = 0;
+    // ソフトキーが押された時入る変数
+    soft_click_layer = -1;
+    soft_click_key = -1;
     // 再生用バック処理
     xTaskCreatePinnedToCore(background_loop, "bgloop", 2048, NULL, 20, NULL, 0);
 }

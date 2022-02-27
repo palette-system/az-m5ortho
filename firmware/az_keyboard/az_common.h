@@ -377,6 +377,10 @@ extern setting_key_press *setting_press;
 extern uint16_t soft_setting_length;
 extern setting_key_press *soft_setting_press;
 
+// ソフトキーが押された時入る変数(押されてない間は-1)
+extern int16_t soft_click_layer;
+extern int16_t soft_click_key;
+
 // remapに送る用のデータ
 extern uint8_t  *setting_remap;
 extern uint16_t  layer_max;

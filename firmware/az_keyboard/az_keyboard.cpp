@@ -84,6 +84,9 @@ void AzKeyboard::start_keyboard() {
     send_move_x_buf = 0;
     send_move_y_buf = 0;
     send_move_index = 0;
+
+    // 画面待ち受け表示
+    disp->view_top_page();
 }
 
 // 各ユニットの初期化
@@ -119,6 +122,13 @@ void AzKeyboard::key_action_exec() {
                 ankeycls.key_up(i); // 暗記クラスに離したよを送る(暗記用)
             }
         }
+    }
+    // ソフトキー入力チェック
+    if (soft_click_layer >= 0 && soft_click_key >= 0) {
+        // 入力があればクリック処理実行
+        soft_key_click_action(soft_click_layer, soft_click_key);
+        soft_click_layer = -1;
+        soft_click_key = -1;
     }
 }
 
@@ -302,6 +312,76 @@ void AzKeyboard::send_string(char *send_char) {
     }
     // 全て離す
     bleKeyboard.releaseAll();
+}
+
+
+// ソフトキークリック時の動作
+void AzKeyboard::soft_key_click_action(int layer, int key_num) {
+    int i, m, k, r;
+    // キーの設定取得
+    setting_key_press key_set = common_cls.get_soft_key_setting(layer, key_num);
+    // キーの押された時の設定があるか確認
+    if (key_set.layer < 0 || key_set.key_num < 0 || key_set.action_type < 0) {
+        // 設定が無ければ何もしない
+        sound_cls.daken_down(0); // サウンドクラスに押したよを送る
+        return;
+    }
+    // キーが押された時の動作タイプ取得
+    int action_type = key_set.action_type;
+    // キーボードの接続が無ければ何もしない(レイヤー切り替え、WEBフック以外)
+    if (action_type != 3 && action_type != 4 && action_type != 6 && action_type != 7 && action_type != 8 && !bleKeyboard.isConnected()) {
+        sound_cls.daken_down(0); // サウンドクラスに押したよを送る
+        return;
+    }
+    int sound_type = 0;
+    // 動作タイプ別の動作
+    if (action_type == 1) {
+        // 通常キー入力
+        setting_normal_input normal_input;
+        memcpy(&normal_input, key_set.data, sizeof(setting_normal_input));
+        // キーを押す
+        for (i=0; i<normal_input.key_length; i++) {
+            if (normal_input.key[i] == 0x4005) { // ソフトキーは押しっぱなしが無いので何もしない
+                // マウススクロールボタン
+                // mouse_scroll_flag = true;
+            } else if (normal_input.key[i] & MOUSE_CODE) {
+                // マウスボタンだった場合
+                k = normal_input.key[i] - MOUSE_CODE;
+                bleKeyboard.mouse_press(k); // マウスボタンを押す
+                bleKeyboard.mouse_release(k); // マウスボタンを離す
+            } else {
+                // キーコードだった場合
+                bleKeyboard.press_raw(normal_input.key[i]); // キーを押す
+            }
+        }
+        // キーを離す
+        for (i=0; i<normal_input.key_length; i++) {
+            if (normal_input.key[i] != 0x4005 && !(normal_input.key[i] & MOUSE_CODE)) {
+                // キーコードだった場合
+                bleKeyboard.release_raw(normal_input.key[i]); // キーを離す
+                sound_type = normal_input.key[i]; // サウンドクラスに渡すキーコードを指定(最後の１キーのみ)
+            }
+        }
+
+    } else if (action_type == 2) {
+        // 固定テキストの入力
+        send_string(key_set.data); // 特定の文章を送る
+
+    } else if (action_type == 4) {
+        // webフック
+        send_webhook(key_set.data);
+        
+    } else if (action_type == 5) {
+        // マウス移動
+        setting_mouse_move mouse_move_input;
+        memcpy(&mouse_move_input, key_set.data, sizeof(setting_mouse_move));
+        bleKeyboard.mouse_move(mouse_move_input.x, mouse_move_input.y, 0, 0);
+
+    }
+
+    // サウンドクラスに押したよを送る
+    sound_cls.daken_down(sound_type);
+    
 }
 
 // キーが押された時の動作
@@ -924,11 +1004,14 @@ void AzKeyboard::loop_exec(void) {
     common_cls.key_old_copy();
 
     // タッチパネルマウス操作
+    // Serial.printf("mouse_pad_status: %D\n", mouse_pad_status);
     if (mouse_pad_status == 1) { // マウスパッド操作の時
         mouse_loop_pad();
     } else if (mouse_pad_status == 2) { // ジョイスティック操作の時
-          mouse_loop_joy();
-    } else if (mouse_pad_setting.mouse_type == mouse_pad_status) { // 操作なし設定で操作なしの時
+        mouse_loop_joy();
+    } else if (mouse_pad_status == 3) { // ソフトウェアキーの場合
+        disp->loop_exec(); // LVGLの表示をする
+    } else if (mouse_pad_status == 0) { // 操作なし設定で操作なしの時
         mouse_loop_none();
     }
 

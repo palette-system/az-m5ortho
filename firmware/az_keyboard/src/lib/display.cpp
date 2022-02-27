@@ -22,6 +22,10 @@ lv_img_dsc_t stimg_obj;
 bool stimg_load_fl;
 uint8_t _disp_rotate; // 画面の向き
 
+// マトリックスメニュー表示用のボタンデータ
+const char *btnm_map[16];
+// マトリックス長押しインデックス
+uint16_t mx_pressing_index;
 
 
 // リストオブジェクト
@@ -37,45 +41,51 @@ lv_obj_t * lv_text_obj;
 lv_obj_t * lv_text_obj_2;
 
 
-void view_mouse_page(); // マウスパッド画面表示
+void _view_top_page(); // トップページ画面表示
+void view_soft_key_page(); // ソフトウェアキー画面表示
 void view_setting_mousepad(lv_obj_t * obj, lv_event_t event); // マウスパッド設定画面表示
 void view_setting_led(lv_obj_t * obj, lv_event_t event); // バックライト設定画面表示
 void view_setting_sound(lv_obj_t * obj, lv_event_t event); // サウンド設定画面表示
 void view_setting_moniter(lv_obj_t * obj, lv_event_t event); // モニター設定画面表示
 void view_setting_menu_fnc(); // 設定メニュー表示
 
+
+// 
 void btmmtx_eve(lv_obj_t * obj, lv_event_t event) {
-        // const char * txt = lv_btnmatrix_get_active_btn_text(obj);
-		int ix = lv_btnmatrix_get_active_btn(obj);
-    if(event == LV_EVENT_VALUE_CHANGED) {
-	//	Serial.printf("LV_EVENT_VALUE_CHANGED: %d\n", ix);
-    // }else if(event == LV_EVENT_PRESSED) {
-	// 	Serial.printf("LV_EVENT_PRESSED: %d\n", ix);
-    // }else if(event == LV_EVENT_PRESSING) {
-	// 	Serial.printf("LV_EVENT_PRESSING: %d\n", ix);
-    // }else if(event == LV_EVENT_PRESS_LOST) {
-	//	Serial.printf("LV_EVENT_PRESS_LOST: %d\n", ix);
-    }else if(event == LV_EVENT_SHORT_CLICKED) {
-	 	Serial.printf("LV_EVENT_SHORT_CLICKED: %d\n", ix);
-    }else if(event == LV_EVENT_LONG_PRESSED) {
-		Serial.printf("LV_EVENT_LONG_PRESSED: %d\n", ix);
-    // }else if(event == LV_EVENT_LONG_PRESSED_REPEAT) {
-	//	Serial.printf("LV_EVENT_LONG_PRESSED_REPEAT: %d\n", ix);
-    }else if(event == LV_EVENT_CLICKED) {
-		Serial.printf("LV_EVENT_CLICKED: %d\n", ix);
-    // }else if(event == LV_EVENT_RELEASED) {
-	//	Serial.printf("LV_EVENT_RELEASED: %d\n", ix);
+	// const char * txt = lv_btnmatrix_get_active_btn_text(obj);
+	int ix;
+	// LV_EVENT_PRESSED 押した時
+	// LV_EVENT_PRESSING 押されてる間発生し続ける
+	// LV_EVENT_SHORT_CLICKED 短押し(離された時1回)
+	// LV_EVENT_LONG_PRESSED 長押し(長い判定された時1回)
+	// LV_EVENT_LONG_PRESSED_REPEAT 長押し判定された後発生し続ける
+	// LV_EVENT_CLICKED クリック(離された時1回、短押し判定の時も発生する)
+
+    if (event == LV_EVENT_PRESSED) { // 押された時
+		mx_pressing_index = 0; // マトリックス長押しインデックス初期化
+	}
+    if(event == LV_EVENT_CLICKED) { // 離された時
+		ix = lv_btnmatrix_get_active_btn(obj);
+		soft_click_layer = 0;
+		soft_click_key = ix;
     }
+	if (event == LV_EVENT_PRESSING) { // 押し続けてる間
+		mx_pressing_index++;
+		if (mx_pressing_index > 30) { // 閾値を超えたら設定画面表示
+			M5.Axp.SetLDOEnable(3, true);
+			delay(100);
+			M5.Axp.SetLDOEnable(3, false);
+			while (M5.Touch.ispressed()) delay(100);
+			disp->view_setting_menu();
+		}
+	} 
 }
-
-
-const char *btnm_map[16];
-
 
 //=====================================================================
 /*Read the touchpad*/
 bool my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data){
-	if (mouse_pad_status >= 0) {
+	// 操作なし、タッチパッド、ジョイスティックの場合はタッチ反応無視
+	if (mouse_pad_status == 0 || mouse_pad_status == 1 || mouse_pad_status == 2) {
 		data->state = LV_INDEV_STATE_REL;
 		return false;
 	}
@@ -119,8 +129,8 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 // 設定メニュー閉じるイベント
 void close_setting(lv_obj_t * obj, lv_event_t event) {
 	if (event == LV_EVENT_CLICKED) { // クリック
-		// マウスパッド画面表示
-        view_mouse_page();
+		// トップページ画面表示
+        _view_top_page();
 	}
 }
 
@@ -219,38 +229,6 @@ void reboot_setting_mode_alert(lv_obj_t * obj, lv_event_t event) {
     }
 }
 
-// マトリックスボタンテスト
-void view_btnmatrix(lv_obj_t * obj, lv_event_t event) {
-	// クリック以外のイベントは無視
-	if (event != LV_EVENT_CLICKED) return;
-
-	// 画面上のオブジェクト全て削除
-	lv_obj_clean(lv_scr_act());
-
-    int i, n;
-	n = 0;
-	for (i=0; i<soft_setting_length; i++) {
-		btnm_map[n] = soft_setting_press[i].key_name;
-		n++;
-		if ((i % 2) && (soft_setting_length - 1) > i) {
-			btnm_map[n] = "\n";
-			n++;
-		}
-	}
-	btnm_map[n] = "";
-    lv_obj_t * btnm1 = lv_btnmatrix_create(lv_scr_act(), NULL);
-    lv_btnmatrix_set_map(btnm1, btnm_map);
-    // lv_btnmatrix_set_btn_width(btnm1, 2, 2);        /*Make "Action1" twice as wide as "Action2"*/
-    // lv_btnmatrix_set_btn_ctrl(btnm1, 6, LV_BTNMATRIX_CTRL_CHECKABLE);
-    // lv_btnmatrix_set_btn_ctrl(btnm1, 7, LV_BTNMATRIX_CTRL_CHECK_STATE);
-	if (_disp_rotate == 0 || _disp_rotate == 2) {
-        lv_obj_set_size(btnm1, 240, 320);
-	} else {
-        lv_obj_set_size(btnm1, 320, 240);
-	}
-	lv_obj_align(btnm1, NULL, LV_ALIGN_CENTER, 0, 0);
-    lv_obj_set_event_cb(btnm1, btmmtx_eve);
-}
 
 // キーボード変更画面クローズボタンイベント
 void view_keyboard_select_close(lv_obj_t * obj, lv_event_t event) {
@@ -381,7 +359,7 @@ void view_setting_menu_fnc() {
     lv_obj_set_event_cb(btn, view_keyboard_select_event);
     btn = lv_list_add_btn(lv_list_obj, NULL, "画面設定");
     lv_obj_set_event_cb(btn, view_setting_moniter);
-    btn = lv_list_add_btn(lv_list_obj, NULL, "マウス操作");
+    btn = lv_list_add_btn(lv_list_obj, NULL, "待ち受け操作");
     lv_obj_set_event_cb(btn, view_setting_mousepad);
     btn = lv_list_add_btn(lv_list_obj, NULL, "バックライト設定");
     lv_obj_set_event_cb(btn, view_setting_led);
@@ -389,8 +367,6 @@ void view_setting_menu_fnc() {
     lv_obj_set_event_cb(btn, view_setting_sound);
     btn = lv_list_add_btn(lv_list_obj, NULL, "設定モードで再起動");
     lv_obj_set_event_cb(btn, reboot_setting_mode_alert);
-    btn = lv_list_add_btn(lv_list_obj, NULL, "ボタンテスト");
-    lv_obj_set_event_cb(btn, view_btnmatrix);
     btn = lv_list_add_btn(lv_list_obj, "×", "閉じる");
     lv_obj_set_event_cb(btn, close_setting);
 
@@ -449,7 +425,7 @@ void view_setting_mousepad(lv_obj_t * obj, lv_event_t event) {
 
 	// window作成
     lv_obj_t * win = lv_win_create(lv_scr_act(), NULL);
-    lv_win_set_title(win, "マウス操作");
+    lv_win_set_title(win, "待ち受け操作");
 
 	// テキスト
     lv_obj_t * txt = lv_label_create(win, NULL);
@@ -458,7 +434,7 @@ void view_setting_mousepad(lv_obj_t * obj, lv_event_t event) {
 
 	// セレクトメニュー表示
 	lv_drop_down_obj = lv_dropdown_create(win, NULL);
-	lv_dropdown_set_options(lv_drop_down_obj, "なし\nマウスパッド\nジョイスティック");
+	lv_dropdown_set_options(lv_drop_down_obj, "なし\nマウスパッド\nジョイスティック\nソフトウェアキー");
 	lv_obj_set_size(lv_drop_down_obj, 180, 34);
 	lv_dropdown_set_selected(lv_drop_down_obj, mouse_pad_setting.mouse_type);
 	lv_dropdown_set_symbol(lv_drop_down_obj, "▼");
@@ -695,13 +671,21 @@ void view_setting_sound(lv_obj_t * obj, lv_event_t event) {
 
 
 // マウスパッド操作画面
-void view_mouse_page() {
-	// 画面上のオブジェクト全て削除
-	lv_obj_clean(lv_scr_act());
-	uint8_t head_data[4];
+void _view_top_page() {
 	
 	// 待ち受け画面用の画面の明るさに設定
 	common_cls.moniter_brightness(0);
+
+	// ソフトウェアキーが設定されていたらソフトウェアキー画面表示
+	Serial.printf("mouse_pad_setting.mouse_type: %D\n", mouse_pad_setting.mouse_type);
+	if (mouse_pad_setting.mouse_type == 3) {
+		view_soft_key_page();
+		return;
+	}
+
+	// 画面上のオブジェクト全て削除
+	lv_obj_clean(lv_scr_act());
+	uint8_t head_data[4];
 
 	// 待ち受け画像表示
 	char stimg_file_name[32];
@@ -754,6 +738,43 @@ void view_mouse_page() {
 	// 表示インデックス
 	lvgl_loop_index = 2;
 	
+}
+
+// ソフトウェアキー画面表示
+void view_soft_key_page() {
+	// 画面上のオブジェクト全て削除
+	lv_obj_clean(lv_scr_act());
+
+    int i, n;
+	n = 0;
+	for (i=0; i<soft_setting_length; i++) {
+		btnm_map[n] = soft_setting_press[i].key_name;
+		n++;
+		if ((i % 2) && (soft_setting_length - 1) > i) {
+			btnm_map[n] = "\n";
+			n++;
+		}
+	}
+	btnm_map[n] = "";
+    lv_obj_t * btnm1 = lv_btnmatrix_create(lv_scr_act(), NULL);
+    lv_btnmatrix_set_map(btnm1, btnm_map);
+    // lv_btnmatrix_set_btn_width(btnm1, 2, 2); // 指定したボタンの幅の割合を指定
+    // lv_btnmatrix_set_btn_ctrl(btnm1, 6, LV_BTNMATRIX_CTRL_CHECKABLE); // トグルボタン
+    // lv_btnmatrix_set_btn_ctrl(btnm1, 7, LV_BTNMATRIX_CTRL_CHECK_STATE); // トグル選択しっぱなし固定
+	if (_disp_rotate == 0 || _disp_rotate == 2) {
+        lv_obj_set_size(btnm1, 240, 320);
+	} else {
+        lv_obj_set_size(btnm1, 320, 240);
+	}
+	lv_obj_align(btnm1, NULL, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_event_cb(btnm1, btmmtx_eve);
+
+	// マウスパッド操作
+	mouse_pad_status = mouse_pad_setting.mouse_type;
+	// メニュー表示終了
+	menu_mode_flag = false;
+	// 表示インデックス
+	lvgl_loop_index = 0;
 }
 
 
@@ -846,24 +867,6 @@ void view_setting_moniter(lv_obj_t * obj, lv_event_t event) {
 }
 
 
-// 渡した画像データを画面に表示する
-void Display::view_raw_image(uint8_t *img_data) {
-	stimg_obj.header.always_zero = 0;
-	stimg_obj.header.cf = LV_IMG_CF_TRUE_COLOR;
-	stimg_obj.header.w = (img_data[1] >> 2) | ((img_data[2] & 0x1F) << 6);
-	stimg_obj.header.h = ((img_data[2] & 0xE0) >> 5) | (img_data[3] << 3);
-	stimg_obj.data_size = stimg_obj.header.w * stimg_obj.header.h * 2;
-	stimg_obj.data = (uint8_t *)&img_data[4];
-
-	// 画面上のオブジェクト全て削除
-	lv_obj_clean(lv_scr_act());
-
-	// 画像オブジェクト作成
-	lv_obj_t * icon = lv_img_create(lv_scr_act(), NULL);
-	lv_img_set_src(icon, &stimg_obj);
-	lv_obj_align(icon, NULL, LV_ALIGN_CENTER, 0, 0);
-}
-
 
 
 
@@ -887,7 +890,12 @@ void Display::begin(uint8_t disp_rotate) {
 	  _disp_rotate = disp_rotate;
 	}
 	lv_setup();
-	view_mouse_page();
+	// _view_top_page();
+}
+
+// 待ち受けページ表示
+void Display::view_top_page() {
+	_view_top_page();
 }
 
 // 設定メニュー表示
@@ -938,6 +946,23 @@ void Display::view_int(uint16_t x, uint16_t y, int v) {
 	
 }
 
+// 渡した画像データを画面に表示する
+void Display::view_raw_image(uint8_t *img_data) {
+	stimg_obj.header.always_zero = 0;
+	stimg_obj.header.cf = LV_IMG_CF_TRUE_COLOR;
+	stimg_obj.header.w = (img_data[1] >> 2) | ((img_data[2] & 0x1F) << 6);
+	stimg_obj.header.h = ((img_data[2] & 0xE0) >> 5) | (img_data[3] << 3);
+	stimg_obj.data_size = stimg_obj.header.w * stimg_obj.header.h * 2;
+	stimg_obj.data = (uint8_t *)&img_data[4];
+
+	// 画面上のオブジェクト全て削除
+	lv_obj_clean(lv_scr_act());
+
+	// 画像オブジェクト作成
+	lv_obj_t * icon = lv_img_create(lv_scr_act(), NULL);
+	lv_img_set_src(icon, &stimg_obj);
+	lv_obj_align(icon, NULL, LV_ALIGN_CENTER, 0, 0);
+}
 
 // データを流し込んで画像を表示する(ヘッダ)
 void Display::viewBMPspi_head() {
