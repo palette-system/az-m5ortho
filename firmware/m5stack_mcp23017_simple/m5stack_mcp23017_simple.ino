@@ -5,7 +5,7 @@
 #include <Adafruit_MCP23X17.h>
 
 // I/Oエキスパンダの数
-#define  IOMCP_LENGTH  4
+#define  IOMCP_LENGTH  1
 
 // チェックするキーの数
 #define  INPUT_KEY_LENGTH  (16 * IOMCP_LENGTH)
@@ -13,7 +13,7 @@
 
 // I2Cのピン
 #define IOMCP_SDA  26
-#define IOMCP_SCL  14
+#define IOMCP_SCL  25
 
 // I/Oエキスパンダ用
 Adafruit_MCP23X17 *iomcp;

@@ -41,7 +41,7 @@
 
 
 // ファームウェアのバージョン文字
-#define FIRMWARE_VERSION   "000204"
+#define FIRMWARE_VERSION   "000206"
 
 // EEPROMに保存しているデータのバージョン文字列
 #define EEP_DATA_VERSION    "AZM022"
@@ -338,6 +338,8 @@ extern int default_layer_no;
 extern int select_layer_no;
 extern int last_select_layer_key; // レイヤーボタン最後に押されたボタン(これが離されたらレイヤーリセット)
 
+// display 初期化フラグ
+extern bool disp_enable;
 
 // 押している最中のキーデータ
 extern press_key_data press_key_list[PRESS_KEY_MAX];

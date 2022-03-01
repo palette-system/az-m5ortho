@@ -55,6 +55,9 @@ moniterset_data_set moniter_setting;
 // 液晶表示用オブジェクト
 Display *disp;
 
+// display 初期化フラグ
+bool disp_enable;
+
 // rgb_led制御用クラス
 Neopixel rgb_led_cls = Neopixel();
 
@@ -211,10 +214,24 @@ static void background_loop(void* arg) {
     unsigned long start_time = millis();
     // サウンドを制御する定期処理
     sound_cls.loop_exec();
+    // LED用定期処理
+    // rgb_led_cls.rgb_led_loop_exec();
     unsigned long work_time = millis() - start_time;
-    if (work_time < 10) { vTaskDelay(10 - work_time); }
+    if (work_time < 20) { vTaskDelay(20 - work_time); }
   }
 }
+
+// 画面描画ループ
+static void background_disp_loop(void* arg) {
+  while (true) {
+    unsigned long start_time = millis();
+    if (!menu_mode_flag && disp_enable) lv_task_handler();
+    unsigned long work_time = millis() - start_time;
+    if (work_time < 30) { vTaskDelay(30 - work_time); }
+  }
+}
+
+
 
 // コンストラクタ
 AzCommon::AzCommon() {
@@ -269,11 +286,15 @@ void AzCommon::common_start() {
     lvgl_loop_index = 0;
     // ディスプレイの向き
     disp_rotation = 0;
+    // ディスプレイ初期化フラグ
+    disp_enable = false;
     // ソフトキーが押された時入る変数
     soft_click_layer = -1;
     soft_click_key = -1;
     // 再生用バック処理
     xTaskCreatePinnedToCore(background_loop, "bgloop", 2048, NULL, 20, NULL, 0);
+    // ディスプレイループ
+    xTaskCreatePinnedToCore(background_disp_loop, "dploop", 2048, NULL, 20, NULL, 1);
 }
 
 // リスタート用ループ処理

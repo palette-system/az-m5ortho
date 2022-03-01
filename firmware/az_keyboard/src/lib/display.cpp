@@ -890,6 +890,7 @@ void Display::begin(uint8_t disp_rotate) {
 	  _disp_rotate = disp_rotate;
 	}
 	lv_setup();
+	// disp_enable = true;
 	// _view_top_page();
 }
 

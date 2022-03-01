@@ -47,6 +47,7 @@ void BleKeyboardJIS::begin(std::string deviceName, std::string deviceManufacture
   this->deviceName = deviceName;
   this->deviceManufacturer = deviceManufacturer;
   xTaskCreate(this->taskServer, "server", 20000, (void *)this, 5, NULL); // BLE HID 開始処理
+  // xTaskCreatePinnedToCore(this->taskServer, "ble", 20000, (void *)this, 5, NULL, 0);
 };
 
 // BLEキーボード終了

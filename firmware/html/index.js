@@ -196,6 +196,16 @@ mst.browser_btn_control_remove = function() {
     window.removeEventListener("beforeunload", mst.beforeunload_func, false);
 };
 
+// 半角文字のみかチェック
+mst.is_half_str = function(str){
+  if (!str) return true; // 文字が空ならチェックしない
+  if(str.match(/^[A-Za-z0-9!"#$%&'()\*\+\-\.,\/:;<=>?@\[\\\]^_`{|}~]*$/)){
+    return true;
+  }else{
+    return false;
+  }
+}
+
 // 設定JSON取得
 mst.get_setting_json = function() {
     // 設定JSON取得
@@ -825,7 +835,7 @@ mst.check_ascii = function(elm){
     for(i=0 ; i<txt.length ; i++){
         if(escape(txt.charAt(i)).length >= 4){
             alert("半角英数字を入力してください。");
-            elm.value = "";
+            // elm.value = "";
             return false;
         }
     }
@@ -835,7 +845,7 @@ mst.check_ascii = function(elm){
 // テキスト内容変更イベント
 mst.text_on_change = function() {
     var obj = $("key_text");
-    mst.check_ascii(obj);
+    if (!mst.check_ascii(obj)) obj.value = "";
     mst.key_edit_data.press.text = obj.value;
 };
 
@@ -885,9 +895,9 @@ mst.view_key_setting = function(key_id) {
     if (mst.key_edit_type == 0) {
         s += "<tr><td colspan='2'><b>キー番号：</b> <font style='font-size: 40px;'>" + mst.key_edit_kid + "</font></td></tr>";
     } else if (mst.key_edit_type == 1) {
-        st = "font-size: 30px; width: 320px; border: 3px solid black;";
+        st = "font-size: 30px; width: 320px; border: 3px solid black;ime-mode:disabled;";
         s += "<tr><td colspan='2'><b>表示名：</b> ";
-        s += "<input type='text' id='key_name_txt' style='"+st+"' value='" +  mst.key_edit_data.name + "'>";
+        s += "<input type='text' id='key_name_txt' style='"+st+"' value='" +  mst.key_edit_data.name + "' onChange='javascript:mst.check_ascii(this);mst.key_edit_data.name=this.value;'>";
         s += "</td></tr>";
     }
     s += "<tr><td colspan='2' style='padding: 20px 0;'><hr style='"+hrst+"'></td></tr>";
@@ -1141,8 +1151,12 @@ mst.key_setting_btn_click = function(type_id) {
         // ソフトウェアキーは名前も入れる
         if (mst.key_edit_type == 1) {
             n = $("key_name_txt").value;
-            if (n.length > 6) {
-                set_html("info_box", "表示名は6文字までです");
+            if (!mst.is_half_str(n)) {
+                set_html("info_box", "表示名は半角英数字で指定して下さい");
+                return;
+            }
+            if (n.length > 12) {
+                set_html("info_box", "表示名は12文字までです");
                 return;
             }
             s.name = n;

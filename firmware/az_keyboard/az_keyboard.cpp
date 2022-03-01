@@ -352,6 +352,7 @@ void AzKeyboard::soft_key_click_action(int layer, int key_num) {
             } else {
                 // キーコードだった場合
                 bleKeyboard.press_raw(normal_input.key[i]); // キーを押す
+                sound_type = normal_input.key[i];
             }
         }
         // キーを離す
@@ -362,13 +363,16 @@ void AzKeyboard::soft_key_click_action(int layer, int key_num) {
                 sound_type = normal_input.key[i]; // サウンドクラスに渡すキーコードを指定(最後の１キーのみ)
             }
         }
+        sound_cls.daken_down(sound_type); // サウンドクラスに押したよを送る
 
     } else if (action_type == 2) {
         // 固定テキストの入力
+        sound_cls.daken_down(0); // サウンドクラスに押したよを送る
         send_string(key_set.data); // 特定の文章を送る
 
     } else if (action_type == 4) {
         // webフック
+        sound_cls.daken_down(0); // サウンドクラスに押したよを送る
         send_webhook(key_set.data);
         
     } else if (action_type == 5) {
@@ -376,11 +380,9 @@ void AzKeyboard::soft_key_click_action(int layer, int key_num) {
         setting_mouse_move mouse_move_input;
         memcpy(&mouse_move_input, key_set.data, sizeof(setting_mouse_move));
         bleKeyboard.mouse_move(mouse_move_input.x, mouse_move_input.y, 0, 0);
+        sound_cls.daken_down(0); // サウンドクラスに押したよを送る
 
     }
-
-    // サウンドクラスに押したよを送る
-    sound_cls.daken_down(sound_type);
     
 }
 
@@ -461,9 +463,13 @@ void AzKeyboard::key_down_action(int key_num) {
                 ESP_LOGD(LOG_TAG, "key press : %D %D\r\n", key_num, normal_input.key[i]);
             }
         }
+        // サウンドクラスに押したよを送る
+        sound_cls.daken_down(sound_type);
 
     } else if (action_type == 2) {
         // 固定テキストの入力
+        // サウンドクラスに押したよを送る
+        sound_cls.daken_down(sound_type);
         send_string(key_set.data); // 特定の文章を送る
         // キー押したよリストに追加
         press_key_list_push(action_type, key_num, -1, select_layer_no, -1);
@@ -484,9 +490,13 @@ void AzKeyboard::key_down_action(int key_num) {
         // キー押したよリストに追加
         press_key_list_push(action_type, key_num, -1, m, -1);
         ESP_LOGD(LOG_TAG, "key press layer : %D %02x %D\r\n", key_num, layer_move_input.layer_type, layer_move_input.layer_id);
+        // サウンドクラスに押したよを送る
+        sound_cls.daken_down(sound_type);
 
     } else if (action_type == 4) {
         // webフック
+        // サウンドクラスに押したよを送る
+        sound_cls.daken_down(sound_type);
         send_webhook(key_set.data);
         
     } else if (action_type == 5) {
@@ -499,12 +509,16 @@ void AzKeyboard::key_down_action(int key_num) {
             mouse_move_input.speed);
         // キー押したよリストに追加
         press_key_list_push(action_type, key_num, -1, select_layer_no, -1);
+        // サウンドクラスに押したよを送る
+        sound_cls.daken_down(sound_type);
 
     } else if (action_type == 6) {
         // 暗記ボタン
         ankeycls.ankey_down(select_layer_no, key_num);
         // キー押したよリストに追加
         press_key_list_push(action_type, key_num, -1, select_layer_no, -1);
+        // サウンドクラスに押したよを送る
+        sound_cls.daken_down(sound_type);
 
     } else if (action_type == 7 && ankeycls.ankey_flag == 0) {
         // LED設定ボタン(暗記処理中は動作無視)
@@ -525,6 +539,8 @@ void AzKeyboard::key_down_action(int key_num) {
             // 光らせ方変更
             rgb_led_cls.setting_shine_type();
         }
+        // サウンドクラスに押したよを送る
+        sound_cls.daken_down(sound_type);
 
     } else if (action_type == 8 && ankeycls.ankey_flag == 0) {
         // 打鍵設定ボタン(暗記処理中は動作無視)
@@ -544,13 +560,13 @@ void AzKeyboard::key_down_action(int key_num) {
             // 打鍵数をファイルに保存
             dakeycls.save_dakey(1);
         }
+        // サウンドクラスに押したよを送る
+        sound_cls.daken_down(sound_type);
     }
 
     // 拡張メソッド実行
     my_function.key_press(key_num, key_set);
 
-    // サウンドクラスに押したよを送る
-    sound_cls.daken_down(sound_type);
     
 }
 
@@ -968,7 +984,10 @@ void AzKeyboard::mouse_loop_none() {
 // 定期実行の処理
 void AzKeyboard::loop_exec(void) {
   unsigned long n;
+  unsigned long lix;
   n = millis();
+  lix = 0;
+  disp_enable = true;
   while (true) {
 
     // 入力モードが変わっていたら変更
@@ -1010,7 +1029,7 @@ void AzKeyboard::loop_exec(void) {
     } else if (mouse_pad_status == 2) { // ジョイスティック操作の時
         mouse_loop_joy();
     } else if (mouse_pad_status == 3) { // ソフトウェアキーの場合
-        disp->loop_exec(); // LVGLの表示をする
+        // if ((lix % 2) == 0) disp->loop_exec(); // LVGLの表示をする
     } else if (mouse_pad_status == 0) { // 操作なし設定で操作なしの時
         mouse_loop_none();
     }
@@ -1030,6 +1049,9 @@ void AzKeyboard::loop_exec(void) {
 
     // リスタート用ループ処理
     common_cls.restart_loop();
+
+    lix++;
+    if (lix >= 256) lix = 0;
 
     vTaskDelay(7);
 
