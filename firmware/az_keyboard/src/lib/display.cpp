@@ -186,6 +186,11 @@ void lv_setup() {
   indev_drv.read_cb = my_touchpad_read;
   lv_indev_drv_register(&indev_drv);
   
+  int i;
+  for (i=0; i<16; i++) {
+	  btnm_map[i] = new char[24];
+	  btnm_map[i] = "";
+  }
   // init spiffs system driver
   // init_file_system_driver();
 	stimg_load_fl = false;
