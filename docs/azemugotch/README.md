@@ -27,5 +27,6 @@
 ![写真2](/images/emugotch/booth_4.jpg)
 ![写真3](/images/emugotch/booth_2.jpg)
 ![写真4](/images/emugotch/booth_color.jpg)
+![写真5](/images/emugotch/booth_5.jpg)
 
 
