@@ -277,6 +277,10 @@ void view_keyboard_select_exec(lv_obj_t * obj, lv_event_t event) {
 
 // キーボード選択画面表示(select_mode = 0 設定メニューから来た / 1 初期起動時のキーボード選択)
 void view_keyboard_select(int select_mode) {
+
+	// モニタ描画停止
+	disp_enable = false;
+
 	// 画面上のオブジェクト全て削除
 	lv_obj_clean(lv_scr_act());
 	
@@ -321,6 +325,9 @@ void view_keyboard_select(int select_mode) {
 		lv_obj_set_event_cb(btn2, view_keyboard_select_close);
 		lv_obj_set_style_local_value_str(btn2, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "閉じる");
 	}
+
+	// モニタ描画開始
+	disp_enable = true;
 }
 
 // キーボード選択ボタンイベント
@@ -333,6 +340,10 @@ void view_keyboard_select_event(lv_obj_t * obj, lv_event_t event) {
 
 // 設定メニュー画面表示
 void view_setting_menu_fnc() {
+
+	// モニタ描画停止
+	disp_enable = false;
+
 	// 画面上のオブジェクト全て削除
 	lv_obj_clean(lv_scr_act());
 
@@ -377,8 +388,12 @@ void view_setting_menu_fnc() {
 
 	// マウスパッド操作停止
 	mouse_pad_status = -1;
+
 	// メニュー表示中にする
 	menu_mode_flag = true;
+
+	// モニタ描画開始
+	disp_enable = true;
 }
 
 // マウスパッド設定画面決定クリック
@@ -424,6 +439,9 @@ void change_mousepad_speed(lv_obj_t * obj, lv_event_t event) {
 void view_setting_mousepad(lv_obj_t * obj, lv_event_t event) {
 	// クリック以外のイベントは無視
 	if (event != LV_EVENT_CLICKED) return;
+
+	// モニタ描画停止
+	disp_enable = false;
 
 	// 画面上のオブジェクト全て削除
 	lv_obj_clean(lv_scr_act());
@@ -481,6 +499,9 @@ void view_setting_mousepad(lv_obj_t * obj, lv_event_t event) {
 
 	// ドラッグした時だけスクロールバー表示
 	// lv_win_set_scrollbar_mode(win, LV_SCRLBAR_MODE_DRAG);
+
+	// モニタ描画開始
+	disp_enable = true;
 }
 
 // バックライトON/OFF
@@ -522,6 +543,9 @@ void led_color_type(lv_obj_t * obj, lv_event_t event) {
 void view_setting_led(lv_obj_t * obj, lv_event_t event) {
 	// クリック以外のイベントは無視
 	if (event != LV_EVENT_CLICKED) return;
+
+	// モニタ描画停止
+	disp_enable = false;
 
 	// 画面上のオブジェクト全て削除
 	lv_obj_clean(lv_scr_act());
@@ -584,6 +608,8 @@ void view_setting_led(lv_obj_t * obj, lv_event_t event) {
 	lv_obj_set_event_cb(btn5, view_setting_menu_ev);
 	lv_obj_set_style_local_value_str(btn5, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "閉じる");
 	
+	// モニタ描画開始
+	disp_enable = true;
 }
 
 // サウンドON/OFF
@@ -616,6 +642,9 @@ void sound_key_type(lv_obj_t * obj, lv_event_t event) {
 void view_setting_sound(lv_obj_t * obj, lv_event_t event) {
 	// クリック以外のイベントは無視
 	if (event != LV_EVENT_CLICKED) return;
+
+	// モニタ描画停止
+	disp_enable = false;
 
 	// 画面上のオブジェクト全て削除
 	lv_obj_clean(lv_scr_act());
@@ -670,6 +699,8 @@ void view_setting_sound(lv_obj_t * obj, lv_event_t event) {
 	lv_obj_set_event_cb(btn5, view_setting_menu_ev);
 	lv_obj_set_style_local_value_str(btn5, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "閉じる");
 	
+	// モニタ描画開始
+	disp_enable = true;
 }
 
 
@@ -687,6 +718,9 @@ void _view_top_page() {
 		view_soft_key_page();
 		return;
 	}
+
+	// モニタ描画停止
+	disp_enable = false;
 
 	// 画面上のオブジェクト全て削除
 	lv_obj_clean(lv_scr_act());
@@ -742,11 +776,16 @@ void _view_top_page() {
 	menu_mode_flag = false;
 	// 表示インデックス
 	lvgl_loop_index = 2;
+	// モニタ描画開始
+	disp_enable = true;
 	
 }
 
 // ソフトウェアキー画面表示
 void view_soft_key_page() {
+	// モニタ描画停止
+	disp_enable = false;
+
 	// 画面上のオブジェクト全て削除
 	lv_obj_clean(lv_scr_act());
 
@@ -780,6 +819,8 @@ void view_soft_key_page() {
 	menu_mode_flag = false;
 	// 表示インデックス
 	lvgl_loop_index = 0;
+	// モニタ描画開始
+	disp_enable = true;
 }
 
 

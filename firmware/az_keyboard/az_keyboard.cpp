@@ -840,7 +840,7 @@ void AzKeyboard::mouse_loop_joy() {
             last_touch_x = x;
             last_touch_y = y;
             last_touch_index++;
-            if (touch_send_count == 0 && last_touch_index > 70) {
+            if (touch_send_count == 0 && last_touch_index > 90) {
                 M5.Axp.SetLDOEnable(3, true);
                 delay(100);
                 M5.Axp.SetLDOEnable(3, false);
@@ -912,7 +912,7 @@ void AzKeyboard::mouse_loop_pad() {
             start_touch_y = y;
             last_touch_index++;
             // マウス移動無しの長押しだった場合設定メニュー表示
-            if (touch_send_count == 0 && last_touch_index > 70) {
+            if (touch_send_count == 0 && last_touch_index > 90) {
                 M5.Axp.SetLDOEnable(3, true);
                 delay(100);
                 M5.Axp.SetLDOEnable(3, false);
@@ -933,10 +933,11 @@ void AzKeyboard::mouse_loop_pad() {
         last_touch_index = -1;
     }
     if (send_move_x_buf != 0 || send_move_y_buf != 0) send_move_index++;
-    if (send_move_index > 3) {
+    if (send_move_index > 1) {
         bleKeyboard.mouse_move(send_move_x_buf, send_move_y_buf, 0, 0);
         send_move_x_buf = 0;
         send_move_y_buf = 0;
+        send_move_index = 0;
     }
 }
 
@@ -965,7 +966,7 @@ void AzKeyboard::mouse_loop_none() {
             start_touch_x = x;
             start_touch_y = y;
             last_touch_index++;
-            if (touch_send_count == 0 && last_touch_index > 70) {
+            if (touch_send_count == 0 && last_touch_index > 90) {
                 M5.Axp.SetLDOEnable(3, true);
                 delay(100);
                 M5.Axp.SetLDOEnable(3, false);
@@ -987,7 +988,6 @@ void AzKeyboard::loop_exec(void) {
   unsigned long lix;
   n = millis();
   lix = 0;
-  disp_enable = true;
   while (true) {
 
     // 入力モードが変わっていたら変更
