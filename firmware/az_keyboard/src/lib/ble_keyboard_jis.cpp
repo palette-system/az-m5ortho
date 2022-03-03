@@ -204,14 +204,14 @@ unsigned short BleKeyboardJIS::modifiers_press(unsigned short k) {
     this->_keyReport.modifiers |= 0x02; // the left shift modifier
     k &= 0xFF;
   }
-  if (k == 224) this->_keyReport.modifiers |= 0x01; // LEFT Ctrl
-  if (k == 228) this->_keyReport.modifiers |= 0x10; // RIGHT Ctrl
-  if (k == 225) this->_keyReport.modifiers |= 0x02; // LEFT Shift
-  if (k == 229) this->_keyReport.modifiers |= 0x20; // RIGHT Shift
-  if (k == 226) this->_keyReport.modifiers |= 0x04; // LEFT Alt
-  if (k == 230) this->_keyReport.modifiers |= 0x40; // RIGHT Alt
-  if (k == 227) this->_keyReport.modifiers |= 0x08; // LEFT GUI
-  if (k == 231) this->_keyReport.modifiers |= 0x80; // RIGHT GUI
+  if (k == 224) { k = 0; this->_keyReport.modifiers |= 0x01; } // LEFT Ctrl
+  if (k == 228) { k = 0; this->_keyReport.modifiers |= 0x10; } // RIGHT Ctrl
+  if (k == 225) { k = 0; this->_keyReport.modifiers |= 0x02; } // LEFT Shift
+  if (k == 229) { k = 0; this->_keyReport.modifiers |= 0x20; } // RIGHT Shift
+  if (k == 226) { k = 0; this->_keyReport.modifiers |= 0x04; } // LEFT Alt
+  if (k == 230) { k = 0; this->_keyReport.modifiers |= 0x40; } // RIGHT Alt
+  if (k == 227) { k = 0; this->_keyReport.modifiers |= 0x08; } // LEFT GUI
+  if (k == 231) { k = 0; this->_keyReport.modifiers |= 0x80; } // RIGHT GUI
   return k;
 };
 
@@ -221,14 +221,14 @@ unsigned short BleKeyboardJIS::modifiers_release(unsigned short k) {
     this->_keyReport.modifiers &= ~(0x02);  // the left shift modifier
     k &= 0xFF;
   }
-  if (k == 224) this->_keyReport.modifiers &= ~(0x01); // LEFT Ctrl
-  if (k == 228) this->_keyReport.modifiers &= ~(0x10); // RIGHT Ctrl
-  if (k == 225) this->_keyReport.modifiers &= ~(0x02); // LEFT Shift
-  if (k == 229) this->_keyReport.modifiers &= ~(0x20); // RIGHT Shift
-  if (k == 226) this->_keyReport.modifiers &= ~(0x04); // LEFT Alt
-  if (k == 230) this->_keyReport.modifiers &= ~(0x40); // RIGHT Alt
-  if (k == 227) this->_keyReport.modifiers &= ~(0x08); // LEFT GUI
-  if (k == 231) this->_keyReport.modifiers &= ~(0x80); // RIGHT GUI
+  if (k == 224) { k = 0; this->_keyReport.modifiers &= ~(0x01); } // LEFT Ctrl
+  if (k == 228) { k = 0; this->_keyReport.modifiers &= ~(0x10); } // RIGHT Ctrl
+  if (k == 225) { k = 0; this->_keyReport.modifiers &= ~(0x02); } // LEFT Shift
+  if (k == 229) { k = 0; this->_keyReport.modifiers &= ~(0x20); } // RIGHT Shift
+  if (k == 226) { k = 0; this->_keyReport.modifiers &= ~(0x04); } // LEFT Alt
+  if (k == 230) { k = 0; this->_keyReport.modifiers &= ~(0x40); } // RIGHT Alt
+  if (k == 227) { k = 0; this->_keyReport.modifiers &= ~(0x08); } // LEFT GUI
+  if (k == 231) { k = 0; this->_keyReport.modifiers &= ~(0x80); } // RIGHT GUI
   return k;
 };
 

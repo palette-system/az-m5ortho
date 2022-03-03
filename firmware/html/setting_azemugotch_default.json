@@ -18,7 +18,7 @@
 	"keyboard_pin": {
 		"direct": [34, 19, 27, 13, 36, 35],
 		"touch": [],
-		"ioxp": [32]
+		"ioxp": []
 	},
 	"ioxp_pin": [25, 26],
 	"default_layer": 0,
@@ -30,7 +30,7 @@
 					"press": {
 						"action_type": 1,
 						"key": [
-							41
+							4
 						],
 						"repeat_interval": "51"
 					},
@@ -41,7 +41,7 @@
 					"press": {
 						"action_type": 1,
 						"key": [
-							20
+							5
 						],
 						"repeat_interval": "51"
 					},
@@ -52,7 +52,7 @@
 					"press": {
 						"action_type": 1,
 						"key": [
-							26
+							6
 						],
 						"repeat_interval": "51"
 					},
@@ -63,7 +63,7 @@
 					"press": {
 						"action_type": 1,
 						"key": [
-							8
+							7
 						],
 						"repeat_interval": "51"
 					},
@@ -74,7 +74,7 @@
 					"press": {
 						"action_type": 1,
 						"key": [
-							21
+							8
 						],
 						"repeat_interval": "51"
 					},
@@ -85,18 +85,7 @@
 					"press": {
 						"action_type": 1,
 						"key": [
-							23
-						],
-						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
-				},
-				"key_6": {
-					"press": {
-						"action_type": 1,
-						"key": [
-							28
+							9
 						],
 						"repeat_interval": "51"
 					},
