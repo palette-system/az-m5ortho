@@ -3,7 +3,7 @@
 
 ## 販売サイト
 
-- [BOOTH](https://booth.pm/ja/items/3329196)
+- [BOOTH](https://booth.pm/ja/items/3696255)
 
 
 ## メディア
