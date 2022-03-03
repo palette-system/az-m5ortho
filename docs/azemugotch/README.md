@@ -16,7 +16,7 @@
 - [作成マニュアル](/docs/azemugotch/build_guide/)
 - [初期設定マニュアル](/docs/azm5ortho/Initial_setting/)
 - [液晶画面設定メニュー](/docs/azm5ortho/moniter_setting/)
-- [WiFi設定メニュー](/docs/azm5ortho/wifi_setting/)
+- [WiFi設定メニュー](/docs/wifi_setting/)
 - [回路図](/images/emugotch/emugotch_kairo.png)
 - [M5StackCore2 を購入時の状態に戻す](https://w-tori.net/wp/m5stack-core2-reset/)
 <br><br>
