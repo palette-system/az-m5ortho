@@ -110,7 +110,8 @@
   <tr>
     <td><img src="/images/emugotch/build_12.jpg" width="400"><br><img src="/images/emugotch/build_13.jpg" width="400"><br><img src="/images/emugotch/build_14.jpg" width="400"></td>
     <td valign="top">
-      ボトムプレートの矢印部分に<b>14.5mmの六角スペーサー</b>を<b>M2 6mm 樹脂ネジ</b>で固定して下さい。<br>全部で5か所あります。<br>プレートに凹みがある方にネジを差し込んで下さい。
+      ボトムプレートの矢印部分に<b>14.5mmの六角スペーサー</b>を<b>M2 6mm 樹脂ネジ</b>で固定して下さい。<br>全部で5か所あります。<br>プレートに凹みがある方にネジを差し込んで下さい。<br><br>
+      ※ ネジ山が削れやすいので力を入れすぎないよう気をつけてください。
     </td>
   </tr>
   <tr>
@@ -122,7 +123,8 @@
   <tr>
     <td><img src="/images/emugotch/build_17.jpg" width="400"></td>
     <td valign="top">
-      スイッチの間に六角形の穴があるので<b>六角 5mm スペーサー</b>を入れ、裏から<b>M2 10mm 樹脂ネジ</b>でとめて下さい。
+      スイッチの間に六角形の穴があるので<b>六角 5mm スペーサー</b>を入れ、裏から<b>M2 10mm 樹脂ネジ</b>でとめて下さい。<br><br>
+      ※ ネジ山が削れやすいので力を入れすぎないよう気をつけてください。
     </td>
   </tr>
   <tr>
@@ -134,7 +136,8 @@
   <tr>
     <td><img src="/images/emugotch/build_19.jpg" width="400"><br><img src="/images/emugotch/build_20.jpg" width="400"></td>
     <td valign="top">
-      トッププレートを乗せて矢印の部分を<b>M2 6mm 樹脂ネジ</b>でとめて下さい。
+      トッププレートを乗せて矢印の部分を<b>M2 6mm 樹脂ネジ</b>でとめて下さい。<br><br>
+      ※ ネジ山が削れやすいので力を入れすぎないよう気をつけてください。
     </td>
   </tr>
   <tr>
