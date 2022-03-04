@@ -21,6 +21,11 @@
 - [M5StackCore2 を購入時の状態に戻す](https://w-tori.net/wp/m5stack-core2-reset/)
 <br><br>
 
+## 説明
+
+![説明1](/images/emugotch/detail_01.jpg)
+![説明2](/images/emugotch/detail_02.jpg)
+![説明3](/images/emugotch/detail_03.jpg)
 
 ## 写真
 
