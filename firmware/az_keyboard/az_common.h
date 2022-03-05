@@ -371,6 +371,9 @@ extern JsonObject setting_obj;
 // バッテリーオブジェクト
 extern AXP192 power;
 
+// バッテリ残量更新フラグ
+extern int pw_update_index;
+
 // キーが押された時の設定
 extern uint16_t setting_length;
 extern setting_key_press *setting_press;

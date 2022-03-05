@@ -1034,6 +1034,9 @@ void AzKeyboard::loop_exec(void) {
         mouse_loop_none();
     }
 
+    if (pw_update_index >= 0) pw_update_index++;
+    if (pw_update_index > 6000) disp->view_power();
+
     // メニュー表示中はLVGLのみ実行
     while (menu_mode_flag) {
         disp->loop_exec();

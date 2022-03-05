@@ -16,6 +16,12 @@
 LV_IMG_DECLARE(setting_img);
 LV_IMG_DECLARE(stimg_default);
 LV_IMG_DECLARE(emugotch_logo_320);
+LV_IMG_DECLARE(power_0_img);
+LV_IMG_DECLARE(power_1_img);
+LV_IMG_DECLARE(power_2_img);
+LV_IMG_DECLARE(power_3_img);
+LV_IMG_DECLARE(power_4_img);
+
 
 
 lv_img_dsc_t stimg_obj;
@@ -40,6 +46,8 @@ lv_obj_t * lv_slider_obj_2;
 lv_obj_t * lv_text_obj;
 lv_obj_t * lv_text_obj_2;
 
+// バッテリー残量アイコン
+lv_obj_t * pwicon;
 
 void _view_top_page(); // トップページ画面表示
 void view_soft_key_page(); // ソフトウェアキー画面表示
@@ -48,6 +56,7 @@ void view_setting_led(lv_obj_t * obj, lv_event_t event); // バックライト�
 void view_setting_sound(lv_obj_t * obj, lv_event_t event); // サウンド設定画面表示
 void view_setting_moniter(lv_obj_t * obj, lv_event_t event); // モニター設定画面表示
 void view_setting_menu_fnc(); // 設定メニュー表示
+void view_power_gate(); // バッテリー残量を表示
 
 
 // 
@@ -193,7 +202,8 @@ void lv_setup() {
   }
   // init spiffs system driver
   // init_file_system_driver();
-	stimg_load_fl = false;
+  stimg_load_fl = false;
+  pw_update_index = -1;
 
 
 }
@@ -343,6 +353,9 @@ void view_setting_menu_fnc() {
 
 	// モニタ描画停止
 	disp_enable = false;
+
+    // バッテリ残量更新フラグ(-1 = 更新しない)
+	pw_update_index = -1;
 
 	// 画面上のオブジェクト全て削除
 	lv_obj_clean(lv_scr_act());
@@ -713,7 +726,6 @@ void _view_top_page() {
 	common_cls.moniter_brightness(0);
 
 	// ソフトウェアキーが設定されていたらソフトウェアキー画面表示
-	Serial.printf("mouse_pad_setting.mouse_type: %D\n", mouse_pad_setting.mouse_type);
 	if (mouse_pad_setting.mouse_type == 3) {
 		view_soft_key_page();
 		return;
@@ -725,6 +737,7 @@ void _view_top_page() {
 	// 画面上のオブジェクト全て削除
 	lv_obj_clean(lv_scr_act());
 	uint8_t head_data[4];
+
 
 	// 待ち受け画像表示
 	char stimg_file_name[32];
@@ -763,6 +776,9 @@ void _view_top_page() {
 		lv_obj_align(icon, NULL, LV_ALIGN_CENTER, 0, 0);
 	}
 
+    // バッテリ残量表示
+	view_power_gate();
+
 	// 閉じるボタン
 	// lv_obj_t * btn5 = lv_btn_create(lv_scr_act(), NULL);
 	// lv_obj_set_size(btn5, 50, 50);
@@ -779,6 +795,29 @@ void _view_top_page() {
 	// モニタ描画開始
 	disp_enable = true;
 	
+}
+
+// バッテリー残量を表示
+void view_power_gate() {
+	float pw = power.GetBatVoltage();
+	if (pw_update_index >= 0) {
+		lv_obj_del(pwicon);
+	}
+	pw_update_index = 0;
+	pwicon = lv_img_create(lv_scr_act(), NULL);
+	if (pw > 3.9) {
+	    lv_img_set_src(pwicon, &power_4_img);
+	} else if (pw > 3.7) {
+	    lv_img_set_src(pwicon, &power_3_img);
+	} else if (pw > 3.5) {
+	    lv_img_set_src(pwicon, &power_2_img);
+	} else if (pw > 3.3) {
+	    lv_img_set_src(pwicon, &power_1_img);
+	} else {
+	    lv_img_set_src(pwicon, &power_0_img);
+	}
+	lv_obj_align(pwicon, NULL, LV_ALIGN_IN_TOP_RIGHT, -10, 10);
+
 }
 
 // ソフトウェアキー画面表示
@@ -812,6 +851,9 @@ void view_soft_key_page() {
 	}
 	lv_obj_align(btnm1, NULL, LV_ALIGN_CENTER, 0, 0);
     lv_obj_set_event_cb(btnm1, btmmtx_eve);
+
+    // バッテリ残量表示
+	view_power_gate();
 
 	// マウスパッド操作
 	mouse_pad_status = mouse_pad_setting.mouse_type;
@@ -1141,7 +1183,10 @@ void Display::view_error_wifi_conn() {
 // 打鍵数を保存しましたテキスト表示
 void Display::view_dakey_save_comp() {
 }
-
+// バッテリー残量更新
+void Display::view_power() {
+	view_power_gate();
+}
 
 
 

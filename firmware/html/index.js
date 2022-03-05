@@ -199,7 +199,7 @@ mst.browser_btn_control_remove = function() {
 // 半角文字のみかチェック
 mst.is_half_str = function(str){
   if (!str) return true; // 文字が空ならチェックしない
-  if(str.match(/^[A-Za-z0-9!"#$%&'()\*\+\-\.,\/:;<=>?@\[\\\]^_`{|}~]*$/)){
+  if(str.match(/^[A-Za-z0-9 !"#$%&'()\*\+\-\.,\/:;<=>?@\[\\\]^_`{|}~]*$/)){
     return true;
   }else{
     return false;

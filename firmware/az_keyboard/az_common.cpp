@@ -165,6 +165,9 @@ bool ioxp_enable[8];
 // バッテリーオブジェクト
 AXP192 power;
 
+// バッテリ残量更新フラグ
+int pw_update_index;
+
 // I/Oエキスパンダ用
 Adafruit_MCP23X17 *iomcp;
 
