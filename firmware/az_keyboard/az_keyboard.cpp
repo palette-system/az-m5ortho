@@ -77,9 +77,6 @@ void AzKeyboard::start_keyboard() {
     // 拡張関数 開始処理
     my_function.begin();
 
-    // 液晶は待ち受け画像
-    // disp->view_standby_image();
-
     // マウス移動用バッファ
     send_move_x_buf = 0;
     send_move_y_buf = 0;
@@ -277,8 +274,6 @@ void AzKeyboard::send_webhook(char *jstr) {
         send_string("wifi not connected.");
         return;
     }
-    // 液晶にwebhook中を表示する
-    disp->view_webhook();
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
     char res_char[1024];
     // httpリクエスト送信
@@ -286,8 +281,6 @@ void AzKeyboard::send_webhook(char *jstr) {
     r.toCharArray(res_char, 1024);
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
     ESP_LOGD(LOG_TAG, "http res: %S\n", res_char);
-    // 液晶に待ち受け画像を表示する
-    disp->view_standby_image();
     send_string(res_char);
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
 }

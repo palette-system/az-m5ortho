@@ -809,9 +809,9 @@ void view_power_gate() {
 	    lv_img_set_src(pwicon, &power_4_img);
 	} else if (pw > 3.7) {
 	    lv_img_set_src(pwicon, &power_3_img);
-	} else if (pw > 3.5) {
+	} else if (pw > 3.6) {
 	    lv_img_set_src(pwicon, &power_2_img);
-	} else if (pw > 3.3) {
+	} else if (pw > 3.4) {
 	    lv_img_set_src(pwicon, &power_1_img);
 	} else {
 	    lv_img_set_src(pwicon, &power_0_img);
@@ -1116,10 +1116,6 @@ void Display::view_save() {
 void Display::view_wifi_conn() {
 	this->_last_view_type = DISP_TYPE_WIFICNN;
 }
-// Webhook中
-void Display::view_webhook() {
-	this->_last_view_type = DISP_TYPE_WEBFOOK;
-}
 // 暗記中
 void Display::view_ankey_now() {
 }
@@ -1150,14 +1146,6 @@ void Display::view_daken_key_reset() {
 void Display::view_dakagi_qr() {
 }
 
-// 待ち受け画像表示
-void Display::view_standby_image() {
-	if (this->_last_view_type == DISP_TYPE_STANDBY) return; // 最後に表示したのが待ち受けなら何もしない
-	// M5.Lcd.drawBitmap(0, 0, 240, 320, (uint16_t *)m5_palettesystem_img);
-	M5.Lcd.printf("BAT: %f", power.GetBatVoltage());
-	this->_last_view_type = DISP_TYPE_STANDBY;
-	this->_last_view_info = 255;
-}
 // LED ステータス表示
 void Display::view_led_stat() {
 }
