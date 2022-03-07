@@ -34,6 +34,7 @@ AZ-M5ortho で使用しているファームウェアソースです。<br>
 - M5Stack 0.3.1
 <br>
 ※ ESP8266Audio はgithubからmasterのソースをZIPでダウンロードしてきて、ZIPファイルからライブラリをインストールして下さい。<br>
+※ lv_arduino のライブラリインストール後 https://github.com/palette-system/az-m5ortho/tree/main/firmware/lv_arduino のファイルを インストールしたlv_arduinoのディレクトリにコピーして下さい。<br>
 <br>
 
 ## 書込み時のボード設定
