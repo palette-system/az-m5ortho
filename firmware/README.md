@@ -19,6 +19,10 @@ AZ-M5ortho で使用しているファームウェアソースです。<br>
 
 - Arduino 1.8.13
 
+インストール手順
+https://raspberrypi.mongonta.com/howto-start-m5stack-core2arduinoide/
+
+
 ■ボードマネージャー
 - M5Stack 1.0.9
 
@@ -30,10 +34,9 @@ AZ-M5ortho で使用しているファームウェアソースです。<br>
 - lv_arduino 3.0.1
 - Adafruit NeoPixel 1.10.4
 - Adafruit MCP23017 Arduino Library 2.1.0
-- ESP8266Audio 1.9.5
+- ESP8266Audio 1.8.1
 - M5Stack 0.3.1
 <br>
-※ ESP8266Audio はgithubからmasterのソースをZIPでダウンロードしてきて、ZIPファイルからライブラリをインストールして下さい。<br>
 ※ lv_arduino のライブラリインストール後 https://github.com/palette-system/az-m5ortho/tree/main/firmware/lv_arduino のファイルを インストールしたlv_arduinoのディレクトリにコピーして下さい。<br>
 <br>
 
@@ -46,14 +49,8 @@ AZ-M5ortho で使用しているファームウェアソースです。<br>
 - [PROGMEM作蔵さん](https://hello-world.blog.ss-blog.jp/2016-10-16)
 
 
-## こちらのライブラリを使用させて頂いています
-
-- [NimBLE-Arduino](https://github.com/h2zero/NimBLE-Arduino)
-- [ESP8266Audio](https://github.com/earlephilhower/ESP8266Audio)
-
 ## こちらの素材を使用させて頂いています
 
 - [効果音ラボ](https://soundeffect-lab.info/)
 
-※ NimBLEはZIPファイルでライブラリ追加
 
