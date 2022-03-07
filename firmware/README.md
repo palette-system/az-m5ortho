@@ -18,6 +18,7 @@ AZ-M5ortho で使用しているファームウェアソースです。<br>
 ## 開発環境
 
 - Arduino 1.8.13
+
 ■ボードマネージャー
 - M5Stack 1.0.9
 
@@ -31,7 +32,6 @@ AZ-M5ortho で使用しているファームウェアソースです。<br>
 - Adafruit MCP23017 Arduino Library 2.1.0
 - ESP8266Audio 1.9.5
 - M5Stack 0.3.1
-<br>
 <br>
 ※ ESP8266Audio はgithubからmasterのソースをZIPでダウンロードしてきて、ZIPファイルからライブラリをインストールして下さい。<br>
 <br>
