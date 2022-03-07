@@ -12,6 +12,7 @@ AZ-M5ortho で使用しているファームウェアソースです。<br>
 
 ## 対応商品
 
+- えむごっち
 - AZ-M5ortho
 
 
@@ -19,8 +20,8 @@ AZ-M5ortho で使用しているファームウェアソースです。<br>
 
 - Arduino 1.8.13
 
-インストール手順
-https://raspberrypi.mongonta.com/howto-start-m5stack-core2arduinoide/
+　インストール手順<br>
+　https://raspberrypi.mongonta.com/howto-start-m5stack-core2arduinoide/
 
 
 ■ボードマネージャー
