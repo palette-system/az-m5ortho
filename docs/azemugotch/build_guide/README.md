@@ -80,6 +80,18 @@
 
 <br><br>
 
+## はんだ付け例
+<table>
+  <tr>
+    <td><img src="/images/emugotch/comp_01.jpg" width="550"></td>
+    <td><img src="/images/emugotch/comp_02.jpg" width="550"></td>
+  </tr>
+</table>
+
+<br><br>
+
+comp_01.jpg
+
 ## スイッチのはんだ付け
 <table>
   <tr>

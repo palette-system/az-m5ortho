@@ -70,7 +70,7 @@ void setup() {
 
 // キーの入力状態を取得
 void key_read() {
-    int c, i, j, n;
+    int c, i, j, k, n;
     int m[IOMCP_LENGTH];
     
     // 前回の入力情報を old へ
@@ -79,7 +79,17 @@ void key_read() {
     }
     
     // 現在の入力情報取得
-    for (i=0; i<IOMCP_LENGTH; i++) m[i] = iomcp[i].readGPIOAB();
+    for (i=0; i<IOMCP_LENGTH; i++) {
+      m[i] = iomcp[i].readGPIOAB();
+      // 全ピン入力無しならエキスパンダがリセットされた可能性があるので、ピンの初期化をもっかいやって取得しなおす
+      if (m[i] == 0x00) {
+        for (j=0; j<16; j++) { // 全ピン入力にする
+            iomcp[i].pinMode(j, INPUT_PULLUP);
+        }
+        m[i] = iomcp[i].readGPIOAB();
+        if (m[i] == 0x00) m[i] = 0xffff; // 取り直してもデータが無いなら全ピンボタンが押されてない状態にする
+      }
+    }
     for (i=0; i<16; i++) {
         c = 1 << i;
         n = 0;

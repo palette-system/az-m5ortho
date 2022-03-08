@@ -41,7 +41,7 @@
 
 
 // ファームウェアのバージョン文字
-#define FIRMWARE_VERSION   "000208"
+#define FIRMWARE_VERSION   "000209"
 
 // EEPROMに保存しているデータのバージョン文字列
 #define EEP_DATA_VERSION    "AZM022"
@@ -267,7 +267,7 @@ extern short ioxp_len;
 extern short *ioxp_list;
 extern short ioxp_sda;
 extern short ioxp_scl;
-extern bool ioxp_enable[8];
+extern short ioxp_status[8];
 
 
 // 液晶表示用オブジェクト

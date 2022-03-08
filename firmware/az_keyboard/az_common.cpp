@@ -160,7 +160,8 @@ short ioxp_len;
 short *ioxp_list;
 short ioxp_sda;
 short ioxp_scl;
-bool ioxp_enable[8];
+short ioxp_status[8];
+
 
 // バッテリーオブジェクト
 AXP192 power;
@@ -273,7 +274,7 @@ void AzCommon::common_start() {
     ioxp_scl = -1;
     // ioエキスパンダフラグ
     for (i=0; i<8; i++) {
-      ioxp_enable[i] = false;
+      ioxp_status[i] = -1;
     }
 
     // マウスパッドステータス
@@ -1340,10 +1341,9 @@ void AzCommon::pin_setup() {
         delay(10);
         for (j = 0; j < 16; j++) {
             iomcp[i].pinMode(j, INPUT_PULLUP);
-            delay(1);
         }
         delay(50);
-        ioxp_enable[i] = true;
+        ioxp_status[i] = 0;
     }
   }
 
@@ -1544,10 +1544,26 @@ void AzCommon::key_read(void) {
     // IOエキスパンダ
     start_time = millis();
     for (i=0; i<ioxp_len; i++) {
-        if (ioxp_enable[i]) {
+        if (ioxp_status[i] == 0) {
             m[i] = iomcp[i].readGPIOAB();
+            if (m[i] == 0) {
+                // 全ピン読み込み無しだとIOエキスパンダの接続が切れたかリセットした可能性あり
+                ioxp_status[i] = 1; // 一旦接続切れたステータスにする
+                m[i] = 0xffff; // 全ボタン離した状態
+            }
+        } else if (ioxp_status[i] > 256) {
+            // 接続が切れた状態の場合100周期に1回ピンの初期化を送信してステータスリセット
+            for (j = 0; j < 16; j++) {
+                iomcp[i].pinMode(j, INPUT_PULLUP);
+            }
+            ioxp_status[i] = 0; // ステータスを接続状態に戻す
+            m[i] = 0xffff; // 全ボタン離した状態
+        } else if (ioxp_status[i] > 0) {
+            // IOエキスパンダ接続していない間カウントアップ
+            ioxp_status[i]++;
+            m[i] = 0xffff; // 全ボタン離した状態
         } else {
-            m[i] = 0x00;
+            m[i] = 0xFFFF; // 全てのボタン離した状態
         }
     }
     for (i=0; i<16; i++) {
