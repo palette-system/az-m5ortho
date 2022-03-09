@@ -36,8 +36,10 @@
     <td><img src="/images/azm5ortho/init_4.jpg" width="600"></td>
     <td valign="top">
       ドライバのインストールが終わったらM5StackCore2をPCにUSBでつなぎます。<br><br>
-      その後 <b>Chrome</b> で <a href="https://azkey.jp/azm5ortho/" target="_blank">https://azkey.jp/azm5ortho/</a> を開き、ファームウェア欄の「 <b>Version　0.0.1　書込み</b> 」をクリックします。<br>
-      必ずChromeで開いて下さい。
+      その後 <b>Chrome</b> で <a href="https://azkey.jp/azm5ortho/" target="_blank">https://azkey.jp/azm5ortho/</a> を開き、ファームウェア欄の「 <b>Version　0.2.8　書込み</b> 」をクリックします。<br>
+      <br>
+      ※ Versionは最新の物のボタンが表示されています。<br>
+      ※ 必ずChromeで開いて下さい。
     </td>
   </tr>
   <tr>
@@ -50,7 +52,9 @@
     <td><img src="/images/azm5ortho/init_6.jpg" width="600"></td>
     <td valign="top">
       接続されるとボタンの下に書込みステータスが表示され、書き込みが始まります。<br><br>
-      ※ 書込みが失敗する場合はChromeを再起動したり、M5StackCore2のUSBを抜き差ししてもう一度お試しください。
+      ※ 他のアプリケーションでシリアルポートを使用している最中は書込みできないので、シリアルポートを使用しているアプリケーションは閉じて下さい。<br>
+      ※ 書込みをする時M5Stackの電源は入れた状態にして下さい。<br>
+      ※ 書込みが失敗する場合はChromeを再起動したり、M5StackCore2のUSBを抜き差ししてもう一度お試しください。<br>
     </td>
   </tr>
   <tr>
@@ -71,13 +75,13 @@
     <td><img src="/images/azm5ortho/mon_1.jpg" width="600"></td>
     <td valign="top">
       初回起動時のみ現在接続しているキーボードの選択画面が表示されます。<br>
-      接続しているキーボード(<b>AZ-M5ortho</b>)を選択し「 決定 」をタップしてください。
+      接続しているキーボードを選択し「 決定 」をタップしてください。
     </td>
   </tr>
   <tr>
     <td><img src="/images/azm5ortho/mon_3.jpg" width="600"><br><img src="/images/azm5ortho/init_8.jpg" width="600"></td>
     <td valign="top">
-      M5StackCore2が再起動されパレットシステムのロゴが表示されたら初期設定完了です。<br><br>
+      M5StackCore2が再起動され待ち受け画像が表示されたら初期設定完了です。<br><br>
       この状態でPCからBluetooth機器を検索するとキーボードが出てきます。
     </td>
   </tr>
