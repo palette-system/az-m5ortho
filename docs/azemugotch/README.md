@@ -24,6 +24,7 @@
 
 ## 説明
 
+![pop](/images/emugotch/popA4_1500.jpg)
 ![説明1](/images/emugotch/detail_01.jpg)
 ![説明2](/images/emugotch/detail_02.jpg)
 ![説明3](/images/emugotch/detail_03.jpg)
