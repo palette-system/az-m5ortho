@@ -791,7 +791,8 @@ void AzCommon::get_keymap(JsonObject setting_obj, char *key_name) {
                 text_str.toCharArray(setpt[i].key_name, m);
             } else {
                 // 表示名が無ければ空文字を設定
-                setpt[i].key_name = "";
+                setpt[i].key_name = new char[1];
+                strcpy(setpt[i].key_name, "");
             }
             setpt[i].action_type = press_obj["action_type"].as<signed int>();
             if (setpt[i].action_type == 1) {
