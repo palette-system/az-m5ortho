@@ -19,6 +19,7 @@
 - [WiFi設定メニュー](/docs/wifi_setting/)
 - [回路図](/images/emugotch/emugotch_kairo.png)
 - [登録用のWAVファイル作成方法](/docs/azemugotch/create_wav/)
+- [アクリルプレートのデータ](/docs/azemugotch/plate/)
 - [M5StackCore2 を購入時の状態に戻す](https://w-tori.net/wp/m5stack-core2-reset/)
 <br><br>
 
