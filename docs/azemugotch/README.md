@@ -8,6 +8,9 @@
 
 ## メディア
 
+【記事】へりかる 様<br>
+https://helical-engineer.com/keyboard-emugotch/
+<br><br>
 
 
 ## ドキュメント
