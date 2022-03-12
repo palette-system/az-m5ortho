@@ -234,6 +234,18 @@ mst.key_list = [
 	{"key": "67", "char": "F10", "value": "F10"},
 	{"key": "68", "char": "F11", "value": "F11"},
 	{"key": "69", "char": "F12", "value": "F12"},
+	{"key": "104", "char": "F13", "value": "F13"},
+	{"key": "105", "char": "F14", "value": "F14"},
+	{"key": "106", "char": "F15", "value": "F15"},
+	{"key": "107", "char": "F16", "value": "F16"},
+	{"key": "108", "char": "F17", "value": "F17"},
+	{"key": "109", "char": "F18", "value": "F18"},
+	{"key": "110", "char": "F19", "value": "F19"},
+	{"key": "111", "char": "F20", "value": "F20"},
+	{"key": "112", "char": "F21", "value": "F21"},
+	{"key": "113", "char": "F22", "value": "F22"},
+	{"key": "114", "char": "F23", "value": "F23"},
+	{"key": "115", "char": "F24", "value": "F24"},
 
 	{"key": "44", "char": "SP", "value": "Space"},
 	{"key": "4126", "char": "!", "value": "!"}, // 30 + shift

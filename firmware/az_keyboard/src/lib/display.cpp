@@ -698,8 +698,7 @@ void view_setting_sound(lv_obj_t * obj, lv_event_t event) {
 
 	// 音の種類メニュー
 	lv_drop_down_obj = lv_dropdown_create(win, NULL);
-	// lv_dropdown_set_options(lv_drop_down_obj, "なし\nカスタム音\ntype 1\ntype 2\ntype 3\ntype 4\ntype 5\ntype 6\ntype 7");
-	lv_dropdown_set_options(lv_drop_down_obj, "none\ncustom\ntype 1\ntype 2\ntype 3\ntype 4\ntype 5\ntype 6\ntype 7");
+	lv_dropdown_set_options(lv_drop_down_obj, "なし \nカスタム音 \nタイプ 1\nタイプ 2\nタイプ 3\nタイプ 4\nタイプ 5\nタイプ 6\nタイプ 7");
 	lv_obj_set_size(lv_drop_down_obj, 200, 34);
 	lv_dropdown_set_selected(lv_drop_down_obj, sound_cls._setting.type_default);
 	lv_dropdown_set_symbol(lv_drop_down_obj, "▼");
