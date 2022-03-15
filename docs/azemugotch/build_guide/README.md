@@ -175,7 +175,7 @@ comp_01.jpg
   <tr>
     <td><img src="/images/emugotch/build_22.jpg" width="400"></td>
     <td valign="top">
-      裏側から<b>M3 スリムヘッドネジ</b>でM5StackCore2を固定します。<br>上２箇所が短い16mm、下２箇所が長い20mmのネジで固定して下さい。
+      裏側から<b>M3 スリムヘッドネジ</b>でM5StackCore2を固定します。<br>上２箇所が短い16mm、下２箇所が長い20mmのえむごっち付属の黒いネジで固定して下さい。
     </td>
   </tr>
   <tr>
