@@ -181,7 +181,8 @@ comp_01.jpg
   <tr>
     <td><img src="/images/emugotch/build_23.jpg" width="400"></td>
     <td valign="top">
-      キーキャップをはめ込んで完成です。
+      キーキャップをはめ込んで完成です。<br><br>
+      ※ お好みで裏面にゴム足を張り付けて下さい。
     </td>
   </tr>
 </table>
