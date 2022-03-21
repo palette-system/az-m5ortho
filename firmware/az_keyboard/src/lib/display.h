@@ -89,7 +89,6 @@ class Display
 		void view_dakagi_thermo_on(); // サーモグラフモードをON/OFF切り替える
 		void view_dakagi_qr_on(); // 打鍵QRコードモードをON/OFF切り替える
 		void view_black(); // 画面全体黒い画面表示
-		void view_standby_image(); // 待ち受け画面表示
 		void view_led_stat(); // LEDステータス表示
 		void view_led_bright(); // LED 明るさ設定表示
 		void view_led_color(); // LED 色設定表示
@@ -99,7 +98,6 @@ class Display
 		void view_setting_mode(); // 設定モード画面表示
 		void view_save(); // 保存中表示
 		void view_wifi_conn(); // WiFi接続中画面表示
-		void view_webhook(); // Webhook中表示
 		void view_ankey_now(); // 暗記中表示
 		void view_setting_init_comp(); // 設定の初期化が完了しました画面表示
 		void view_error_wifi_conn(); // Wifi接続して下さいエラー表示
@@ -108,6 +106,7 @@ class Display
 		void view_keyboard_setting(); // キーボード選択画面表示
 		void view_raw_image(uint8_t *img_data); // 渡された画像データを表示
 		void view_power(); // バッテリー残量表示
+		void view_info_layer_name(); // インフォメーションにレイヤー名を表示
 		void loop_exec(); // 定期処理
 };
 

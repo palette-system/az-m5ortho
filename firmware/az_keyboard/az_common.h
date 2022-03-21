@@ -41,7 +41,7 @@
 
 
 // ファームウェアのバージョン文字
-#define FIRMWARE_VERSION   "000209"
+#define FIRMWARE_VERSION   "000211"
 
 // EEPROMに保存しているデータのバージョン文字列
 #define EEP_DATA_VERSION    "AZM022"
@@ -135,6 +135,8 @@ struct moniterset_data_set {
     uint8_t value_2;
 };
 
+// レイヤーの名前
+
 
 // ArduinoJSON SPRAM用の定義
 struct SpiRamAllocator {
@@ -151,25 +153,25 @@ struct SpiRamAllocator {
 using SpiRamJsonDocument = BasicJsonDocument<SpiRamAllocator>;
 
 
-// 通常キー入力
+// 通常キー入力(キー設定用)
 struct setting_normal_input {
-    uint8_t key_length;
-    uint16_t *key;
-    uint16_t hold;
-    short repeat_interval;
+    uint8_t key_length; // 登録しているキーコードの数
+    uint16_t *key; // キーコードの配列
+    uint16_t hold; // 長押し設定
+    short repeat_interval; // 連打用設定
 };
 
-// マウス移動
+// マウス移動(キー設定用)
 struct setting_mouse_move {
     int16_t x;
     int16_t y;
     int16_t speed;
 };
 
-// レイヤー切り替え
+// レイヤー切り替え(キー設定用)
 struct setting_layer_move {
-    int8_t layer_id;
-    int8_t layer_type;
+    int8_t layer_id; // 切り替え先のレイヤーID
+    int8_t layer_type; // 切り替えのタイプ
 };
 
 // キーを押した時の設定
@@ -181,6 +183,13 @@ struct setting_key_press {
     short data_size; // データのサイズ
     char *data; // 入力データ
 };
+
+// レイヤーの名前データ保持用
+struct layer_name_data {
+    short layer; // レイヤーのID
+    char *layer_name; // レイヤーの登録名
+};
+
 
 // WIFI設定
 struct azsetting_wifi {
@@ -220,9 +229,7 @@ class AzCommon
         void moniter_brightness(int set_type); // 画面の明るさ設定
         void pin_setup(); // キーの入力ピンの初期化
         void pin_setup_sub_process(); // 入力ピン初期化のキーボード別の処理
-        bool layers_exists(int layer_no); // レイヤーが存在するか確認
         setting_key_press get_key_setting(int layer_id, int key_num); // 指定したキーの入力設定を取得する
-        bool soft_layers_exists(int layer_no); // レイヤーが存在するか確認
         setting_key_press get_soft_key_setting(int layer_id, int key_num); // 指定したキーの入力設定を取得する
         void load_data(); // EEPROMからデータをロードする
         void save_data(); // EEPROMに保存する
@@ -391,6 +398,11 @@ extern uint8_t  *setting_remap;
 extern uint16_t  layer_max;
 extern uint16_t  key_max;
 
+// レイヤー名のデータ
+extern layer_name_data *layer_name_list;
+extern uint16_t layer_name_length;
+extern layer_name_data *soft_layer_name_list;
+extern uint16_t soft_layer_name_length;
 
 // リスタート用のフラグ
 extern int8_t restart_flag;

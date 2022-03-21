@@ -433,6 +433,8 @@ void AzKeyboard::key_down_action(int key_num) {
             } else if (k == 0x04) { // レイヤー
                 select_layer_no = normal_input.hold & 0x0F;
                 last_select_layer_key = key_num; // 最後に押されたレイヤーボタン設定
+                // infoにレイヤー名を表示
+                disp->view_info_layer_name();
             }
             press_key_list_push(9, key_num, normal_input.hold, m, -1); // アクションタイプは9:holdにする
         } else {
@@ -483,6 +485,8 @@ void AzKeyboard::key_down_action(int key_num) {
         // キー押したよリストに追加
         press_key_list_push(action_type, key_num, -1, m, -1);
         ESP_LOGD(LOG_TAG, "key press layer : %D %02x %D\r\n", key_num, layer_move_input.layer_type, layer_move_input.layer_id);
+        // infoにレイヤー名を表示
+        disp->view_info_layer_name();
         // サウンドクラスに押したよを送る
         sound_cls.daken_down(sound_type);
 
@@ -603,6 +607,8 @@ void AzKeyboard::key_up_action(int key_num) {
                 if (last_select_layer_key == key_num) {
                     select_layer_no = default_layer_no;
                     last_select_layer_key = -1;
+                    // infoにレイヤー名を表示
+                    disp->view_info_layer_name();
                 }
             }
             // 最後に押されたレイヤーボタンならばレイヤーを解除
@@ -632,6 +638,8 @@ void AzKeyboard::key_up_action(int key_num) {
                 if (last_select_layer_key == key_num) {
                     select_layer_no = default_layer_no;
                     last_select_layer_key = -1;
+                    // infoにレイヤー名を表示
+                    disp->view_info_layer_name();
                 }
             }
             // 押していた時間が短ければ単押しのキーを送信

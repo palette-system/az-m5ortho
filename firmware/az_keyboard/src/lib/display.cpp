@@ -46,6 +46,9 @@ lv_obj_t * lv_slider_obj_2;
 lv_obj_t * lv_text_obj;
 lv_obj_t * lv_text_obj_2;
 
+// ヘッダインフォテキスト
+lv_obj_t * hdinfo;
+
 // バッテリー残量アイコン
 lv_obj_t * pwicon;
 
@@ -56,7 +59,9 @@ void view_setting_led(lv_obj_t * obj, lv_event_t event); // バックライト�
 void view_setting_sound(lv_obj_t * obj, lv_event_t event); // サウンド設定画面表示
 void view_setting_moniter(lv_obj_t * obj, lv_event_t event); // モニター設定画面表示
 void view_setting_menu_fnc(); // 設定メニュー表示
+void view_head_info(); // ヘッダインフォを表示
 void view_power_gate(); // バッテリー残量を表示
+void set_info_layer_name(); // 今選択中のレイヤー名をインフォメーションテキストに設定
 
 
 // 
@@ -776,6 +781,9 @@ void _view_top_page() {
 		lv_obj_align(icon, NULL, LV_ALIGN_CENTER, 0, 0);
 	}
 
+    // ヘッダインフォを表示
+    view_head_info();
+
     // バッテリ残量表示
 	view_power_gate();
 
@@ -796,6 +804,27 @@ void _view_top_page() {
 	disp_enable = true;
 	
 }
+
+// ヘッダインフォを表示
+void view_head_info() {
+
+	// テキスト
+    hdinfo = lv_label_create(lv_scr_act(), NULL);
+    // lv_label_set_text(hdinfo, " ");
+	set_info_layer_name();
+    lv_obj_align(hdinfo, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 10);
+
+}
+
+// 今選択中のレイヤー名をインフォメーションテキストに設定
+void set_info_layer_name() {
+	int i;
+	for (i=0; i<layer_name_length; i++) {
+		if (layer_name_list[i].layer != select_layer_no) continue;
+		lv_label_set_text(hdinfo, layer_name_list[i].layer_name);
+	}
+}
+
 
 // バッテリー残量を表示
 void view_power_gate() {
@@ -851,6 +880,9 @@ void view_soft_key_page() {
 	}
 	lv_obj_align(btnm1, NULL, LV_ALIGN_CENTER, 0, 0);
     lv_obj_set_event_cb(btnm1, btmmtx_eve);
+
+    // ヘッダインフォを表示
+    view_head_info();
 
     // バッテリ残量表示
 	view_power_gate();
@@ -1175,7 +1207,10 @@ void Display::view_dakey_save_comp() {
 void Display::view_power() {
 	view_power_gate();
 }
-
+// インフォメーションにレイヤー名を表示
+void Display::view_info_layer_name() {
+	set_info_layer_name();
+}
 
 
 

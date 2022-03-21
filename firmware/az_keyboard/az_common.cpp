@@ -17,6 +17,13 @@ int16_t soft_click_key;
 uint8_t  *setting_remap;
 uint16_t  layer_max;
 uint16_t  key_max;
+
+// レイヤー名のデータ
+layer_name_data *layer_name_list;
+uint16_t layer_name_length;
+layer_name_data *soft_layer_name_list;
+uint16_t soft_layer_name_length;
+
 // wifi設定
 uint8_t wifi_data_length;
 azsetting_wifi *wifi_data;
@@ -735,11 +742,16 @@ void AzCommon::clear_keymap() {
         }
     }
     delete[] setting_press;
+    // レイヤー名も解放
+    for (i=0; i<layer_name_length; i++) {
+        delete layer_name_list[i].layer_name;
+    }
+    delete[] layer_name_list;
 }
 
 // JSONデータからキーマップの情報を読み込む
 void AzCommon::get_keymap(JsonObject setting_obj, char *key_name) {
-    int i, j, k, m, at, s;
+    int i, j, k, l, m, at, s;
     char lkey[16];
     char kkey[16];
     uint16_t lnum, knum, slen, lmax;
@@ -752,14 +764,17 @@ void AzCommon::get_keymap(JsonObject setting_obj, char *key_name) {
     setting_layer_move layer_move_input;
     setting_mouse_move mouse_move_input;
     setting_key_press *setpt;
+    layer_name_data *lndt;
     // 設定項目が存在しなければ何もしない
     if (!setting_obj.containsKey(key_name)) return;
     // まずはキー設定されている数を取得
     layers = setting_obj[key_name].as<JsonObject>();
     slen = 0;
+    lmax = 0;
     for (it_l=layers.begin(); it_l!=layers.end(); ++it_l) {
         if (!setting_obj[key_name][it_l->key().c_str()].containsKey("keys")) continue;
         slen += setting_obj[key_name][it_l->key().c_str()]["keys"].size();
+        lmax++;
     }
     ESP_LOGD(LOG_TAG, "setting total %D\n", slen);
     // キー設定が存在しなければ何もしない
@@ -770,11 +785,23 @@ void AzCommon::get_keymap(JsonObject setting_obj, char *key_name) {
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
     // キー設定読み込み
     i = 0;
-    lmax = 0;
+    l = 0;
+    lndt = new layer_name_data[lmax];
     for (it_l=layers.begin(); it_l!=layers.end(); ++it_l) {
         sprintf(lkey, "%S", it_l->key().c_str());
         lnum = split_num(lkey);
-        lmax++;
+        lndt[l].layer = lnum;
+        if (setting_obj[key_name][lkey].containsKey("name")) {
+            // レイヤー名があればレイヤー名取得
+            text_str = setting_obj[key_name][lkey]["name"].as<String>();
+            m = text_str.length() + 1;
+            lndt[l].layer_name = new char[m];
+            text_str.toCharArray(lndt[l].layer_name, m);
+        } else {
+            lndt[l].layer_name = new char[1];
+            strcpy(lndt[l].layer_name, "");
+        }
+        l++;
         keys = setting_obj[key_name][lkey]["keys"].as<JsonObject>();
         for (it_k=keys.begin(); it_k!=keys.end(); ++it_k) {
             sprintf(kkey, "%S", it_k->key().c_str());
@@ -868,9 +895,16 @@ void AzCommon::get_keymap(JsonObject setting_obj, char *key_name) {
         setting_press = setpt;
         setting_length = slen;
         layer_max = lmax;
+        // レイヤー名取得
+        layer_name_list = lndt;
+        layer_name_length = lmax;
+
     } else if (strcmp(key_name, "soft_layers") == 0) { // ソフトウェアキー設定
         soft_setting_press = setpt;
         soft_setting_length = slen;
+        // レイヤー名取得
+        soft_layer_name_list = lndt;
+        soft_layer_name_length = lmax;
     }
     // setting_press = setpt;
   
@@ -1361,15 +1395,6 @@ void AzCommon::pin_setup_sub_process() {
     }
 }
 
-// レイヤーが存在するか確認
-bool AzCommon::layers_exists(int layer_no) {
-    int i;
-    for (i=0; i<setting_length; i++) {
-        if (setting_press[i].layer == layer_no) return true;
-    }
-    return false;
-}
-
 // 指定したキーの入力設定オブジェクトを取得する
 setting_key_press AzCommon::get_key_setting(int layer_id, int key_num) {
     int i;
@@ -1381,16 +1406,6 @@ setting_key_press AzCommon::get_key_setting(int layer_id, int key_num) {
     r.key_num = -1;
     r.action_type = -1;
     return r;
-}
-
-
-// レイヤーが存在するか確認
-bool AzCommon::soft_layers_exists(int layer_no) {
-    int i;
-    for (i=0; i<soft_setting_length; i++) {
-        if (soft_setting_press[i].layer == layer_no) return true;
-    }
-    return false;
 }
 
 // 指定したキーの入力設定オブジェクトを取得する

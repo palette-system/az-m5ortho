@@ -9,6 +9,7 @@ mst.view_softkey_setting = function() {
     var s = "";
     s += "<b style='font-size: 30px;'>ソフトウェアキー</b><br><br><br><br>";
     vc = 0;
+    if (!mst.setting_data.soft_layers) mst.setting_data.soft_layers = {};
     for (k in mst.setting_data.soft_layers) {
         ly = mst.setting_data.soft_layers[k];
         // s += ly.name + "<br>";
