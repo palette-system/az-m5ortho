@@ -1,5 +1,4 @@
 #include <NimBLEServer.h>
-#include <FastCRC.h>
 
 #include "Arduino.h"
 #include "ble_callbacks.h"
@@ -12,7 +11,6 @@
   static const char* LOG_TAG = "NimBLEDevice";
 #endif
 
-FastCRC32 CRC32;
 
 // remapへ返事を返す用のバッファ
 uint8_t remap_buf[36];
@@ -154,13 +152,10 @@ void RemapDescriptorCallbacks::onRead(NimBLEDescriptor* pDescriptor) {
 /** Remap Output コールバック クラス */
 /* ====================================================================================================================== */
 
-RemapOutputCallbacks::RemapOutputCallbacks(void) {
-	remap_change_flag = 0;
-}
-
-
+// ファイル送受信用のファイルポインタ
 File open_file;
 
+// ステップ分受信したか確認
 int check_step() {
 	int i, r = 0;
 	for (i=0; i<8; i++) {
@@ -168,6 +163,20 @@ int check_step() {
 	}
 	return r;
 };
+
+// crc32のハッシュ値を計算
+int crc32(uint8_t* d, int len) {
+	int i;
+    uint32_t r = 0 ^ (-1);
+    for (i=0; i<len; i++) {
+        r = (r >> 8) ^ crc_table_crc32[(r ^ d[i]) & 0xFF];
+    }
+    return (r ^ (-1));
+};
+
+RemapOutputCallbacks::RemapOutputCallbacks(void) {
+	remap_change_flag = 0;
+}
 
 void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 	uint8_t* data = (uint8_t*)(me->getValue().c_str());
@@ -305,6 +314,17 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 		    // 情報を取得
 			s = remap_buf[1]; // ステップ数
 			p = (remap_buf[2] << 16) + (remap_buf[3] << 8) + remap_buf[4]; // 読み込み開始位置
+			h = (remap_buf[5] << 24) + (remap_buf[6] << 16) + (remap_buf[7] << 8) + remap_buf[8]; // ハッシュ値
+			if (h != 0) {
+				l = s * (data_length - 4); // ステップ数 x 1コマンドで送るデータ数
+				m = crc32(&save_file_data[p - l], l); // 前回送った所のハッシュを計算
+				if (h != m) { // ハッシュ値が違えば前に送った所をもう一回送る
+					// Serial.printf("NG : [%d %d] [ %d -> %d ]\n", h, m, p, (p - l));
+				    p = p - l;
+				} else {
+					// Serial.printf("OK : [%d %d] [ %d ]\n", h, m, p);
+				}
+			}
 			j = 0;
 			// open_file = SPIFFS.open(target_file_path, "r");
 			// open_file.seek(p, SeekSet);
@@ -398,7 +418,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 				// open_file.seek(j, SeekSet);
 				// open_file.write(save_file_data, l);
 				// for (i=0; i<512; i++) save_file_data[i] = 0x00; // バッファクリア
-				h = CRC32.crc32(&save_file_data[j], l);
+				h = crc32(&save_file_data[j], l);
 				if (k < save_file_length) {
 					// まだデータを全部受け取って無ければ次を要求するコマンドを送信
 					send_buf[0] = 0x33;

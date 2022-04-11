@@ -16,11 +16,17 @@ webhid.load_length = 0;
 // ロードしたデータ
 webhid.load_data = [];
 
+// ロード時のハッシュを計算する用のデータ
+webhid.load_hash = [];
+
 // 最後にロードした時間
 webhid.last_load_time = 0;
 
 // 最後にロードしたポイント
 webhid.last_load_point = 0;
+
+// 最後に送ったハッシュ値
+webhid.last_send_hash = 0;
 
 // ロード中のファイルパス
 webhid.load_file_path = "";
@@ -36,6 +42,9 @@ webhid.save_seek = 0;
 
 // 保存するデータ
 webhid.save_data = [];
+
+// 保存時のハッシュを計算する用のデータ
+webhid.save_hash = [];
 
 // 保存中のファイルパス
 webhid.save_file_path = "";
@@ -173,11 +182,13 @@ webhid.handle_input_report = function(e) {
         webhid.load_data = [];
         for (i=0; i<webhid.load_length; i++) webhid.load_data.push(0x00);
         // データ取得コマンド作成
-        cmd = [webhid.command_id.file_load_data, webhid.load_step, 0x00, 0x00, 0x00];
+        cmd = [webhid.command_id.file_load_data, webhid.load_step, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         // コマンド送信
         webhid.load_index = 0;
+        webhid.load_hash = [];
         webhid.last_load_time = webhid.millis(); // 最後にコマンドを投げた時間
         webhid.last_load_point = 0; // 最後にリクエストしたポイント
+        webhid.last_send_hash = 0;
         webhid.send_command(cmd).then(() => {
             webhid.view_info("loading... [ 0 / "+webhid.load_length+" ]");
         });
@@ -193,21 +204,28 @@ webhid.handle_input_report = function(e) {
         // 1バイトずつデータ取得
         while (i < s) {
             webhid.load_data[p + i] = get_data[i + 4];
+            webhid.load_hash.push(get_data[i + 4]);
             i++;
             if ((p + i) >= webhid.load_length) break; // ファイル容量分全部読み込んだら終了
         }
         webhid.load_index++; // step数加算
         if (webhid.load_index >= webhid.load_step && (p + i) < webhid.load_length) {
             // step終わって、まだデータ全部読めて無ければ次のデータ取得コマンドを送信
+            webhid.last_send_hash = webhid.crc32(webhid.load_hash);
             webhid.load_index = 0; // stepをリセット
+            webhid.load_hash = []; // ハッシュデータもリセット
             m = p + i; // 次読み込む開始位置
             // データ要求コマンド作成
             cmd = [
                 webhid.command_id.file_load_data,
                 webhid.load_step,
-                ((m >> 16) & 0xff),
-                ((m >> 8) & 0xff),
-                (m & 0xff) ];
+                ((m >> 16) & 0xff), // 読み込み開始位置 1
+                ((m >> 8) & 0xff),  // 読み込み開始位置 2
+                (m & 0xff),         // 読み込み開始位置 3
+                ((webhid.last_send_hash >> 24) & 0xff), // ハッシュ1
+                ((webhid.last_send_hash >> 16) & 0xff), // ハッシュ2
+                ((webhid.last_send_hash >> 8) & 0xff),  // ハッシュ3
+                (webhid.last_send_hash & 0xff) ];       // ハッシュ4
             // コマンド送信
             webhid.last_load_time = webhid.millis(); // 最後にコマンドを投げた時間
             webhid.last_load_point = m; // 最後にリクエストしたポイント
@@ -294,12 +312,15 @@ webhid.file_load_check = function() {
     if (t > 2000) { // 2秒以上データが受け取れなければもう一回データ要求コマンドを送信
         // データ要求コマンド作成
         if (webhid.load_step > 1) webhid.load_step--; // 一度に送るデータ数を減らす
+        webhid.load_index = 0; // stepをリセット
+        webhid.load_hash = []; // ハッシュデータもリセット
         let cmd = [
             webhid.command_id.file_load_data,
             webhid.load_step,
             ((webhid.last_load_point >> 16) & 0xff),
             ((webhid.last_load_point >> 8) & 0xff),
-            (webhid.last_load_point & 0xff) ];
+            (webhid.last_load_point & 0xff),
+            0x00, 0x00, 0x00, 0x00 ]; // ハッシュ値0でハッシュチェック関係なく指定したアドレスのデータを要求できる
         // コマンド送信
         webhid.last_load_time = webhid.millis(); // 最後にコマンドを投げた時間
         webhid.send_command(cmd).then(() => {
