@@ -1,0 +1,38 @@
+<html>
+<head>
+<meta charset="utf-8">
+<title>test</title>
+<script language="JavaScript" src="./js/jquery-2.1.4.min.js"></script>
+<script language="JavaScript" src="./js/jquery-ui.js"></script>
+<script language="JavaScript" src="./js/webhid.js"></script>
+
+</head>
+<body>
+
+<br><br>
+
+<input type="button" value="connect" onClick="javascript:var f = async function() {webhid.connect();}; f();"><br>
+<input type="button" value="get_file" onClick="javascript:var f = async function() {webhid.get_file('/setting.json');}; f();"><br>
+<input type="button" value="save_file" onClick="javascript:var f = async function() {webhid.save_file('/setting.json', $('#json_area').val());}; f();"><br>
+
+<div id="console_div"></div>
+<br>
+
+<script language="JavaScript">
+
+
+$(function(){
+
+    // webhidオブジェクト初期化
+    webhid.init({"info_div": "console_div"});
+
+
+});
+
+
+
+
+</script>
+
+</body>
+</html>

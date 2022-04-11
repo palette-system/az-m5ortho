@@ -1,4 +1,5 @@
 #include <NimBLEServer.h>
+#include <FastCRC.h>
 
 #include "Arduino.h"
 #include "ble_callbacks.h"
@@ -11,9 +12,21 @@
   static const char* LOG_TAG = "NimBLEDevice";
 #endif
 
+FastCRC32 CRC32;
 
 // remapへ返事を返す用のバッファ
 uint8_t remap_buf[36];
+
+// ファイル送受信用バッファ
+uint8_t send_buf[36];
+char target_file_path[36];
+
+// ファイル保存用バッファ
+uint8_t *save_file_data;
+int save_file_length;
+uint8_t save_file_step;
+uint8_t save_file_index;
+bool save_step_flag[8];
 
 // remapで設定変更があったかどうかのフラグ
 uint8_t remap_change_flag;
@@ -146,12 +159,21 @@ RemapOutputCallbacks::RemapOutputCallbacks(void) {
 }
 
 
+File open_file;
+
+int check_step() {
+	int i, r = 0;
+	for (i=0; i<8; i++) {
+		if (save_step_flag[i]) r++;
+	}
+	return r;
+};
 
 void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 	uint8_t* data = (uint8_t*)(me->getValue().c_str());
 	size_t data_length = me->getDataLength();
 	memcpy(remap_buf, data, data_length);
-	int i, j, m;
+	int h, i, j, k, l, m, s, p;
     uint8_t *command_id   = &(remap_buf[0]);
     uint8_t *command_data = &(remap_buf[1]);
 
@@ -243,6 +265,176 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			}
 			break;
 		}
+		case id_get_file_start: { // 0x30 ファイル取得開始
+			send_buf[0] = 0x30;
+			// ファイル名を取得
+			i = 1;
+			while (remap_buf[i]) {
+				target_file_path[i - 1] = remap_buf[i];
+				i++;
+				if (i >= 32) break;
+			}
+			target_file_path[i - 1] = 0x00;
+		    // ファイルが無ければ0を返す
+			if (!SPIFFS.exists(target_file_path)) {
+				for (i=1; i<32; i++) send_buf[i] = 0x00;
+				this->sendRawData(remap_buf, 32);
+				return;
+			}
+			open_file = SPIFFS.open(target_file_path, "r");
+			save_file_length = open_file.size();
+			// Serial.printf("ps_malloc load: %d %d\n", save_file_length, heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+			save_file_data = (uint8_t *)ps_malloc(save_file_length);
+			i = 0;
+			while (open_file.available()) {
+				save_file_data[i] = open_file.read();
+				i++;
+			}
+			open_file.close();
+			send_buf[1] = 0x01; // ファイルは存在する
+			send_buf[2] = ((save_file_length >> 24) & 0xff);
+			send_buf[3] = ((save_file_length >> 16) & 0xff);
+			send_buf[4] = ((save_file_length >> 8) & 0xff);
+			send_buf[5] = (save_file_length & 0xff);
+			for (i=6; i<32; i++) send_buf[i] = 0x00;
+			this->sendRawData(send_buf, 32);
+			return;
+		    
+		}
+		case id_get_file_data: { // 0x31 ファイルデータ要求
+		    // 情報を取得
+			s = remap_buf[1]; // ステップ数
+			p = (remap_buf[2] << 16) + (remap_buf[3] << 8) + remap_buf[4]; // 読み込み開始位置
+			j = 0;
+			// open_file = SPIFFS.open(target_file_path, "r");
+			// open_file.seek(p, SeekSet);
+			for (j=0; j<s; j++) {
+				send_buf[0] = 0x31;
+				send_buf[1] = ((p >> 16) & 0xff);
+				send_buf[2] = ((p >> 8) & 0xff);
+				send_buf[3] = (p & 0xff);
+				i = 4;
+				// while (open_file.available()) {
+				while (p < save_file_length) {
+					// send_buf[i] = open_file.read();
+					send_buf[i] = save_file_data[p];
+					i++;
+					p++;
+					if (i >= 32) break;
+				}
+				while (i<32) {
+					send_buf[i] = 0x00;
+					i++;
+				}
+				this->sendRawData(send_buf, 32);
+				// if (!open_file.available()) break;
+				if (p >= save_file_length) break;
+
+			}
+			if (p >= save_file_length) {
+				// Serial.printf("free load: %d %d\n", save_file_length, heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+				free(save_file_data);
+			}
+
+			// open_file.close();
+			return;
+		}
+		case id_save_file_start: { // 0x32 ファイル保存開始
+		    // 容量を取得
+			save_file_length = (remap_buf[1] << 24) + (remap_buf[2] << 16) + (remap_buf[3] << 8) + remap_buf[4];
+			// 保存時のステップ数
+			save_file_step = remap_buf[5];
+			// ファイル名を取得
+			i = 6;
+			while (remap_buf[i]) {
+				target_file_path[i - 6] = remap_buf[i];
+				i++;
+				if (i >= 32) break;
+			}
+			target_file_path[i - 6] = 0x00;
+			// データ受け取りバッファクリア
+			// for (i=0; i<512; i++) save_file_data[i] = 0x00;
+			// 取得したステップのインデックス
+			for (i=0; i<8; i++) save_step_flag[i] = false;
+			// ファイルオープン
+			// Serial.printf("ps_malloc save: %d %d\n", save_file_length, heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+			save_file_data = (uint8_t *)ps_malloc(save_file_length);
+			// open_file = SPIFFS.open(target_file_path, "w");
+			// データ要求コマンド送信
+			send_buf[0] = 0x33;
+			send_buf[1] = save_file_step;
+			for (i=2; i<32; i++) send_buf[i] = 0x00;
+			this->sendRawData(send_buf, 32);
+			return;
+
+		}
+		case id_save_file_data: { // 0x33 ファイルデータ受け取り
+		    s = remap_buf[1]; // 何ステップ目のデータか
+			j = (remap_buf[2] << 16) + (remap_buf[3] << 8) + remap_buf[4]; // 何処開始のデータか
+			m = data_length - 5; // データの長さ
+			// バッファにデータを貯める
+			p = s * m; // バッファの書込み開始位置
+			// Serial.printf("save: %d %d %d\n", j, p, m);
+			for (i=0; i<m; i++) {
+				// save_file_data[p + i] = remap_buf[i + 5];
+				if ((j + p + i) >= save_file_length) break;
+				save_file_data[j + p + i] = remap_buf[i + 5];
+			}
+			// ステップのインデックス加算
+			save_step_flag[s] = true;
+			// 全ステップ取得した
+			if (check_step() >= save_file_step) {
+				// ステップインデックスをリセット
+				for (i=0; i<8; i++) save_step_flag[i] = false;
+				// バッファに入ったデータをファイルに書き出し
+				l = m * save_file_step; // 書込みを行うサイズ
+				k = j + l; // 書込み後のシークポイント
+				// 書込みサイズが保存予定のサイズを超えたら超えない数値にする
+				if (k > save_file_length) {
+					l = save_file_length - j;
+					k = j + l;
+				}
+				// 書き込む
+				// open_file.seek(j, SeekSet);
+				// open_file.write(save_file_data, l);
+				// for (i=0; i<512; i++) save_file_data[i] = 0x00; // バッファクリア
+				h = CRC32.crc32(&save_file_data[j], l);
+				if (k < save_file_length) {
+					// まだデータを全部受け取って無ければ次を要求するコマンドを送信
+					send_buf[0] = 0x33;
+					send_buf[1] = save_file_step;
+					send_buf[2] = (k >> 24) & 0xff;
+					send_buf[3] = (k >> 16) & 0xff;
+					send_buf[4] = (k >> 8) & 0xff;
+					send_buf[5] = k & 0xff;
+					send_buf[6] = (h >> 24) & 0xff;
+					send_buf[7] = (h >> 16) & 0xff;
+					send_buf[8] = (h >> 8) & 0xff;
+					send_buf[9] = h & 0xff;
+					for (i=10; i<32; i++) send_buf[i] = 0x00;
+					this->sendRawData(send_buf, 32);
+					return;
+				} else {
+					// データを全部受け取り終わり
+					open_file = SPIFFS.open(target_file_path, "w");
+					open_file.write(save_file_data, save_file_length);
+					open_file.close(); // ファイルクローズ
+					// Serial.printf("free save: %d %d\n", save_file_length, heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+					free(save_file_data);
+					// 完了を送る
+					send_buf[0] = 0x34;
+					for (i=1; i<32; i++) send_buf[i] = 0x00;
+					this->sendRawData(send_buf, 32);
+					return;
+				}
+
+
+			}
+			return;
+
+
+		}
+
 		default: {
 			remap_buf[0] = 0xFF;
 			break;
