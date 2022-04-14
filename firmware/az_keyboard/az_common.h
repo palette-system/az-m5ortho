@@ -184,6 +184,32 @@ struct setting_key_press {
     char *data; // 入力データ
 };
 
+// IOエキスパンダオプションの設定
+struct ioxp_option {
+    uint8_t addr; // IOエキスパンダのアドレス
+    uint8_t *row;
+    uint8_t row_len;
+    uint8_t *col;
+    uint8_t col_len;
+    uint8_t *direct;
+    uint8_t direct_len;
+};
+
+// オプションのキー設定とのマッピング配列
+struct opt_key_map {
+    uint8_t org; // オプション内の何番目のキーか
+    short stg; // キー設定何番か
+};
+
+// i2cオプションの設定
+struct i2c_option {
+    uint8_t opt_type; // オプションのタイプ 1: ioエキスパンダキーボード
+    ioxp_option *ioxp; // 使用するIOエキスパンダの設定
+    uint8_t ioxp_len; // IOエキスパンダ設定の数
+    opt_key_map *map; // オプションのキー設定とのマッピング設定
+    uint8_t map_len; // マッピング設定の数
+};
+
 // レイヤーの名前データ保持用
 struct layer_name_data {
     short layer; // レイヤーのID
@@ -276,6 +302,9 @@ extern short ioxp_sda;
 extern short ioxp_scl;
 extern short ioxp_status[8];
 
+// I2Cオプションの設定
+extern i2c_option *i2copt;
+extern short i2copt_len;
 
 // 液晶表示用オブジェクト
 extern Display *disp;

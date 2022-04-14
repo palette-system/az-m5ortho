@@ -12,8 +12,13 @@
 <br><br>
 
 <input type="button" value="connect" onClick="javascript:var f = async function() {webhid.connect();}; f();"><br>
+<br>
+<input type="button" value="file_list" onClick="javascript:var f = async function() {webhid.get_file_list();}; f();"><br>
+<br>
 <input type="button" value="get_file" onClick="javascript:var f = async function() {webhid.get_file('/setting.json');}; f();"><br>
 <input type="button" value="save_file" onClick="javascript:var f = async function() {webhid.save_file('/setting.json', $('#json_area').val());}; f();"><br>
+<br>
+<input type="button" value="restart" onClick="javascript:var f = async function() {webhid.m5_restart(0);}; f();"><br>
 
 <div id="console_div"></div>
 <br>

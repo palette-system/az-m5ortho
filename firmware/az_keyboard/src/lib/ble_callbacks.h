@@ -43,6 +43,8 @@ enum via_command_id {
     id_save_file_start                      = 0x32,
     id_save_file_data                       = 0x33,
     id_save_file_complate                   = 0x34,
+	id_get_file_list                        = 0x35,
+	id_restart                              = 0x36,
 
     // システム用
     id_unhandled                            = 0xFF,

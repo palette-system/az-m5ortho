@@ -94,9 +94,7 @@ mst.setting_data = {
                     "press": {
                         "action_type": 1,
                         "key": [4]
-                    },
-                    "long_press": {},
-                    "long_press_time": 0
+                    }
                 }
             }
         }

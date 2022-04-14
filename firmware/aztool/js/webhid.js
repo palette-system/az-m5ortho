@@ -1,121 +1,123 @@
 var webhid = {};
 
 
-// Ú‘±‚µ‚½HIDƒfƒoƒCƒX
+// æ¥ç¶šã—ãŸHIDãƒ‡ãƒã‚¤ã‚¹
 webhid.device = null;
 
-// ƒf[ƒ^‚ğƒ[ƒh‚·‚é‚ÌstepŒvZ—p
+// ãƒ‡ãƒ¼ã‚¿ã‚’ãƒ­ãƒ¼ãƒ‰ã™ã‚‹æ™‚ã®stepè¨ˆç®—ç”¨
 webhid.load_index = 0;
 
-// ƒf[ƒ^‚ğƒ[ƒh‚·‚éˆê‹C‚É‰½ƒŒƒR[ƒhó‚¯æ‚é‚©
+// ãƒ‡ãƒ¼ã‚¿ã‚’ãƒ­ãƒ¼ãƒ‰ã™ã‚‹æ™‚ä¸€æ°—ã«ä½•ãƒ¬ã‚³ãƒ¼ãƒ‰å—ã‘å–ã‚‹ã‹
 webhid.load_step = 16;
 
-// ƒf[ƒ^‚ğƒ[ƒh‚·‚é—e—Ê
+// ãƒ‡ãƒ¼ã‚¿ã‚’ãƒ­ãƒ¼ãƒ‰ã™ã‚‹å®¹é‡
 webhid.load_length = 0;
 
-// ƒ[ƒh‚µ‚½ƒf[ƒ^
+// ãƒ­ãƒ¼ãƒ‰ã—ãŸãƒ‡ãƒ¼ã‚¿
 webhid.load_data = [];
 
-// ƒ[ƒh‚ÌƒnƒbƒVƒ…‚ğŒvZ‚·‚é—p‚Ìƒf[ƒ^
+// ãƒ­ãƒ¼ãƒ‰æ™‚ã®ãƒãƒƒã‚·ãƒ¥ã‚’è¨ˆç®—ã™ã‚‹ç”¨ã®ãƒ‡ãƒ¼ã‚¿
 webhid.load_hash = [];
 
-// ÅŒã‚Éƒ[ƒh‚µ‚½ŠÔ
+// æœ€å¾Œã«ãƒ­ãƒ¼ãƒ‰ã—ãŸæ™‚é–“
 webhid.last_load_time = 0;
 
-// ÅŒã‚Éƒ[ƒh‚µ‚½ƒ|ƒCƒ“ƒg
+// æœ€å¾Œã«ãƒ­ãƒ¼ãƒ‰ã—ãŸãƒã‚¤ãƒ³ãƒˆ
 webhid.last_load_point = 0;
 
-// ÅŒã‚É‘—‚Á‚½ƒnƒbƒVƒ…’l
+// æœ€å¾Œã«é€ã£ãŸãƒãƒƒã‚·ãƒ¥å€¤
 webhid.last_send_hash = 0;
 
-// ƒ[ƒh’†‚Ìƒtƒ@ƒCƒ‹ƒpƒX
+// ãƒ­ãƒ¼ãƒ‰ä¸­ã®ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹
 webhid.load_file_path = "";
 
-// •Û‘¶ƒf[ƒ^‘—M‚ÌƒCƒ“ƒfƒbƒNƒX
+// ä¿å­˜ãƒ‡ãƒ¼ã‚¿é€ä¿¡ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹
 webhid.save_index = 0;
 
-// •Û‘¶ƒf[ƒ^‚ğˆê‹C‚É‰½ƒŒƒR[ƒh‘—M‚·‚é‚©
+// ä¿å­˜ãƒ‡ãƒ¼ã‚¿ã‚’ä¸€æ°—ã«ä½•ãƒ¬ã‚³ãƒ¼ãƒ‰é€ä¿¡ã™ã‚‹ã‹
 webhid.save_step = 0;
 
-// •Û‘¶ƒf[ƒ^‚ğ‘—M‚·‚éƒf[ƒ^‚ÌŠJnˆÊ’u
+// ä¿å­˜ãƒ‡ãƒ¼ã‚¿ã‚’é€ä¿¡ã™ã‚‹ãƒ‡ãƒ¼ã‚¿ã®é–‹å§‹ä½ç½®
 webhid.save_seek = 0;
 
-// •Û‘¶‚·‚éƒf[ƒ^
+// ä¿å­˜ã™ã‚‹ãƒ‡ãƒ¼ã‚¿
 webhid.save_data = [];
 
-// •Û‘¶‚ÌƒnƒbƒVƒ…‚ğŒvZ‚·‚é—p‚Ìƒf[ƒ^
+// ä¿å­˜æ™‚ã®ãƒãƒƒã‚·ãƒ¥ã‚’è¨ˆç®—ã™ã‚‹ç”¨ã®ãƒ‡ãƒ¼ã‚¿
 webhid.save_hash = [];
 
-// •Û‘¶’†‚Ìƒtƒ@ƒCƒ‹ƒpƒX
+// ä¿å­˜ä¸­ã®ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹
 webhid.save_file_path = "";
 
-// HID ‚Ì usage ID
+// HID ã® usage ID
 webhid.hid_usage = 0x61;
 webhid.hid_usage_page = 0xff60;
 
-// HIDÚ‘±ƒŠƒNƒGƒXƒg—pƒpƒ‰ƒ[ƒ^
+// HIDæ¥ç¶šãƒªã‚¯ã‚¨ã‚¹ãƒˆç”¨ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
 webhid.hid_request_prm = {filters: [{"usagePage": webhid.hid_usage_page, "usage": webhid.hid_usage}]};
 
-// ‘—óM‚·‚éƒ|[ƒg‚Ì”Ô†
+// é€å—ä¿¡ã™ã‚‹ãƒãƒ¼ãƒˆã®ç•ªå·
 webhid.raw_report_id = 0;
 
-// ƒCƒ“ƒtƒH‚ğ•\¦‚·‚éDIV
+// ã‚¤ãƒ³ãƒ•ã‚©ã‚’è¡¨ç¤ºã™ã‚‹DIV
 webhid.info_div = "";
 
-// ƒRƒ}ƒ“ƒhID
+// ã‚³ãƒãƒ³ãƒ‰ID
 webhid.command_id = {
-    "file_load_start": 0x30, // ƒtƒ@ƒCƒ‹“Ç‚İ‚İŠJn
-    "file_load_data": 0x31, // ƒtƒ@ƒCƒ‹ƒf[ƒ^æ“¾
-    "file_save_start": 0x32, // ƒtƒ@ƒCƒ‹•Û‘¶ŠJn
-    "file_save_data": 0x33, // ƒtƒ@ƒCƒ‹•Û‘¶ƒf[ƒ^‘—M
-    "file_save_complate": 0x34, // ƒtƒ@ƒCƒ‹•Û‘¶Š®—¹
-    "none": 0x00 // ‹ó‘—M
+    "file_load_start": 0x30, // ãƒ•ã‚¡ã‚¤ãƒ«èª­ã¿è¾¼ã¿é–‹å§‹
+    "file_load_data": 0x31, // ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‡ãƒ¼ã‚¿å–å¾—
+    "file_save_start": 0x32, // ãƒ•ã‚¡ã‚¤ãƒ«ä¿å­˜é–‹å§‹
+    "file_save_data": 0x33, // ãƒ•ã‚¡ã‚¤ãƒ«ä¿å­˜ãƒ‡ãƒ¼ã‚¿é€ä¿¡
+    "file_save_complate": 0x34, // ãƒ•ã‚¡ã‚¤ãƒ«ä¿å­˜å®Œäº†
+    "file_list": 0x35, // ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆã‚’å–å¾—ã™ã‚‹
+    "restart": 0x36, //M5StackCore2ã®å†èµ·å‹•
+    "none": 0x00 // ç©ºé€ä¿¡
 };
 
-// ‰Šú‰»
+// åˆæœŸåŒ–
 webhid.init = function(opt) {
-    // ƒIƒvƒVƒ‡ƒ“‚ğó‚¯æ‚é
+    // ã‚ªãƒ—ã‚·ãƒ§ãƒ³ã‚’å—ã‘å–ã‚‹
     let k;
     for (k in opt) {
         webhid[k] = opt[k];
     }
-    // crcƒe[ƒuƒ‹ì¬
+    // crcãƒ†ãƒ¼ãƒ–ãƒ«ä½œæˆ
     webhid.crc_table = webhid.get_crctable();
-    // Ú‘±ƒCƒxƒ“ƒg“o˜^
+    // æ¥ç¶šã‚¤ãƒ™ãƒ³ãƒˆç™»éŒ²
     navigator.hid.addEventListener("connect", webhid.handle_connect);
-    // Ú‘±I—¹ƒCƒxƒ“ƒg“o˜^
+    // æ¥ç¶šçµ‚äº†ã‚¤ãƒ™ãƒ³ãƒˆç™»éŒ²
     navigator.hid.addEventListener("disconnect", webhid.handle_disconnect);
 };
 
-// ƒRƒ}ƒ“ƒh‚ğ‘—M
+// ã‚³ãƒãƒ³ãƒ‰ã‚’é€ä¿¡
 webhid.send_command = function(arr) {
-    while (arr.length < webhid.raw_report_id.out_size) arr.push(0x00); // 0‹l‚ß
+    while (arr.length < webhid.raw_report_id.out_size) arr.push(0x00); // 0è©°ã‚
     let cmd = new Uint8Array(arr);
     return webhid.device.sendReport(webhid.raw_report_id.out, cmd);
 };
 
-// ƒ~ƒŠ•b‚ÌŠÔ‚ğæ“¾
+// ãƒŸãƒªç§’ã®æ™‚é–“ã‚’å–å¾—
 webhid.millis = function() {
     let d = new Date();
     return d.getTime();
 };
 
-// •¶š—ñ‚ğuint8Array‚É‚·‚é
+// æ–‡å­—åˆ—ã‚’uint8Arrayã«ã™ã‚‹
 webhid.str2arr = function(str) {
     return new TextEncoder().encode(str);
 };
 
-// uint8Array‚ğ•¶š—ñ‚É‚·‚é
+// uint8Arrayã‚’æ–‡å­—åˆ—ã«ã™ã‚‹
 webhid.arr2str = function(arr) {
     return  new TextDecoder().decode(new Uint8Array(arr))
 };
 
-// •¶š—ñ‚©‚Ç‚¤‚©‚Ì”»’è
+// æ–‡å­—åˆ—ã‹ã©ã†ã‹ã®åˆ¤å®š
 webhid.is_string = function(v) {
     return (typeof v === "string" || v instanceof String);
 }
 
-// crc32 ŒvZ—p‚Ìcrcƒe[ƒuƒ‹æ“¾
+// crc32 è¨ˆç®—ç”¨ã®crcãƒ†ãƒ¼ãƒ–ãƒ«å–å¾—
 webhid.get_crctable = function(){
     var c;
     var crcTable = [];
@@ -129,7 +131,7 @@ webhid.get_crctable = function(){
     return crcTable;
 }
 
-// crc32 ƒnƒbƒVƒ…ŒvZ
+// crc32 ãƒãƒƒã‚·ãƒ¥è¨ˆç®—
 webhid.crc32 = function(arr) {
     var crc = 0 ^ (-1);
     for (var i = 0; i < arr.length; i++ ) {
@@ -138,7 +140,7 @@ webhid.crc32 = function(arr) {
     return Math.floor(crc ^ (-1));
 };
 
-// ƒCƒ“ƒtƒHƒ[ƒVƒ‡ƒ“•\¦
+// ã‚¤ãƒ³ãƒ•ã‚©ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³è¡¨ç¤º
 webhid.view_info = function(msg) {
     if (!webhid.info_div) {
         console.log("info: " + msg);
@@ -147,23 +149,23 @@ webhid.view_info = function(msg) {
     $("#" + webhid.info_div).html(msg);
 };
 
-// HIDÚ‘±‚µ‚½ŒÄ‚Ño‚³‚ê‚éƒCƒxƒ“ƒg
+// HIDæ¥ç¶šã—ãŸæ™‚å‘¼ã³å‡ºã•ã‚Œã‚‹ã‚¤ãƒ™ãƒ³ãƒˆ
 webhid.handle_connect = function(e) {
-    console.log("Device connected: " + e.device.productName);
+    webhid.view_info("æ¥ç¶šã—ã¾ã—ãŸ " + e.device.productId + " : " + e.device.vendorId);
 };
 
-// HIDÚ‘±I—¹‚µ‚½‚ÉŒÄ‚Ño‚³‚ê‚éƒCƒxƒ“ƒg
+// HIDæ¥ç¶šçµ‚äº†ã—ãŸæ™‚ã«å‘¼ã³å‡ºã•ã‚Œã‚‹ã‚¤ãƒ™ãƒ³ãƒˆ
 webhid.handle_disconnect = function(e) {
-    webhid.device = null; // ƒfƒoƒCƒX
-    webhid.raw_report_id = 0; // ‘—óM‚µ‚Ä‚¢‚½ƒŒƒ|[ƒg”Ô†
-    console.log("Device disconnected: " + e.device.productName);
+    webhid.device = null; // ãƒ‡ãƒã‚¤ã‚¹
+    webhid.raw_report_id = 0; // é€å—ä¿¡ã—ã¦ã„ãŸãƒ¬ãƒãƒ¼ãƒˆç•ªå·
+    webhid.view_info("åˆ‡æ–­ã—ã¾ã—ãŸ " + e.device.productId + " : " + e.device.vendorId);
 };
 
-// ƒf[ƒ^‚ğó‚¯æ‚Á‚½‚ÌƒCƒxƒ“ƒg
+// ãƒ‡ãƒ¼ã‚¿ã‚’å—ã‘å–ã£ãŸæ™‚ã®ã‚¤ãƒ™ãƒ³ãƒˆ
 webhid.handle_input_report = function(e) {
-    // ‘S‚Ä‚Ìƒ|[ƒg‚ÌƒCƒ“ƒvƒbƒg‚Å‚±‚ÌƒCƒxƒ“ƒg‚ª”­¶‚·‚é‚Ì‚ÅrawˆÈŠO‚Ìƒ|[ƒg‚ÌƒCƒxƒ“ƒg‚Í–³‹
+    // å…¨ã¦ã®ãƒãƒ¼ãƒˆã®ã‚¤ãƒ³ãƒ—ãƒƒãƒˆã§ã“ã®ã‚¤ãƒ™ãƒ³ãƒˆãŒç™ºç”Ÿã™ã‚‹ã®ã§rawä»¥å¤–ã®ãƒãƒ¼ãƒˆã®ã‚¤ãƒ™ãƒ³ãƒˆã¯ç„¡è¦–
     if (e.reportId != webhid.raw_report_id.in) return;
-    // ƒf[ƒ^‚ğUint8Array‚É‚·‚é
+    // ãƒ‡ãƒ¼ã‚¿ã‚’Uint8Arrayã«ã™ã‚‹
     let get_data = new Uint8Array(e.data.buffer);
     // console.log("get");
     // console.log(get_data);
@@ -171,80 +173,26 @@ webhid.handle_input_report = function(e) {
     let cmd;
     let l, i, j, h, p, s;
     if (cmd_type == webhid.command_id.file_load_start) {
-        // ƒtƒ@ƒCƒ‹“Ç‚İ‚İŠJn(ƒtƒ@ƒCƒ‹—L–³‚Æ—e—Ê‚ª‹A‚Á‚Ä—ˆ‚é)
-        if (!get_data[1]) { // ƒtƒ@ƒCƒ‹‚ª–³‚¢
-            webhid.view_info("ƒtƒ@ƒCƒ‹‚ª‘¶İ‚µ‚Ü‚¹‚ñ‚Å‚µ‚½B");
+        // ãƒ•ã‚¡ã‚¤ãƒ«èª­ã¿è¾¼ã¿é–‹å§‹(ãƒ•ã‚¡ã‚¤ãƒ«æœ‰ç„¡ã¨å®¹é‡ãŒå¸°ã£ã¦æ¥ã‚‹)
+        if (!get_data[1]) { // ãƒ•ã‚¡ã‚¤ãƒ«ãŒç„¡ã„
+            webhid.view_info("ãƒ•ã‚¡ã‚¤ãƒ«ãŒå­˜åœ¨ã—ã¾ã›ã‚“ã§ã—ãŸã€‚");
             return;
         }
-        // —e—Êæ“¾
-        webhid.load_length = (get_data[2] << 24) + (get_data[3] << 16) + (get_data[4] << 8) + get_data[5];
-        // ‹ó‚Ìƒ[ƒhƒf[ƒ^‚ğì¬(‚±‚±‚Éƒf[ƒ^‚ğ“ü‚ê‚Ä‚¢‚­)
-        webhid.load_data = [];
-        for (i=0; i<webhid.load_length; i++) webhid.load_data.push(0x00);
-        // ƒf[ƒ^æ“¾ƒRƒ}ƒ“ƒhì¬
-        cmd = [webhid.command_id.file_load_data, webhid.load_step, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-        // ƒRƒ}ƒ“ƒh‘—M
-        webhid.load_index = 0;
-        webhid.load_hash = [];
-        webhid.last_load_time = webhid.millis(); // ÅŒã‚ÉƒRƒ}ƒ“ƒh‚ğ“Š‚°‚½ŠÔ
-        webhid.last_load_point = 0; // ÅŒã‚ÉƒŠƒNƒGƒXƒg‚µ‚½ƒ|ƒCƒ“ƒg
-        webhid.last_send_hash = 0;
-        webhid.send_command(cmd).then(() => {
-            webhid.view_info("loading... [ 0 / "+webhid.load_length+" ]");
-        });
-        // ƒ[ƒhŠÄ‹ˆ—ŠJn
-        webhid.file_load_check();
+        // ãƒ•ã‚¡ã‚¤ãƒ«ã®å®¹é‡å–å¾—
+        s = (get_data[2] << 24) + (get_data[3] << 16) + (get_data[4] << 8) + get_data[5];
+        // èª­ã¿è¾¼ã¿é–‹å§‹
+        webhid.load_start_exec(s);
 
     } else if (cmd_type == webhid.command_id.file_load_data) {
-        // ƒtƒ@ƒCƒ‹“Ç‚İ‚İ(ƒf[ƒ^æ“¾)
-        i = 0;
-        s = get_data.length - 4; // ó‚¯æ‚Á‚½ƒf[ƒ^‚ÌƒTƒCƒYæ“¾-4‚ÍƒRƒ}ƒ“ƒh‚ÆŠJnˆÊ’u•ª
-        p = (get_data[1] << 16) + (get_data[2] << 8) + get_data[3]; // ó‚¯æ‚Á‚½ƒf[ƒ^‚ÌŠJnˆÊ’uæ“¾
-        // console.log(p + " / " + webhid.load_length);
-        // 1ƒoƒCƒg‚¸‚Âƒf[ƒ^æ“¾
-        while (i < s) {
-            webhid.load_data[p + i] = get_data[i + 4];
-            webhid.load_hash.push(get_data[i + 4]);
-            i++;
-            if ((p + i) >= webhid.load_length) break; // ƒtƒ@ƒCƒ‹—e—Ê•ª‘S•”“Ç‚İ‚ñ‚¾‚çI—¹
-        }
-        webhid.load_index++; // step”‰ÁZ
-        if (webhid.load_index >= webhid.load_step && (p + i) < webhid.load_length) {
-            // stepI‚í‚Á‚ÄA‚Ü‚¾ƒf[ƒ^‘S•”“Ç‚ß‚Ä–³‚¯‚ê‚ÎŸ‚Ìƒf[ƒ^æ“¾ƒRƒ}ƒ“ƒh‚ğ‘—M
-            webhid.last_send_hash = webhid.crc32(webhid.load_hash);
-            webhid.load_index = 0; // step‚ğƒŠƒZƒbƒg
-            webhid.load_hash = []; // ƒnƒbƒVƒ…ƒf[ƒ^‚àƒŠƒZƒbƒg
-            m = p + i; // Ÿ“Ç‚İ‚ŞŠJnˆÊ’u
-            // ƒf[ƒ^—v‹ƒRƒ}ƒ“ƒhì¬
-            cmd = [
-                webhid.command_id.file_load_data,
-                webhid.load_step,
-                ((m >> 16) & 0xff), // “Ç‚İ‚İŠJnˆÊ’u 1
-                ((m >> 8) & 0xff),  // “Ç‚İ‚İŠJnˆÊ’u 2
-                (m & 0xff),         // “Ç‚İ‚İŠJnˆÊ’u 3
-                ((webhid.last_send_hash >> 24) & 0xff), // ƒnƒbƒVƒ…1
-                ((webhid.last_send_hash >> 16) & 0xff), // ƒnƒbƒVƒ…2
-                ((webhid.last_send_hash >> 8) & 0xff),  // ƒnƒbƒVƒ…3
-                (webhid.last_send_hash & 0xff) ];       // ƒnƒbƒVƒ…4
-            // ƒRƒ}ƒ“ƒh‘—M
-            webhid.last_load_time = webhid.millis(); // ÅŒã‚ÉƒRƒ}ƒ“ƒh‚ğ“Š‚°‚½ŠÔ
-            webhid.last_load_point = m; // ÅŒã‚ÉƒŠƒNƒGƒXƒg‚µ‚½ƒ|ƒCƒ“ƒg
-            webhid.send_command(cmd).then(() => {
-                webhid.view_info("loading...  "+m+" / "+webhid.load_length+" ");
-            });
-        } else if ((p + i) >= webhid.load_length) {
-            // ÅŒã‚Ü‚Åæ“¾‚Å‚«‚½‚çŠ®—¹
-            webhid.load_file_path = "";
-            let str = webhid.arr2str(webhid.load_data); // ”z—ñ‚ğƒeƒLƒXƒg‚É•ÏŠ·
-            webhid.view_info("<textarea id='json_area' style='width: 800px; height:300px;'>"+str+"</textarea>");
-        }
+        // ãƒ‡ãƒ¼ã‚¿ãƒ­ãƒ¼ãƒ‰å‡¦ç†
+        webhid.load_data_exec(get_data);
         
     } else if (cmd_type == webhid.command_id.file_save_data) {
-        // ƒtƒ@ƒCƒ‹•Û‘¶‚Ìƒf[ƒ^—v‹
-        webhid.save_step = get_data[1]; // ‘—M‚·‚éƒXƒeƒbƒv”‚ğæ“¾
+        // ãƒ•ã‚¡ã‚¤ãƒ«ä¿å­˜ã®ãƒ‡ãƒ¼ã‚¿è¦æ±‚
+        webhid.save_step = get_data[1]; // é€ä¿¡ã™ã‚‹ã‚¹ãƒ†ãƒƒãƒ—æ•°ã‚’å–å¾—
         s = webhid.save_seek;
-        webhid.save_seek = (get_data[2] << 24) + (get_data[3] << 16) + (get_data[4] << 8) + get_data[5]; // “n‚·ƒf[ƒ^‚ÌŠJnˆÊ’uæ“¾
-        p = (get_data[6] << 24) + (get_data[7] << 16) + (get_data[8] << 8) + get_data[9]; // ‘O‰ñ‘—‚Á‚½ƒf[ƒ^‚ÌƒnƒbƒVƒ…(M5Stack‘¤‚ªŒvZ‚µ‚½’l)
+        webhid.save_seek = (get_data[2] << 24) + (get_data[3] << 16) + (get_data[4] << 8) + get_data[5]; // æ¸¡ã™ãƒ‡ãƒ¼ã‚¿ã®é–‹å§‹ä½ç½®å–å¾—
+        p = (get_data[6] << 24) + (get_data[7] << 16) + (get_data[8] << 8) + get_data[9]; // å‰å›é€ã£ãŸãƒ‡ãƒ¼ã‚¿ã®ãƒãƒƒã‚·ãƒ¥(M5Stackå´ãŒè¨ˆç®—ã—ãŸå€¤)
         h = webhid.crc32(webhid.save_hash);
         // console.log(webhid.save_hash);
         if (h == p) {
@@ -253,25 +201,129 @@ webhid.handle_input_report = function(e) {
             console.error("NG : [" + h + "  " + p + "] [" + webhid.save_seek + " -> "+s+"]");
             webhid.save_seek = s;
         }
-        webhid.save_index = 0; // ƒXƒeƒbƒvˆÊ’u‚ğ0‚É
+        webhid.save_index = 0; // ã‚¹ãƒ†ãƒƒãƒ—ä½ç½®ã‚’0ã«
         webhid.save_hash = [];
-        webhid.last_save_time = webhid.millis(); // ÅŒã‚ÉƒRƒ}ƒ“ƒh‚ğ“Š‚°‚½ŠÔ
-        webhid.send_save_data(); // •Û‘¶ƒf[ƒ^‚Ì‘—M
+        webhid.last_save_time = webhid.millis(); // æœ€å¾Œã«ã‚³ãƒãƒ³ãƒ‰ã‚’æŠ•ã’ãŸæ™‚é–“
+        webhid.send_save_data(); // ä¿å­˜ãƒ‡ãƒ¼ã‚¿ã®é€ä¿¡
 
     } else if (cmd_type == webhid.command_id.file_save_complate) {
-        // ƒtƒ@ƒCƒ‹•Û‘¶Š®—¹’Ê’m
-        webhid.save_data = []; // •Û‘¶ƒf[ƒ^ƒNƒŠƒA
-        webhid.save_file_path = ""; // •Û‘¶ƒtƒ@ƒCƒ‹–¼ƒNƒŠƒA
-        webhid.view_info("save complate!");
-        
+        // ãƒ•ã‚¡ã‚¤ãƒ«ä¿å­˜å®Œäº†é€šçŸ¥
+        p = get_data[1]; // çµ‚äº†ã‚¿ã‚¤ãƒ—
+        if (p == 0) { // å—ã‘å–ã‚Šå®Œäº†
+            h = (get_data[2] << 24) + (get_data[3] << 16) + (get_data[4] << 8) + get_data[5]; // ãƒ•ã‚¡ã‚¤ãƒ«å…¨ä½“ã®ãƒãƒƒã‚·ãƒ¥
+            s = webhid.crc32(webhid.save_data);
+            if (h == s) {
+                // ãƒ•ã‚¡ã‚¤ãƒ«å…¨ä½“ã®ãƒãƒƒã‚·ãƒ¥ã‚‚ä¸€è‡´ã—ã¦ã„ã‚Œã°ä¿å­˜å®Œäº†ã‚’é€ä¿¡
+                console.log("file hash: OK " + h + " " + s);
+                cmd = [webhid.command_id.file_save_complate];
+                webhid.send_command(cmd).then(() => {
+                    webhid.view_info("data check OK!");
+                });
+            
+            } else {
+                // ãƒ•ã‚¡ã‚¤ãƒ«å…¨ä½“ã®ãƒãƒƒã‚·ãƒ¥ãŒåˆã‚ãªã‘ã‚Œã°ã‚‚ã†ä¸€åº¦æœ€åˆã‹ã‚‰é€ã‚Šç›´ã—
+                console.error("file hash: NG " + h + " " + s);
+                webhid.save_seek = 0; // é€ã‚Šä½ç½®ã‚’æœ€åˆã‹ã‚‰
+                webhid.save_index = 0; // ã‚¹ãƒ†ãƒƒãƒ—ä½ç½®ã‚’0ã«
+                webhid.save_hash = [];
+                webhid.last_save_time = webhid.millis(); // æœ€å¾Œã«ã‚³ãƒãƒ³ãƒ‰ã‚’æŠ•ã’ãŸæ™‚é–“
+                webhid.send_save_data(); // ä¿å­˜ãƒ‡ãƒ¼ã‚¿ã®é€ä¿¡
+            }
+
+        } else if (p == 1) {
+            // ä¿å­˜å®Œäº†
+            webhid.save_data = []; // ä¿å­˜ãƒ‡ãƒ¼ã‚¿ã‚¯ãƒªã‚¢
+            webhid.save_file_path = ""; // ä¿å­˜ãƒ•ã‚¡ã‚¤ãƒ«åã‚¯ãƒªã‚¢
+            webhid.view_info("save complate!");
+
+        }
+
+    } else if (cmd_type == webhid.command_id.file_list) {
+        // ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆå–å¾—é–‹å§‹
+        // ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆã®ã‚µã‚¤ã‚ºå–å¾—
+        s = (get_data[1] << 24) + (get_data[2] << 16) + (get_data[3] << 8) + get_data[4];
+        // èª­ã¿è¾¼ã¿é–‹å§‹
+        webhid.load_start_exec(s);
+
     }
     
 };
 
-// •Û‘¶ƒf[ƒ^‚Ì‘—M
+// ãƒ‡ãƒ¼ã‚¿ãƒ­ãƒ¼ãƒ‰é–‹å§‹å‡¦ç†
+webhid.load_start_exec = function(data_size) {
+    let i, cmd;
+    // ãƒ­ãƒ¼ãƒ‰ã™ã‚‹ã‚µã‚¤ã‚º
+    webhid.load_length = data_size;
+    // ç©ºã®ãƒ­ãƒ¼ãƒ‰ãƒ‡ãƒ¼ã‚¿ã‚’ä½œæˆ(ã“ã“ã«ãƒ‡ãƒ¼ã‚¿ã‚’å…¥ã‚Œã¦ã„ã)
+    webhid.load_data = [];
+    for (i=0; i<webhid.load_length; i++) webhid.load_data.push(0x00);
+    // ãƒ‡ãƒ¼ã‚¿å–å¾—ã‚³ãƒãƒ³ãƒ‰ä½œæˆ
+    cmd = [webhid.command_id.file_load_data, webhid.load_step, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+    // ã‚³ãƒãƒ³ãƒ‰é€ä¿¡
+    webhid.load_index = 0;
+    webhid.load_hash = [];
+    webhid.last_load_time = webhid.millis(); // æœ€å¾Œã«ã‚³ãƒãƒ³ãƒ‰ã‚’æŠ•ã’ãŸæ™‚é–“
+    webhid.last_load_point = 0; // æœ€å¾Œã«ãƒªã‚¯ã‚¨ã‚¹ãƒˆã—ãŸãƒã‚¤ãƒ³ãƒˆ
+    webhid.last_send_hash = 0;
+    webhid.send_command(cmd).then(() => {
+        webhid.view_info("loading... [ 0 / "+webhid.load_length+" ]");
+    });
+    // ãƒ­ãƒ¼ãƒ‰ç›£è¦–å‡¦ç†é–‹å§‹
+    webhid.file_load_check();
+};
+
+// ãƒ‡ãƒ¼ã‚¿ãƒ­ãƒ¼ãƒ‰å‡¦ç†
+webhid.load_data_exec = function(get_data) {
+    let cmd;
+    let i, p, s;
+    // ãƒ•ã‚¡ã‚¤ãƒ«èª­ã¿è¾¼ã¿(ãƒ‡ãƒ¼ã‚¿å–å¾—)
+    i = 0;
+    s = get_data.length - 4; // å—ã‘å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã®ã‚µã‚¤ã‚ºå–å¾—-4ã¯ã‚³ãƒãƒ³ãƒ‰ã¨é–‹å§‹ä½ç½®åˆ†
+    p = (get_data[1] << 16) + (get_data[2] << 8) + get_data[3]; // å—ã‘å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã®é–‹å§‹ä½ç½®å–å¾—
+    // console.log(p + " / " + webhid.load_length);
+    // 1ãƒã‚¤ãƒˆãšã¤ãƒ‡ãƒ¼ã‚¿å–å¾—
+    while (i < s) {
+        webhid.load_data[p + i] = get_data[i + 4];
+        webhid.load_hash.push(get_data[i + 4]);
+        i++;
+        if ((p + i) >= webhid.load_length) break; // ãƒ•ã‚¡ã‚¤ãƒ«å®¹é‡åˆ†å…¨éƒ¨èª­ã¿è¾¼ã‚“ã ã‚‰çµ‚äº†
+    }
+    webhid.load_index++; // stepæ•°åŠ ç®—
+    if (webhid.load_index >= webhid.load_step && (p + i) < webhid.load_length) {
+        // stepçµ‚ã‚ã£ã¦ã€ã¾ã ãƒ‡ãƒ¼ã‚¿å…¨éƒ¨èª­ã‚ã¦ç„¡ã‘ã‚Œã°æ¬¡ã®ãƒ‡ãƒ¼ã‚¿å–å¾—ã‚³ãƒãƒ³ãƒ‰ã‚’é€ä¿¡
+        webhid.last_send_hash = webhid.crc32(webhid.load_hash);
+        webhid.load_index = 0; // stepã‚’ãƒªã‚»ãƒƒãƒˆ
+        webhid.load_hash = []; // ãƒãƒƒã‚·ãƒ¥ãƒ‡ãƒ¼ã‚¿ã‚‚ãƒªã‚»ãƒƒãƒˆ
+        m = p + i; // æ¬¡èª­ã¿è¾¼ã‚€é–‹å§‹ä½ç½®
+        // ãƒ‡ãƒ¼ã‚¿è¦æ±‚ã‚³ãƒãƒ³ãƒ‰ä½œæˆ
+        cmd = [
+            webhid.command_id.file_load_data,
+            webhid.load_step,
+            ((m >> 16) & 0xff), // èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½® 1
+            ((m >> 8) & 0xff),  // èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½® 2
+            (m & 0xff),         // èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½® 3
+            ((webhid.last_send_hash >> 24) & 0xff), // ãƒãƒƒã‚·ãƒ¥1
+            ((webhid.last_send_hash >> 16) & 0xff), // ãƒãƒƒã‚·ãƒ¥2
+            ((webhid.last_send_hash >> 8) & 0xff),  // ãƒãƒƒã‚·ãƒ¥3
+            (webhid.last_send_hash & 0xff) ];       // ãƒãƒƒã‚·ãƒ¥4
+        // ã‚³ãƒãƒ³ãƒ‰é€ä¿¡
+        webhid.last_load_time = webhid.millis(); // æœ€å¾Œã«ã‚³ãƒãƒ³ãƒ‰ã‚’æŠ•ã’ãŸæ™‚é–“
+        webhid.last_load_point = m; // æœ€å¾Œã«ãƒªã‚¯ã‚¨ã‚¹ãƒˆã—ãŸãƒã‚¤ãƒ³ãƒˆ
+        webhid.send_command(cmd).then(() => {
+            webhid.view_info("loading...  "+m+" / "+webhid.load_length+" ");
+        });
+    } else if ((p + i) >= webhid.load_length) {
+        // æœ€å¾Œã¾ã§å–å¾—ã§ããŸã‚‰å®Œäº†
+        webhid.load_file_path = "";
+        let str = webhid.arr2str(webhid.load_data); // é…åˆ—ã‚’ãƒ†ã‚­ã‚¹ãƒˆã«å¤‰æ›
+        webhid.view_info("<textarea id='json_area' style='width: 800px; height:300px;'>"+str+"</textarea>");
+    }
+};
+
+// ä¿å­˜ãƒ‡ãƒ¼ã‚¿ã®é€ä¿¡
 webhid.send_save_data = function() {
-    let data_len = webhid.raw_report_id.out_size - 5; // 1ƒXƒeƒbƒv‚Å‘—‚éƒf[ƒ^‚Ì’·‚³
-    // ƒRƒ}ƒ“ƒhì¬
+    let data_len = webhid.raw_report_id.out_size - 5; // 1ã‚¹ãƒ†ãƒƒãƒ—ã§é€ã‚‹ãƒ‡ãƒ¼ã‚¿ã®é•·ã•
+    // ã‚³ãƒãƒ³ãƒ‰ä½œæˆ
     let cmd = [
         webhid.command_id.file_save_data,
         webhid.save_index,
@@ -279,7 +331,7 @@ webhid.send_save_data = function() {
         ((webhid.save_seek >> 8) & 0xff),
         (webhid.save_seek & 0xff)
     ];
-    // ƒRƒ}ƒ“ƒh‚Éƒf[ƒ^‚ğŠi”[
+    // ã‚³ãƒãƒ³ãƒ‰ã«ãƒ‡ãƒ¼ã‚¿ã‚’æ ¼ç´
     let i = webhid.save_seek + (data_len * webhid.save_index);
     while (cmd.length < webhid.raw_report_id.out_size) {
         if (i >= webhid.save_data.length) {
@@ -293,7 +345,7 @@ webhid.send_save_data = function() {
     let p = (webhid.save_seek + (webhid.save_index * (webhid.raw_report_id.out_size - 5)));
     if (p > webhid.save_data.length) p = webhid.save_data.length;
     webhid.view_info("saving ...  " + p + " / " + webhid.save_data.length);
-    // ƒRƒ}ƒ“ƒh‘—M
+    // ã‚³ãƒãƒ³ãƒ‰é€ä¿¡
     // console.log("send");
     // console.log(cmd);
     webhid.send_command(cmd).then(() => {
@@ -304,97 +356,97 @@ webhid.send_save_data = function() {
     });
 };
 
-// ƒ[ƒh‚ª~‚Ü‚Á‚Ä–³‚¢‚©ŠÄ‹
+// ãƒ­ãƒ¼ãƒ‰ãŒæ­¢ã¾ã£ã¦ç„¡ã„ã‹ç›£è¦–
 webhid.file_load_check = function() {
-    // ƒ[ƒh‚ªŠ®—¹‚µ‚Ä‚¢‚½‚çŠÄ‹I—¹
+    // ãƒ­ãƒ¼ãƒ‰ãŒå®Œäº†ã—ã¦ã„ãŸã‚‰ç›£è¦–çµ‚äº†
     if (!webhid.load_file_path) return;
-    let t = webhid.millis() - webhid.last_load_time; // ÅŒã‚É‘—‚Á‚Ä‚©‚ç‚Ç‚ê‚­‚ç‚¢ŠÔ‚ª‚½‚Á‚½‚©
-    if (t > 2000) { // 2•bˆÈãƒf[ƒ^‚ªó‚¯æ‚ê‚È‚¯‚ê‚Î‚à‚¤ˆê‰ñƒf[ƒ^—v‹ƒRƒ}ƒ“ƒh‚ğ‘—M
-        // ƒf[ƒ^—v‹ƒRƒ}ƒ“ƒhì¬
-        if (webhid.load_step > 1) webhid.load_step--; // ˆê“x‚É‘—‚éƒf[ƒ^”‚ğŒ¸‚ç‚·
-        webhid.load_index = 0; // step‚ğƒŠƒZƒbƒg
-        webhid.load_hash = []; // ƒnƒbƒVƒ…ƒf[ƒ^‚àƒŠƒZƒbƒg
+    let t = webhid.millis() - webhid.last_load_time; // æœ€å¾Œã«é€ã£ã¦ã‹ã‚‰ã©ã‚Œãã‚‰ã„æ™‚é–“ãŒãŸã£ãŸã‹
+    if (t > 2000) { // 2ç§’ä»¥ä¸Šãƒ‡ãƒ¼ã‚¿ãŒå—ã‘å–ã‚Œãªã‘ã‚Œã°ã‚‚ã†ä¸€å›ãƒ‡ãƒ¼ã‚¿è¦æ±‚ã‚³ãƒãƒ³ãƒ‰ã‚’é€ä¿¡
+        // ãƒ‡ãƒ¼ã‚¿è¦æ±‚ã‚³ãƒãƒ³ãƒ‰ä½œæˆ
+        if (webhid.load_step > 1) webhid.load_step--; // ä¸€åº¦ã«é€ã‚‹ãƒ‡ãƒ¼ã‚¿æ•°ã‚’æ¸›ã‚‰ã™
+        webhid.load_index = 0; // stepã‚’ãƒªã‚»ãƒƒãƒˆ
+        webhid.load_hash = []; // ãƒãƒƒã‚·ãƒ¥ãƒ‡ãƒ¼ã‚¿ã‚‚ãƒªã‚»ãƒƒãƒˆ
         let cmd = [
             webhid.command_id.file_load_data,
             webhid.load_step,
             ((webhid.last_load_point >> 16) & 0xff),
             ((webhid.last_load_point >> 8) & 0xff),
             (webhid.last_load_point & 0xff),
-            0x00, 0x00, 0x00, 0x00 ]; // ƒnƒbƒVƒ…’l0‚ÅƒnƒbƒVƒ…ƒ`ƒFƒbƒNŠÖŒW‚È‚­w’è‚µ‚½ƒAƒhƒŒƒX‚Ìƒf[ƒ^‚ğ—v‹‚Å‚«‚é
-        // ƒRƒ}ƒ“ƒh‘—M
-        webhid.last_load_time = webhid.millis(); // ÅŒã‚ÉƒRƒ}ƒ“ƒh‚ğ“Š‚°‚½ŠÔ
+            0x00, 0x00, 0x00, 0x00 ]; // ãƒãƒƒã‚·ãƒ¥å€¤0ã§ãƒãƒƒã‚·ãƒ¥ãƒã‚§ãƒƒã‚¯é–¢ä¿‚ãªãæŒ‡å®šã—ãŸã‚¢ãƒ‰ãƒ¬ã‚¹ã®ãƒ‡ãƒ¼ã‚¿ã‚’è¦æ±‚ã§ãã‚‹
+        // ã‚³ãƒãƒ³ãƒ‰é€ä¿¡
+        webhid.last_load_time = webhid.millis(); // æœ€å¾Œã«ã‚³ãƒãƒ³ãƒ‰ã‚’æŠ•ã’ãŸæ™‚é–“
         webhid.send_command(cmd).then(() => {
             webhid.view_info("loading... [ "+webhid.last_load_point+" / "+webhid.load_length+" ]");
         });
     }
-    // 1•b‚¨‚«‚Éƒ`ƒFƒbƒN
+    // 1ç§’ãŠãã«ãƒã‚§ãƒƒã‚¯
     setTimeout(webhid.file_load_check, 1000);
 };
 
-// •Û‘¶‚ª~‚Ü‚Á‚Ä‚¢‚È‚¢‚©ŠÄ‹
+// ä¿å­˜ãŒæ­¢ã¾ã£ã¦ã„ãªã„ã‹ç›£è¦–
 webhid.file_save_check = function() {
-    // •Û‘¶‚ªŠ®—¹‚µ‚Ä‚¢‚½‚çŠÄ‹I—¹
+    // ä¿å­˜ãŒå®Œäº†ã—ã¦ã„ãŸã‚‰ç›£è¦–çµ‚äº†
     if (!webhid.save_file_path) return;
-    let t = webhid.millis() - webhid.last_save_time; // ÅŒã‚É‘—‚Á‚Ä‚©‚ç‚Ç‚ê‚­‚ç‚¢ŠÔ‚ª‚½‚Á‚½‚©
-    if (t > 2000) { // 2•bˆÈãƒf[ƒ^‚ªó‚¯æ‚ê‚È‚¯‚ê‚Î‚à‚¤ˆê‰ñƒf[ƒ^‘—M
+    let t = webhid.millis() - webhid.last_save_time; // æœ€å¾Œã«é€ã£ã¦ã‹ã‚‰ã©ã‚Œãã‚‰ã„æ™‚é–“ãŒãŸã£ãŸã‹
+    if (t > 2000) { // 2ç§’ä»¥ä¸Šãƒ‡ãƒ¼ã‚¿ãŒå—ã‘å–ã‚Œãªã‘ã‚Œã°ã‚‚ã†ä¸€å›ãƒ‡ãƒ¼ã‚¿é€ä¿¡
         console.log("save command resend: " + webhid.save_seek);
-        webhid.save_index = 0; // ƒXƒeƒbƒvˆÊ’u‚ğ0‚É
+        webhid.save_index = 0; // ã‚¹ãƒ†ãƒƒãƒ—ä½ç½®ã‚’0ã«
         webhid.save_hash = [];
-        webhid.last_save_time = webhid.millis(); // ÅŒã‚ÉƒRƒ}ƒ“ƒh‚ğ“Š‚°‚½ŠÔ
-        webhid.send_save_data(); // •Û‘¶ƒf[ƒ^‚Ì‘—M
+        webhid.last_save_time = webhid.millis(); // æœ€å¾Œã«ã‚³ãƒãƒ³ãƒ‰ã‚’æŠ•ã’ãŸæ™‚é–“
+        webhid.send_save_data(); // ä¿å­˜ãƒ‡ãƒ¼ã‚¿ã®é€ä¿¡
     }
-    // 1•b‚¨‚«‚Éƒ`ƒFƒbƒN
+    // 1ç§’ãŠãã«ãƒã‚§ãƒƒã‚¯
     setTimeout(webhid.file_save_check, 1000);
 }
 
-// HID‹@Ší‚ÖÚ‘±
+// HIDæ©Ÿå™¨ã¸æ¥ç¶š
 webhid.connect = function() {
-    // ƒfƒoƒCƒX‚Ì‘I‘ğ
+    // ãƒ‡ãƒã‚¤ã‚¹ã®é¸æŠ
     navigator.hid.requestDevice(webhid.hid_request_prm).then((devices) => {
         if (!devices.length || !devices[0] || !devices[0].collections) {
-            webhid.view_info("‹@Ší‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñ‚Å‚µ‚½B");
+            webhid.view_info("æ©Ÿå™¨ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã§ã—ãŸã€‚");
             return;
         }
-        // Ú‘±‚ğŠJn
+        // æ¥ç¶šã‚’é–‹å§‹
         devices[0].open().then(() => {
-            // ‘—óM‚·‚éƒŒƒ|[ƒg”Ô†æ“¾
+            // é€å—ä¿¡ã™ã‚‹ãƒ¬ãƒãƒ¼ãƒˆç•ªå·å–å¾—
             let r = webhid.get_report_id(devices[0]);
             if (!r.in || !r.out) {
-                webhid.view_info("Ú‘±‚Å‚«‚Ü‚¹‚ñ‚Å‚µ‚½B");
+                webhid.view_info("æ¥ç¶šã§ãã¾ã›ã‚“ã§ã—ãŸã€‚");
                 return;
             }
             webhid.raw_report_id = r;
-            // Ú‘±Š®—¹
+            // æ¥ç¶šå®Œäº†
             webhid.device = devices[0];
-            // ƒf[ƒ^‚ğó‚¯æ‚Á‚½‚ÌƒCƒxƒ“ƒg“o˜^
+            // ãƒ‡ãƒ¼ã‚¿ã‚’å—ã‘å–ã£ãŸæ™‚ã®ã‚¤ãƒ™ãƒ³ãƒˆç™»éŒ²
             webhid.device.addEventListener("inputreport", webhid.handle_input_report);
         });
     });
 };
 
-// rawƒf[ƒ^‚ğ‘—óM‚·‚éƒ|[ƒgID‚ğæ“¾‚·‚é
+// rawãƒ‡ãƒ¼ã‚¿ã‚’é€å—ä¿¡ã™ã‚‹ãƒãƒ¼ãƒˆIDã‚’å–å¾—ã™ã‚‹
 webhid.get_report_id = function(d) {
     let i;
     let r = {"in": 0, "in_size": 0, "out": 0, "out_size": 0};
-    // ƒfƒoƒCƒX‚Ìî•ñ‚ª–³‚¯‚ê‚Î0
+    // ãƒ‡ãƒã‚¤ã‚¹ã®æƒ…å ±ãŒç„¡ã‘ã‚Œã°0
     if (!d.collections || !d.collections.length) return r;
-    // ŠY“–‚Ìƒ|[ƒg”Ô†‚ğ’T‚·
+    // è©²å½“ã®ãƒãƒ¼ãƒˆç•ªå·ã‚’æ¢ã™
     for (i in d.collections) {
         if (d.collections[i].usage == webhid.hid_usage && d.collections[i].usagePage == webhid.hid_usage_page) {
-            r.in = d.collections[1].inputReports[0].reportId; // “ü—Íƒ|[ƒgID
-            r.in_size = d.collections[1].inputReports[0].items[0].reportCount; // “ü—Íƒ|[ƒg‚ÌƒTƒCƒY(32byte)
-            r.out = d.collections[1].outputReports[0].reportId; // o—Íƒ|[ƒgID
-            r.out_size = d.collections[1].outputReports[0].items[0].reportCount; // o—Íƒ|[ƒg‚ÌƒTƒCƒY(32bytp)
+            r.in = d.collections[1].inputReports[0].reportId; // å…¥åŠ›ãƒãƒ¼ãƒˆID
+            r.in_size = d.collections[1].inputReports[0].items[0].reportCount; // å…¥åŠ›ãƒãƒ¼ãƒˆã®ã‚µã‚¤ã‚º(32byte)
+            r.out = d.collections[1].outputReports[0].reportId; // å‡ºåŠ›ãƒãƒ¼ãƒˆID
+            r.out_size = d.collections[1].outputReports[0].items[0].reportCount; // å‡ºåŠ›ãƒãƒ¼ãƒˆã®ã‚µã‚¤ã‚º(32bytp)
             break;
         }
     }
-    // ŠY“–‚·‚éƒ|[ƒg‚ğ•Ô‚·(–³‚¯‚ê‚Î0)
+    // è©²å½“ã™ã‚‹ãƒãƒ¼ãƒˆã‚’è¿”ã™(ç„¡ã‘ã‚Œã°0)
     return r;
 };
 
-// ƒtƒ@ƒCƒ‹‚Ìƒf[ƒ^‚ğæ“¾‚·‚é
+// ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ‡ãƒ¼ã‚¿ã‚’å–å¾—ã™ã‚‹
 webhid.get_file = function(file_path) {
-    // ƒRƒ}ƒ“ƒh‚ğì¬
+    // ã‚³ãƒãƒ³ãƒ‰ã‚’ä½œæˆ
     webhid.load_file_path = file_path;
     let file_path_arr = webhid.str2arr(file_path);
     let cmd = [webhid.command_id.file_load_start];
@@ -403,48 +455,68 @@ webhid.get_file = function(file_path) {
         cmd.push(file_path_arr[i]);
     }
     if (cmd.length > 30) {
-        webhid.view_info("ƒtƒ@ƒCƒ‹–¼‚ª’·‚·‚¬‚Ü‚·B [ "+file_path+" ]");
+        webhid.view_info("ãƒ•ã‚¡ã‚¤ãƒ«åãŒé•·ã™ãã¾ã™ã€‚ [ "+file_path+" ]");
         return;
     }
-    // ƒRƒ}ƒ“ƒh‘—M
+    // ã‚³ãƒãƒ³ãƒ‰é€ä¿¡
     webhid.send_command(cmd).then(() => {
         webhid.view_info("loading ...");
     });
 };
 
-// ƒtƒ@ƒCƒ‹‚Éƒf[ƒ^‚ğ‘‚«‚Ş
+// ãƒ•ã‚¡ã‚¤ãƒ«ã«ãƒ‡ãƒ¼ã‚¿ã‚’æ›¸ãè¾¼ã‚€
 webhid.save_file = function(file_path, file_data) {
-    // •Û‘¶‚·‚éƒf[ƒ^‚ğæ“¾(uint8array‚Å•Û)
+    // ä¿å­˜ã™ã‚‹ãƒ‡ãƒ¼ã‚¿ã‚’å–å¾—(uint8arrayã§ä¿æŒ)
     webhid.save_data = (webhid.is_string(file_data))? webhid.str2arr(file_data): new Uint8Array(file_data);
     webhid.save_hash = [];
     webhid.save_seek = 0;
     webhid.save_file_path = file_path;
-    webhid.last_save_time = webhid.millis(); // ÅŒã‚ÉƒRƒ}ƒ“ƒh‚ğ“Š‚°‚½ŠÔ
-    let file_path_arr = webhid.str2arr(file_path); // ƒtƒ@ƒCƒ‹ƒpƒX‚ğuint8Array‚É•ÏŠ·
-    let data_len = webhid.save_data.length; // •Û‘¶‚·‚éƒtƒ@ƒCƒ‹‚Ì—e—Ê
-    // ƒRƒ}ƒ“ƒhì¬
+    webhid.last_save_time = webhid.millis(); // æœ€å¾Œã«ã‚³ãƒãƒ³ãƒ‰ã‚’æŠ•ã’ãŸæ™‚é–“
+    let file_path_arr = webhid.str2arr(file_path); // ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹ã‚’uint8Arrayã«å¤‰æ›
+    let data_len = webhid.save_data.length; // ä¿å­˜ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ã®å®¹é‡
+    // ã‚³ãƒãƒ³ãƒ‰ä½œæˆ
     let cmd = [
         webhid.command_id.file_save_start,
         ((data_len >> 24) & 0xff),
         ((data_len >> 16) & 0xff),
         ((data_len >> 8) & 0xff),
         (data_len & 0xff),
-        4, // •Û‘¶ƒf[ƒ^‘—M‚ÌƒXƒeƒbƒv”w’è
+        4, // ä¿å­˜ãƒ‡ãƒ¼ã‚¿é€ä¿¡ã®ã‚¹ãƒ†ãƒƒãƒ—æ•°æŒ‡å®š
     ];
     let i;
     for (i=0; i<file_path_arr.length; i++) {
         cmd.push(file_path_arr[i]);
     }
     if (cmd.length > 30) {
-        webhid.view_info("ƒtƒ@ƒCƒ‹–¼‚ª’·‚·‚¬‚Ü‚·B [ "+file_path+" ]");
+        webhid.view_info("ãƒ•ã‚¡ã‚¤ãƒ«åãŒé•·ã™ãã¾ã™ã€‚ [ "+file_path+" ]");
         return;
     }
-    // ƒRƒ}ƒ“ƒh‘—M
+    // ã‚³ãƒãƒ³ãƒ‰é€ä¿¡
     webhid.send_command(cmd).then(() => {
         webhid.view_info("saving ...");
     });
-    // •Û‘¶ƒf[ƒ^‘—M‚ª~‚Ü‚ç‚È‚¢‚©ƒ`ƒFƒbƒNŠJn
+    // ä¿å­˜ãƒ‡ãƒ¼ã‚¿é€ä¿¡ãŒæ­¢ã¾ã‚‰ãªã„ã‹ãƒã‚§ãƒƒã‚¯é–‹å§‹
     webhid.file_save_check();
 };
 
+// ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆã‚’å–å¾—ã™ã‚‹
+webhid.get_file_list = function() {
+    // ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆè¦æ±‚ã‚³ãƒãƒ³ãƒ‰ä½œæˆ
+    let cmd = [webhid.command_id.file_list];
+    // ã‚³ãƒãƒ³ãƒ‰é€ä¿¡
+    webhid.send_command(cmd).then(() => {
+        webhid.view_info("loading ...");
+    });
+};
+
+// M5StackCore2 ã®å†èµ·å‹•
+webhid.m5_restart = function(boot_type) {
+    // ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚¹ãƒˆè¦æ±‚ã‚³ãƒãƒ³ãƒ‰ä½œæˆ
+    let cmd = [webhid.command_id.restart, boot_type];
+    // ã‚³ãƒãƒ³ãƒ‰é€ä¿¡
+    webhid.send_command(cmd).then(() => {
+        webhid.view_info("restarting ...");
+    });
+
+};
 

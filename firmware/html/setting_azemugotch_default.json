@@ -33,9 +33,7 @@
 							4
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_1": {
 					"press": {
@@ -44,9 +42,7 @@
 							5
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_2": {
 					"press": {
@@ -55,9 +51,7 @@
 							6
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_3": {
 					"press": {
@@ -66,9 +60,7 @@
 							7
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_4": {
 					"press": {
@@ -77,9 +69,7 @@
 							8
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_5": {
 					"press": {
@@ -88,14 +78,32 @@
 							9
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				}
 			}
 		}
 	},
 	"option_set": {
 		"type": ""
-	}
+	},
+	"i2c_option": [
+		{
+			"type": 1,
+			"enable": 1,
+			"ioxp": [
+				{
+					"addr": 0x20,
+					"row": [],
+					"col": [],
+					"direct": [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+				}
+			],
+			"key": [
+				{"o": 0, "s": 10},
+				{"o": 1, "s": 11},
+				{"o": 2, "s": 12},
+				{"o": 3, "s": 13}
+			]
+		}
+	]
 }

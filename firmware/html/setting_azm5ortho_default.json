@@ -45,9 +45,7 @@
 					"press": {
 						"action_type": 3,
 						"layer": 2
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_1": {
 					"press": {
@@ -56,9 +54,7 @@
 							29
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_2": {
 					"press": {
@@ -67,9 +63,7 @@
 							4
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_3": {
 					"press": {
@@ -78,17 +72,13 @@
 							20
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_4": {
 					"press": {
 						"action_type": 3,
 						"layer": 1
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_5": {
 					"press": {
@@ -97,9 +87,7 @@
 							225
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_6": {
 					"press": {
@@ -108,9 +96,7 @@
 							224
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_7": {
 					"press": {
@@ -119,9 +105,7 @@
 							43
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_8": {
 					"press": {
@@ -130,9 +114,7 @@
 							26
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_9": {
 					"press": {
@@ -141,9 +123,7 @@
 							22
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_10": {
 					"press": {
@@ -152,9 +132,7 @@
 							27
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_11": {
 					"press": {
@@ -163,9 +141,7 @@
 							41
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_12": {
 					"press": {
@@ -174,9 +150,7 @@
 							8
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_13": {
 					"press": {
@@ -185,9 +159,7 @@
 							7
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_14": {
 					"press": {
@@ -196,9 +168,7 @@
 							6
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_15": {
 					"press": {
@@ -207,9 +177,7 @@
 							227
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_16": {
 					"press": {
@@ -218,9 +186,7 @@
 							44
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_17": {
 					"press": {
@@ -229,9 +195,7 @@
 							5
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_18": {
 					"press": {
@@ -240,9 +204,7 @@
 							10
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_19": {
 					"press": {
@@ -251,9 +213,7 @@
 							23
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_20": {
 					"press": {
@@ -262,9 +222,7 @@
 							226
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_21": {
 					"press": {
@@ -273,9 +231,7 @@
 							25
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_22": {
 					"press": {
@@ -284,9 +240,7 @@
 							9
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_23": {
 					"press": {
@@ -295,9 +249,7 @@
 							21
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_24": {
 					"press": {
@@ -306,9 +258,7 @@
 							16385
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_25": {
 					"press": {
@@ -317,9 +267,7 @@
 							16389
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_26": {
 					"press": {
@@ -328,9 +276,7 @@
 							16386
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_27": {
 					"press": {
@@ -339,9 +285,7 @@
 							6
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_28": {
 					"press": {
@@ -350,9 +294,7 @@
 							25
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_29": {
 					"press": {
@@ -361,9 +303,7 @@
 							5
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_30": {
 					"press": {
@@ -372,9 +312,7 @@
 							17
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_31": {
 					"press": {
@@ -383,9 +321,7 @@
 							16
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_32": {
 					"press": {
@@ -394,9 +330,7 @@
 							53
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_33": {
 					"press": {
@@ -405,9 +339,7 @@
 							16
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_34": {
 					"press": {
@@ -416,9 +348,7 @@
 							13
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_35": {
 					"press": {
@@ -427,9 +357,7 @@
 							24
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_36": {
 					"press": {
@@ -438,9 +366,7 @@
 							42
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_37": {
 					"press": {
@@ -449,9 +375,7 @@
 							17
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_38": {
 					"press": {
@@ -460,9 +384,7 @@
 							11
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_39": {
 					"press": {
@@ -471,9 +393,7 @@
 							28
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_40": {
 					"press": {
@@ -482,17 +402,13 @@
 							44
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_41": {
 					"press": {
 						"action_type": 3,
 						"layer": 1
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_42": {
 					"press": {
@@ -501,9 +417,7 @@
 							16385
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_43": {
 					"press": {
@@ -512,9 +426,7 @@
 							16388
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_44": {
 					"press": {
@@ -523,17 +435,13 @@
 							16386
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_45": {
 					"press": {
 						"action_type": 3,
 						"layer": 1
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_46": {
 					"press": {
@@ -542,9 +450,7 @@
 							53
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_47": {
 					"press": {
@@ -553,9 +459,7 @@
 							70
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_48": {
 					"press": {
@@ -564,9 +468,7 @@
 							80
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_49": {
 					"press": {
@@ -575,9 +477,7 @@
 							55
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_50": {
 					"press": {
@@ -586,9 +486,7 @@
 							15
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_55": {
 					"press": {
@@ -597,9 +495,7 @@
 							12
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_51": {
 					"press": {
@@ -608,9 +504,7 @@
 							18
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_56": {
 					"press": {
@@ -619,9 +513,7 @@
 							19
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_60": {
 					"press": {
@@ -630,9 +522,7 @@
 							45
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_54": {
 					"press": {
@@ -641,9 +531,7 @@
 							14
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_57": {
 					"press": {
@@ -652,9 +540,7 @@
 							52
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_61": {
 					"press": {
@@ -663,9 +549,7 @@
 							40
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_53": {
 					"press": {
@@ -674,9 +558,7 @@
 							54
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_58": {
 					"press": {
@@ -685,9 +567,7 @@
 							82
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_62": {
 					"press": {
@@ -696,9 +576,7 @@
 							225
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_52": {
 					"press": {
@@ -707,9 +585,7 @@
 							70
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_59": {
 					"press": {
@@ -718,9 +594,7 @@
 							81
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_63": {
 					"press": {
@@ -729,9 +603,7 @@
 							79
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				}
 			}
 		},
@@ -741,23 +613,17 @@
 				"key_0": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_1": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_2": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_3": {
 					"press": {
@@ -766,16 +632,12 @@
 							4126
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_4": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_5": {
 					"press": {
@@ -784,9 +646,7 @@
 							225
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_6": {
 					"press": {
@@ -795,9 +655,7 @@
 							224
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_7": {
 					"press": {
@@ -806,9 +664,7 @@
 							53
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_8": {
 					"press": {
@@ -817,30 +673,22 @@
 							4127
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_9": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_10": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_11": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_12": {
 					"press": {
@@ -849,51 +697,37 @@
 							4128
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_13": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_14": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_15": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_16": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_17": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_18": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_19": {
 					"press": {
@@ -902,30 +736,22 @@
 							4130
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_20": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_21": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_22": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_23": {
 					"press": {
@@ -934,72 +760,52 @@
 							4129
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_24": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_25": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_26": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_27": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_28": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_29": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_30": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_31": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_32": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_33": {
 					"press": {
@@ -1008,9 +814,7 @@
 							56
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_34": {
 					"press": {
@@ -1019,9 +823,7 @@
 							47
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_35": {
 					"press": {
@@ -1030,16 +832,12 @@
 							4132
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_36": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_37": {
 					"press": {
@@ -1048,9 +846,7 @@
 							52
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_38": {
 					"press": {
@@ -1059,9 +855,7 @@
 							51
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_39": {
 					"press": {
@@ -1070,72 +864,52 @@
 							4131
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_40": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_41": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_42": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_43": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_44": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_45": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_46": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_47": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_48": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_49": {
 					"press": {
@@ -1144,9 +918,7 @@
 							48
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_50": {
 					"press": {
@@ -1155,9 +927,7 @@
 							46
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_55": {
 					"press": {
@@ -1166,9 +936,7 @@
 							4133
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_51": {
 					"press": {
@@ -1177,9 +945,7 @@
 							4134
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_56": {
 					"press": {
@@ -1188,9 +954,7 @@
 							4141
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_60": {
 					"press": {
@@ -1199,9 +963,7 @@
 							76
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_54": {
 					"press": {
@@ -1210,9 +972,7 @@
 							45
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_57": {
 					"press": {
@@ -1221,9 +981,7 @@
 							137
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_61": {
 					"press": {
@@ -1232,9 +990,7 @@
 							40
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_53": {
 					"press": {
@@ -1243,9 +999,7 @@
 							135
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_58": {
 					"press": {
@@ -1254,9 +1008,7 @@
 							50
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_62": {
 					"press": {
@@ -1265,30 +1017,22 @@
 							225
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_52": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_59": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_63": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				}
 			}
 		},
@@ -1302,9 +1046,7 @@
 							58
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_3": {
 					"press": {
@@ -1313,9 +1055,7 @@
 							59
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_8": {
 					"press": {
@@ -1324,9 +1064,7 @@
 							60
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_12": {
 					"press": {
@@ -1335,9 +1073,7 @@
 							61
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_23": {
 					"press": {
@@ -1346,9 +1082,7 @@
 							62
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_19": {
 					"press": {
@@ -1357,9 +1091,7 @@
 							63
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_39": {
 					"press": {
@@ -1368,9 +1100,7 @@
 							64
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_35": {
 					"press": {
@@ -1379,9 +1109,7 @@
 							65
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_55": {
 					"press": {
@@ -1390,9 +1118,7 @@
 							66
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_51": {
 					"press": {
@@ -1401,9 +1127,7 @@
 							67
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_56": {
 					"press": {
@@ -1412,9 +1136,7 @@
 							68
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_60": {
 					"press": {
@@ -1423,9 +1145,7 @@
 							69
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_6": {
 					"press": {
@@ -1434,58 +1154,42 @@
 							224
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_2": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_9": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_13": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_22": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_18": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_38": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_34": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_54": {
 					"press": {
@@ -1494,9 +1198,7 @@
 							36
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_50": {
 					"press": {
@@ -1505,9 +1207,7 @@
 							37
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_57": {
 					"press": {
@@ -1516,9 +1216,7 @@
 							38
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_61": {
 					"press": {
@@ -1527,9 +1225,7 @@
 							4147
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_5": {
 					"press": {
@@ -1538,58 +1234,42 @@
 							225
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_1": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_10": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_14": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_21": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_17": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_37": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_33": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_53": {
 					"press": {
@@ -1598,9 +1278,7 @@
 							33
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_49": {
 					"press": {
@@ -1609,9 +1287,7 @@
 							34
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_58": {
 					"press": {
@@ -1620,9 +1296,7 @@
 							35
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_62": {
 					"press": {
@@ -1631,79 +1305,57 @@
 							45
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_4": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_0": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_11": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_15": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_20": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_16": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_24": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_25": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_26": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_36": {
 					"press": {
 						"action_type": 0
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_32": {
 					"press": {
@@ -1712,9 +1364,7 @@
 							39
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_52": {
 					"press": {
@@ -1723,9 +1373,7 @@
 							30
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_48": {
 					"press": {
@@ -1734,9 +1382,7 @@
 							31
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_59": {
 					"press": {
@@ -1745,9 +1391,7 @@
 							32
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				},
 				"key_63": {
 					"press": {
@@ -1756,9 +1400,7 @@
 							55
 						],
 						"repeat_interval": "51"
-					},
-					"long_press": {},
-					"long_press_time": 0
+					}
 				}
 			}
 		}
