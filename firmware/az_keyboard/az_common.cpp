@@ -158,6 +158,9 @@ uint32_t boot_count;
 // 打鍵数を自動保存するかどうか
 uint8_t key_count_auto_save;
 
+// IOエキスパンダオブジェクト
+Adafruit_MCP23X17 *ioxp_obj[8];
+
 // 入力用ピン情報
 short direct_len;
 short touch_len;
@@ -178,9 +181,6 @@ AXP192 power;
 
 // バッテリ残量更新フラグ
 int pw_update_index;
-
-// I/Oエキスパンダ用
-Adafruit_MCP23X17 *iomcp;
 
 // LVGL用
 TFT_eSPI lvtft = TFT_eSPI();
@@ -616,7 +616,7 @@ void AzCommon::load_setting_json() {
     op_movie_flag = false;
     if (setting_obj["option_set"]["op_movie"].as<signed int>() > 0) op_movie_flag = true;
     // 入力ピン情報取得
-    int i, j, k, m, n, o, p;
+    int i, j, k, m, n, o, p, r;
     direct_len = setting_obj["keyboard_pin"]["direct"].size();
     touch_len = setting_obj["keyboard_pin"]["touch"].size();
     ioxp_len = setting_obj["keyboard_pin"]["ioxp"].size();
@@ -650,6 +650,7 @@ void AzCommon::load_setting_json() {
     }
 
     // I2cオプションの設定
+    int i2c_key_len = 0;
     if (setting_obj.containsKey("i2c_option") && setting_obj["i2c_option"].size()) {
         // 有効になっているオプションの数を数える
         k = setting_obj["i2c_option"].size();
@@ -683,10 +684,23 @@ void AzCommon::load_setting_json() {
                     // row に設定しているピン
                     if (setting_obj["i2c_option"][i]["ioxp"][n].containsKey("row") &&
                             setting_obj["i2c_option"][i]["ioxp"][n]["row"].size() ) {
+                        // row に設定されている配列を取得(0～7 以外を無視する)
                         i2copt[j].ioxp[n].row_len = setting_obj["i2c_option"][i]["ioxp"][n]["row"].size();
-                        i2copt[j].ioxp[n].row = new uint8_t[i2copt[j].ioxp[n].row_len];
+                        i2copt[j].ioxp[n].row = new uint8_t[i2copt[j].ioxp[n].row_len]; // row のピン番号
+                        i2copt[j].ioxp[n].row_output = new uint8_t[i2copt[j].ioxp[n].row_len]; // マトリックスでrow write するデータ
+                        i2copt[j].ioxp[n].row_mask = 0x00; // row write する時用のマスク
+                        o = 0;
                         for (p=0; p<i2copt[j].ioxp[n].row_len; p++) {
-                            i2copt[j].ioxp[n].row[p] = setting_obj["i2c_option"][i]["ioxp"][n]["row"][p].as<signed int>();
+                            r = setting_obj["i2c_option"][i]["ioxp"][n]["row"][p].as<signed int>();
+                            if (r < 0 || r >= 8) continue; // ポートA以外の場合は取得しない
+                            i2copt[j].ioxp[n].row[o] = r;
+                            o++;
+                            i2copt[j].ioxp[n].row_mask |= 0x01 << r;
+                        }
+                        i2copt[j].ioxp[n].row_len = o;
+                        // マトリックス出力する時用のデータ作成
+                        for (p=0; p<o; p++) {
+                            i2copt[j].ioxp[n].row_output[p] = i2copt[j].ioxp[n].row_mask & ~(0x01 << i2copt[j].ioxp[n].row[p]);
                         }
                     } else {
                         i2copt[j].ioxp[n].row_len = 0;
@@ -714,16 +728,22 @@ void AzCommon::load_setting_json() {
                         i2copt[j].ioxp[n].direct_len = 0;
                     }
                     // キーマッピング設定
-                    if (setting_obj["i2c_option"][i]["map"].containsKey("direct") &&
+                    if (setting_obj["i2c_option"][i].containsKey("map") &&
                             setting_obj["i2c_option"][i]["map"].size() ) {
                         i2copt[j].map_len = setting_obj["i2c_option"][i]["map"].size();
-                        i2copt[j].map = new opt_key_map[i2copt[j].map_len];
+                        i2copt[j].map = new short[i2copt[j].map_len];
                         for (p=0; p<i2copt[j].map_len; p++) {
-                            i2copt[j].map[p].org = setting_obj["i2c_option"][i]["map"][p]["o"].as<signed int>();
-                            i2copt[j].map[p].stg = setting_obj["i2c_option"][i]["map"][p]["s"].as<signed int>();
+                            i2copt[j].map[p] = setting_obj["i2c_option"][i]["map"][p].as<signed int>();
                         }
                     } else {
                         i2copt[j].map_len = 0;
+                    }
+                    i2c_key_len += i2copt[j].map_len;
+                    // キー設定の開始番号
+                    if (setting_obj["i2c_option"][i].containsKey("map_start")) {
+                        i2copt[j].map_start = setting_obj["i2c_option"][i]["map_start"].as<signed int>();
+                    } else {
+                        i2copt[j].map_start = 0;
                     }
                 }
             } else {
@@ -745,7 +765,8 @@ void AzCommon::load_setting_json() {
     layer_max = 0;
     setting_length = 0;
     soft_setting_length = 0;
-    key_max = (16 * ioxp_len) + direct_len + touch_len;
+    // key_max = (16 * ioxp_len) + direct_len + touch_len + i2c_key_len;
+    key_max = (16 * ioxp_len) + direct_len + touch_len; // remap用
     this->get_keymap(setting_obj, "layers"); // 通常キー
     this->get_keymap(setting_obj, "soft_layers"); // ソフトウェアキー
     this->set_setting_remap(); // REMAPに送る用のデータ作成
@@ -1046,6 +1067,7 @@ void AzCommon::set_setting_remap() {
     for (i=0; i<setting_length; i++) {
         at = setting_press[i].action_type;
         m = (setting_press[i].layer * key_max * 2) + (setting_press[i].key_num * 2);
+        if (m >= buf_length) continue; // 領域を超えているキー設定はオプション用なので無視
         if (at == 1) {
             // 通常キー
             memcpy(&normal_input, setting_press[i].data, sizeof(setting_normal_input));
@@ -1435,15 +1457,75 @@ bool AzCommon::create_setting_json() {
     return true;
 }
 
+// I2C機器の初期化(戻り値：増えるキーの数)
+int AzCommon::i2c_setup(int p, i2c_option *opt) {
+    int i, j, k, m, x;
+    int r = 0;
+    int set_type[16];
+    if (opt->opt_type == 1) {
+        // IOエキスパンダ
+        for (i=0; i<opt->ioxp_len; i++) {
+            x = opt->ioxp[i].addr - 32; // アドレス
+            Serial.printf("i2c_setup: %D %D %D\n", i, x, ioxp_status[x]);
+            // まだ初期化されていないIOエキスパンダなら初期化
+            if (ioxp_status[x] < 0) {
+                ioxp_obj[x] = new Adafruit_MCP23X17();
+                ioxp_status[x] = 0;
+                if (ioxp_obj[x]->begin_I2C(opt->ioxp[i].addr, &Wire)) {
+                    M5.Lcd.printf("begin_I2C option  %D  %D OK\n", i, opt->ioxp[i].addr);
+                } else {
+                    M5.Lcd.printf("begin_I2C option  %D  %D NG\n", i, opt->ioxp[i].addr);
+                    delay(1000);
+                    continue;
+                }
+            }
+            // ピンのタイプデータをINPUT_PULLUPで初期化
+            for (j=0; j<16; j++) {
+                set_type[j] = INPUT_PULLUP;
+            }
+            // rowピンだけOUTPUTにする
+            for (j=0; j<opt->ioxp[i].row_len; j++) {
+                set_type[ opt->ioxp[i].row[j] ] = OUTPUT;
+            }
+            // ピン初期化
+            for (j=0; j<16; j++) {
+                ioxp_obj[x]->pinMode(j, set_type[j]);
+            }
+        }
+        // キーの番号をmapデータに入れる
+        // あとでキー設定の番号入れ替えをここでやる
+        k = opt->map_start;
+        for (i=0; i<opt->map_len; i++) {
+            // 設定内容中の番号を付け替える
+            for (j=0; j<setting_length; j++) {
+                if (setting_press[j].key_num == p) {
+                    // 元から同じ番号の設定が入っていたら消す
+                    setting_press[j].key_num = -1;
+                } else if (setting_press[j].key_num == k) {
+                    // Serial.printf("map: %D %D %D [ %D -> %D ]\n", i, j, k, setting_press[j].key_num, p);
+                    setting_press[j].key_num = p;
+                }
+            }
+            p++;
+            k++;
+        }
+    }
+    return p;
+}
+
 // キーの入力ピンの初期化
 void AzCommon::pin_setup() {
     
-  int i, j;
+  int i, j, m, x;
+
+  key_input_length = 0;
 
   // direct(スイッチ直接続)で定義されているピンを全てinputにする
   for (i=0; i<direct_len; i++) {
       pinMode(direct_list[i], INPUT_PULLUP);
   }
+  key_input_length += direct_len;
+
 
   // I2C初期化
   if (ioxp_sda >= 0 && ioxp_scl >= 0) {
@@ -1453,30 +1535,41 @@ void AzCommon::pin_setup() {
         M5.Lcd.printf("Wire1 begin ok\n");
     } else {
         M5.Lcd.printf("Wire1 begin ng\n");
+        delay(1000);
     }
 
     // IOエキスパンダ初期化
     M5.Lcd.printf("Adafruit_MCP23X17 %D\n", ioxp_len);
-    iomcp = new Adafruit_MCP23X17[ioxp_len];
     for (i=0; i<ioxp_len; i++) {
-        if (iomcp[i].begin_I2C(ioxp_list[i], &Wire)) {
-            M5.Lcd.printf("begin_I2C %D  %D OK\n", i, ioxp_list[i]);
-        } else {
-            M5.Lcd.printf("begin_I2C %D  %D NG\n", i, ioxp_list[i]);
-            delay(500);
-            continue;
+        x = ioxp_list[i] - 32;
+        if (ioxp_status[x] < 0) {
+            ioxp_obj[x] = new Adafruit_MCP23X17();
+            if (ioxp_obj[x]->begin_I2C(ioxp_list[i], &Wire)) {
+                M5.Lcd.printf("begin_I2C %D  %D OK\n", i, ioxp_list[i]);
+                ioxp_status[x] = 0;
+            } else {
+                M5.Lcd.printf("begin_I2C %D  %D NG\n", i, ioxp_list[i]);
+                delay(1000);
+                continue;
+            }
         }
         delay(10);
         for (j = 0; j < 16; j++) {
-            iomcp[i].pinMode(j, INPUT_PULLUP);
+            ioxp_obj[x]->pinMode(j, INPUT_PULLUP);
         }
         delay(50);
-        ioxp_status[i] = 0;
     }
+    key_input_length += (ioxp_len * 16);
+    
+
+    // I2C接続のオプション初期化
+    for (i=0; i<i2copt_len; i++) {
+        key_input_length = i2c_setup(key_input_length, &i2copt[i]);
+    }
+    
   }
 
-  key_input_length = (16 * ioxp_len) + direct_len;
-  this->key_count_total = 0;
+  this->key_count_total = 0; // キーボードを起動してから押されたキーの数総数
 }
 
 
@@ -1637,13 +1730,65 @@ void AzCommon::change_mode(int set_mode) {
     ESP.restart(); // ESP32再起動
 }
 
+// I2C機器のキー状態を取得
+int AzCommon::i2c_read(int p, i2c_option *opt, char *read_data) {
+    int i, j, k, m, n, r, x;
+    unsigned long start_time;
+    unsigned long end_time;
+    uint8_t rowput_mask;
+    int rowput_len;
+    int mxread[8];
+    Adafruit_MCP23X17 *ioxp;
+    r = 0;
+    if (opt->opt_type == 1) {
+        // IOエキスパンダ
+        for (i=0; i<opt->ioxp_len; i++) {
+            x = opt->ioxp[i].addr - 32; // アドレス
+            // まだ初期化されていないIOエキスパンダなら無視
+            if (ioxp_status[x] < 0) continue;
+            // row と col があればマトリックス入力
+            if (opt->ioxp[i].row_len > 0 && opt->ioxp[i].col_len > 0) {
+                // まずrowでoutputするデータとマスクを用意
+                rowput_len = opt->ioxp[i].row_len;
+                rowput_mask = opt->ioxp[i].row_mask;
+                ioxp = ioxp_obj[x];
+                // rowのoutput分ループ
+                for (j=0; j<rowput_len; j++) {
+                    ioxp->writeGPIO(opt->ioxp[i].row_output[j], 0); // ポートAに出力
+                    mxread[j] = ioxp->readGPIOAB(); // ポートA,B両方のデータを取得
+                }
+                // マップデータ分入力を取得
+                for (j=0; j<opt->map_len; j++) {
+                    n = opt->map[j];
+                    k = n / 16;
+                    m = n % 16;
+                    if (k >= rowput_len) k = rowput_len - 1; // マトリックスで取得した数より多い場合はdirectの指定なので一番最後に取得した情報で判定
+                    read_data[p] = ((mxread[k] | rowput_mask) & (0x01 << m))? 0: 1;
+                    p++;
+                    r++;
+                }
+            } else {
+                // col と row が無い場合はダイレクトのみ
+                mxread[0] = ioxp_obj[x]->readGPIOAB(); // ポートA,B両方のデータを取得
+                // マップデータ分入力を取得
+                for (j=0; j<opt->map_len; j++) {
+                    m = opt->map[j] % 16;
+                    read_data[p] = (mxread[0] & (0x01 << m))? 0: 1;
+                    p++;
+                    r++;
+                }
+            }
+        }
+    }
+   return r;
+}
 
 // 現在のキーの入力状態を取得
 void AzCommon::key_read(void) {
     unsigned long start_time;
     unsigned long end_time;
     int m[ioxp_len];
-    int i, j, n, c, p;
+    int i, j, n, c, p, x;
     p = 0;
     // ダイレクト入力の取得
     for (i=0; i<direct_len; i++) {
@@ -1651,25 +1796,25 @@ void AzCommon::key_read(void) {
         p++;
     }
     // IOエキスパンダ
-    start_time = millis();
     for (i=0; i<ioxp_len; i++) {
-        if (ioxp_status[i] == 0) {
-            m[i] = iomcp[i].readGPIOAB();
+        x = ioxp_list[i] - 32;
+        if (ioxp_status[x] == 0) {
+            m[i] = ioxp_obj[x]->readGPIOAB();
             if (m[i] == 0) {
                 // 全ピン読み込み無しだとIOエキスパンダの接続が切れたかリセットした可能性あり
-                ioxp_status[i] = 1; // 一旦接続切れたステータスにする
+                ioxp_status[x] = 1; // 一旦接続切れたステータスにする
                 m[i] = 0xffff; // 全ボタン離した状態
             }
-        } else if (ioxp_status[i] > 256) {
+        } else if (ioxp_status[x] > 256) {
             // 接続が切れた状態の場合100周期に1回ピンの初期化を送信してステータスリセット
             for (j = 0; j < 16; j++) {
-                iomcp[i].pinMode(j, INPUT_PULLUP);
+                ioxp_obj[x]->pinMode(j, INPUT_PULLUP);
             }
-            ioxp_status[i] = 0; // ステータスを接続状態に戻す
+            ioxp_status[x] = 0; // ステータスを接続状態に戻す
             m[i] = 0xffff; // 全ボタン離した状態
-        } else if (ioxp_status[i] > 0) {
+        } else if (ioxp_status[x] > 0) {
             // IOエキスパンダ接続していない間カウントアップ
-            ioxp_status[i]++;
+            ioxp_status[x]++;
             m[i] = 0xffff; // 全ボタン離した状態
         } else {
             m[i] = 0xFFFF; // 全てのボタン離した状態
@@ -1683,15 +1828,29 @@ void AzCommon::key_read(void) {
             n += 16;
         }
     }
-    end_time = millis();
+    p += ioxp_len * 16;
+    // I2Cオプション
+    start_time = micros();
+    for (i=0; i<i2copt_len; i++) {
+        p = i2c_read(p, &i2copt[i], input_key);
+    }
+    end_time = micros();
+    /*
+    Serial.printf("%D [", key_input_length);
+    for (i=0; i<key_input_length; i++) {
+        Serial.printf(" %D", input_key[i]);
+    }
+    Serial.printf("] %D\n", (end_time - start_time));
+    delay(1000);
     /*
     M5.Lcd.fillScreen(BLACK);
     M5.Lcd.setCursor(0, 0, 2);
     for (i=0; i<key_input_length; i++) {
-        if ((i % 6) == 5) M5.Lcd.printf("\n");
-        M5.Lcd.printf("[%D,%D]", i, input_key[i]);
+        // if ((i % 6) == 5) M5.Lcd.printf("\n");
+        M5.Lcd.printf(" %D", i, input_key[i]);
     }
     */
+    
 }
 
 // キーボード別の後処理

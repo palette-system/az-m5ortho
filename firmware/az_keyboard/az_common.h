@@ -187,7 +187,9 @@ struct setting_key_press {
 // IOエキスパンダオプションの設定
 struct ioxp_option {
     uint8_t addr; // IOエキスパンダのアドレス
-    uint8_t *row;
+    uint8_t *row; // row のピン
+    uint8_t row_mask; // row output する時に使う全ROWのOR
+    uint8_t *row_output; // row output する時のピンにwriteするデータ
     uint8_t row_len;
     uint8_t *col;
     uint8_t col_len;
@@ -195,18 +197,13 @@ struct ioxp_option {
     uint8_t direct_len;
 };
 
-// オプションのキー設定とのマッピング配列
-struct opt_key_map {
-    uint8_t org; // オプション内の何番目のキーか
-    short stg; // キー設定何番か
-};
-
 // i2cオプションの設定
 struct i2c_option {
     uint8_t opt_type; // オプションのタイプ 1: ioエキスパンダキーボード
     ioxp_option *ioxp; // 使用するIOエキスパンダの設定
     uint8_t ioxp_len; // IOエキスパンダ設定の数
-    opt_key_map *map; // オプションのキー設定とのマッピング設定
+    short map_start; // キー設定の番号開始番号
+    short *map; // キーとして読み取る番号の配列
     uint8_t map_len; // マッピング設定の数
 };
 
@@ -253,6 +250,7 @@ class AzCommon
         int moniterset_load(); // 画面設定読み込み
         int moniterset_save(); // 画面設定保存
         void moniter_brightness(int set_type); // 画面の明るさ設定
+        int i2c_setup(int p, i2c_option *opt); // IOエキスパンダの初期化(戻り値：増えるキーの数)
         void pin_setup(); // キーの入力ピンの初期化
         void pin_setup_sub_process(); // 入力ピン初期化のキーボード別の処理
         setting_key_press get_key_setting(int layer_id, int key_num); // 指定したキーの入力設定を取得する
@@ -264,6 +262,7 @@ class AzCommon
         void save_file_data(char *file_path, uint8_t *save_point, uint16_t save_size); // ファイルに設定値を書込み
         void set_boot_mode(int set_mode); // 起動モードを切り替えてEEPROMに保存
         void change_mode(int set_mode); // モードを切り替えて再起動
+        int i2c_read(int p, i2c_option *opt, char *read_data); // I2C機器のキー状態を取得
         void key_read(); // 現在のキーの状態を取得
         void key_read_sub_process(void); // キー状態取得後のキーボード別の処理
         void key_old_copy(); // 現在のキーの状態を過去用配列にコピー
@@ -290,6 +289,9 @@ extern int status_led_bit;
 
 // ステータスLED表示モード
 extern int status_led_mode;
+
+// IOエキスパンダオブジェクト
+extern Adafruit_MCP23X17 *ioxp_obj[8];
 
 // 入力用ピン情報
 extern short direct_len;
@@ -465,9 +467,6 @@ extern int8_t *led_num;
 extern int8_t *key_matrix;
 extern uint8_t led_num_length;
 extern uint8_t key_matrix_length;
-
-// I/Oエキスパンダ用
-extern Adafruit_MCP23X17 *iomcp;
 
 // LVGL用
 extern TFT_eSPI lvtft;
