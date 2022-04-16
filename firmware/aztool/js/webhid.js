@@ -70,7 +70,8 @@ webhid.command_id = {
     "file_save_data": 0x33, // ファイル保存データ送信
     "file_save_complate": 0x34, // ファイル保存完了
     "file_list": 0x35, // ファイルリストを取得する
-    "restart": 0x36, //M5StackCore2の再起動
+    "restart": 0x36, // M5StackCore2の再起動
+    "get_ioxp_key": 0x37, // IOエキスパンダからキー入力を取得
     "none": 0x00 // 空送信
 };
 
@@ -244,6 +245,10 @@ webhid.handle_input_report = function(e) {
         s = (get_data[1] << 24) + (get_data[2] << 16) + (get_data[3] << 8) + get_data[4];
         // 読み込み開始
         webhid.load_start_exec(s);
+
+    } else if (cmd_type == webhid.command_id.get_ioxp_key) {
+        // IOエキスパンダからキーの入力データを取得
+        webhid.view_info("key: " + get_data.join(" , "));
 
     }
     
@@ -520,3 +525,15 @@ webhid.m5_restart = function(boot_type) {
 
 };
 
+// キー入力取得
+webhid.get_ioxp_key = function(rows) {
+    let i;
+    if (!rows) rows = [];
+    // ファイルリスト要求コマンド作成
+    let cmd = [webhid.command_id.get_ioxp_key, 0x00, rows.length];
+    for (i=0; i<rows.length; i++) cmd.push(rows[i]);
+    // コマンド送信
+    webhid.send_command(cmd).then(() => {
+        webhid.view_info("get ioxp key ...");
+    });
+};

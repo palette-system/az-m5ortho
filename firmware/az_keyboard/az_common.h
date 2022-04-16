@@ -303,6 +303,7 @@ extern short *ioxp_list;
 extern short ioxp_sda;
 extern short ioxp_scl;
 extern short ioxp_status[8];
+extern int ioxp_hash[8];
 
 // I2Cオプションの設定
 extern i2c_option *i2copt;

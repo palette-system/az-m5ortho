@@ -171,6 +171,7 @@ short *ioxp_list;
 short ioxp_sda;
 short ioxp_scl;
 short ioxp_status[8];
+int ioxp_hash[8];
 
 // I2Cオプションの設定
 i2c_option *i2copt;
@@ -285,6 +286,7 @@ void AzCommon::common_start() {
     // ioエキスパンダフラグ
     for (i=0; i<8; i++) {
       ioxp_status[i] = -1;
+      ioxp_hash[i] = 0;
     }
 
     // マウスパッドステータス
@@ -1466,11 +1468,12 @@ int AzCommon::i2c_setup(int p, i2c_option *opt) {
         // IOエキスパンダ
         for (i=0; i<opt->ioxp_len; i++) {
             x = opt->ioxp[i].addr - 32; // アドレス
-            Serial.printf("i2c_setup: %D %D %D\n", i, x, ioxp_status[x]);
+            // Serial.printf("i2c_setup: %D %D %D\n", i, x, ioxp_status[x]);
             // まだ初期化されていないIOエキスパンダなら初期化
             if (ioxp_status[x] < 0) {
                 ioxp_obj[x] = new Adafruit_MCP23X17();
                 ioxp_status[x] = 0;
+                ioxp_hash[x] = 1;
                 if (ioxp_obj[x]->begin_I2C(opt->ioxp[i].addr, &Wire)) {
                     M5.Lcd.printf("begin_I2C option  %D  %D OK\n", i, opt->ioxp[i].addr);
                 } else {
@@ -1547,6 +1550,7 @@ void AzCommon::pin_setup() {
             if (ioxp_obj[x]->begin_I2C(ioxp_list[i], &Wire)) {
                 M5.Lcd.printf("begin_I2C %D  %D OK\n", i, ioxp_list[i]);
                 ioxp_status[x] = 0;
+                ioxp_hash[x] = 1;
             } else {
                 M5.Lcd.printf("begin_I2C %D  %D NG\n", i, ioxp_list[i]);
                 delay(1000);

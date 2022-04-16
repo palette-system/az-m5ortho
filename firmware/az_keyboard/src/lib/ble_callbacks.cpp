@@ -184,7 +184,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 	uint8_t* data = (uint8_t*)(me->getValue().c_str());
 	size_t data_length = me->getDataLength();
 	memcpy(remap_buf, data, data_length);
-	int h, i, j, k, l, m, s, p;
+	int h, i, j, k, l, m, s, o, p, x;
     uint8_t *command_id   = &(remap_buf[0]);
     uint8_t *command_data = &(remap_buf[1]);
 
@@ -499,6 +499,91 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			return;
 
 		}
+		case id_get_ioxp_key: {
+			// IOエキスパンダからキーの読み取り
+			uint8_t rows[8]; // rowのピン
+			uint8_t out_mask; // rowのピンを立てたマスク
+			x = remap_buf[1]; // エキスパンダのアドレス(0～7)
+			// 既に使用しているIOエキスパンダなら読み込みステータス0で返す
+			if (ioxp_hash[x] == 1) {
+				send_buf[0] = 0x37; // IOエキスパンダキー読み込み
+				send_buf[1] = 0x01; // 使用中
+				for (i=2; i<32; i++) send_buf[i] = 0x00;
+				this->sendRawData(send_buf, 32);
+				return;
+			}
+			// 初期化がまだであれば初期化
+			if (ioxp_status[x] < 0) {
+                ioxp_obj[x] = new Adafruit_MCP23X17();
+                ioxp_status[x] = 0;
+				if (!ioxp_obj[x]->begin_I2C(0x20 + x, &Wire)) {
+					// 初期化失敗
+					send_buf[0] = 0x37; // IOエキスパンダキー読み込み
+					send_buf[1] = 0x02; // 初期化失敗
+					for (i=2; i<32; i++) send_buf[i] = 0x00;
+					this->sendRawData(send_buf, 32);
+					return;
+				}
+			}
+			// row の情報を取得
+			s = remap_buf[2]; // row の数
+			if (s > 8) s = 8;
+			for (i=0; i<s; i++) {
+				rows[i] = remap_buf[3 + i]; // row の番号取得
+			}
+			// ピンの初期化
+			h = crc32(remap_buf, 32); // 受け取ったデータのハッシュを取得
+			if (h != ioxp_hash[x]) { // 最後に設定したピン情報と違えばピンの初期化をする
+				for (i=0; i<16; i++) {
+					// row のピンかチェックして rowならOUTPUTに指定
+					k = false;
+					for (j=0; j<s; j++) {
+						if (rows[j] == i) {
+							ioxp_obj[x]->pinMode(i, OUTPUT);
+							k = true;
+							break;
+						}
+					}
+					if (k) continue; // row だったなら次のピンへ
+					// row以外は全てinput
+					ioxp_obj[x]->pinMode(i, INPUT_PULLUP);
+				}
+				ioxp_hash[x] = h;
+			}
+			// キーの読み込み
+			p = 3;
+			send_buf[0] = 0x37; // IOエキスパンダキー読み込み
+			send_buf[1] = 0x00; // 読み取り成功
+			send_buf[2] = s; // rowの数
+			if (s) {
+				// row があればマトリックス読み取り
+				// マスク作成
+				out_mask = 0x00;
+				for (i=0; i<s; i++) out_mask |= (0x01 << rows[i]);
+				// マトリックス読み込み
+				for (i=0; i<s; i++) {
+					o = out_mask & ~(0x01 << rows[i]);
+					ioxp_obj[x]->writeGPIO(o, 0); // ポートAに出力
+					h = ~(ioxp_obj[x]->readGPIOAB() | out_mask); // ポートA,B両方のデータを取得(rowのピンは全て1)
+					send_buf[p] = (h >> 8) & 0xff;
+					p++;
+					send_buf[p] = h & 0xff;
+					p++;
+				}
+			} else {
+				// row が無ければ全ピンダイレクト
+				h = ~(ioxp_obj[x]->readGPIOAB()); // ポートA,B両方のデータを取得
+				send_buf[p] = (h >> 8) & 0xff;
+				p++;
+				send_buf[p] = h & 0xff;
+				p++;
+			}
+			// 結果を送信
+			for (i=p; i<32; i++) send_buf[i] = 0x00; // 残りのデータを0詰め
+			this->sendRawData(send_buf, 32);
+			return;
+		}
+		
 
 		default: {
 			remap_buf[0] = 0xFF;
