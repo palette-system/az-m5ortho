@@ -2,15 +2,23 @@
 <head>
 <meta charset="utf-8">
 <title>test</title>
+<link rel="stylesheet" type="text/css" href="./css/main.css">
+<link rel="stylesheet" type="text/css" href="./css/remodal.css">
+<link rel="stylesheet" type="text/css" href="./css/remodal-default-theme.css">
 <script language="JavaScript" src="./js/jquery-2.1.4.min.js"></script>
 <script language="JavaScript" src="./js/jquery-ui.js"></script>
+<script type="text/javascript" src="./js/remodal.js"></script>
 <script language="JavaScript" src="./js/webhid.js"></script>
+<script language="JavaScript" src="./js/com_serial.js"></script>
+<script type="text/javascript" src="./js/pin_setup.js"></script>
+<script type="text/javascript" src="./js/aztool.js"></script>
 
 </head>
 <body>
 
 <br><br>
 
+<h3>webhid</h3>
 <input type="button" value="connect" onClick="javascript:var f = async function() {webhid.connect();}; f();"><br>
 <br>
 <input type="button" value="file_list" onClick="javascript:var f = async function() {webhid.get_file_list();}; f();"><br>
@@ -28,20 +36,19 @@
 <div id="console_div"></div>
 <br>
 
+<h3>IOエキスパンダ設定</h3>
+<input type="button" value="modal" onClick='javascript:pinstp.open({"addr": 33, "row":[0,1,2], "col":[], "direct":[3,4,5,6,7,8,9,10,11,12,13,14,15]});'><br>
+<br><br>
+
+<h3>KLE</h3>
+<input type="button" value="modal" onClick='javascript:aztool.klemdl.open();'><br>
+<br><br>
+
+
 <script language="JavaScript">
-
-
 $(function(){
-
-    // webhidオブジェクト初期化
-    webhid.init({"info_div": "console_div"});
-
-
+    aztool.init();
 });
-
-
-
-
 </script>
 
 </body>

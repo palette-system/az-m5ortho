@@ -1,0 +1,112 @@
+
+div {
+    user-select: none;
+}
+
+.pbox {
+    height: 34px;
+    width: 170px;
+    font-weight: bold;
+    overflow: hidden;
+    margin: 0;
+    padding: 0 10px;
+    border: solid 1px #fff;
+    border-radius: 12px;
+    user-select: none;
+}
+
+.addrsl {
+    font-size: 24px;
+}
+.ioxp_pintype_box {
+    width: 550px;
+    height: 140px;
+    border:1px solid #aaa;
+    padding:5px;
+    margin: 5px;
+    display: inline-block;
+    overflow: hidden;
+}
+
+.ioxp_pin_box_a {
+    width: 70px;
+    height: 30px;
+    border: 1px solid #666;
+    padding: 0;
+    margin: 5px;
+    display: inline-block;
+    cursor: pointer;
+    text-align: center;
+    border-radius: 12px;
+    background-color: #ff9faa;
+}
+.ioxp_pin_box_div {
+    padding: 5px;
+}
+
+.ioxp_pin_box_b {
+    width: 70px;
+    height: 30px;
+    border: 1px solid #666;
+    padding: 0;
+    margin: 5px;
+    display: inline-block;
+    cursor: pointer;
+    text-align: center;
+    border-radius: 12px;
+    background-color: #aa9fff;
+}
+
+body {
+    font-family: Helvetica, 'メイリオ', Meiryo;
+}
+p {
+    color: #fff;
+    text-align: center;
+}
+li {
+    list-style: none;
+    border-top: solid 1px #ccc;
+    background-color: #fff;
+    cursor: pointer;
+    border-top: none;
+    user-select: none;
+}
+.sort-handle {
+    width: 30px;
+    text-align: center;
+    cursor: n-resize;
+}
+  
+.ui-selecting {
+    background-color: #eee;
+}
+
+/* 選択したオブジェクト */
+.ui-selected {
+    background-color: #999;
+    color: #fff;
+    cursor: move;
+    display: inline-block;
+}
+
+/* オブジェクト選択する時の枠 */
+.ui-selectable-helper {
+    position: absolute;
+    border: solid 1px black;
+    z-index: 20000;
+}
+
+/* 決定ボタン */
+.exec-button {
+    width: 130px;
+    height: 36px;
+    background-color: #2183c0;
+    color: #eee;
+    font-size: 16px;
+    text-align: center;
+    border: solid 1px #aaa;
+    display: inline-block;
+    cursor: pointer;
+    line-height: 36px;
+}
