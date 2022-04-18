@@ -110,3 +110,79 @@ li {
     cursor: pointer;
     line-height: 36px;
 }
+
+/* キャンセルボタン */
+.cancel-button {
+    width: 130px;
+    height: 36px;
+    background-color: #b4b4b4;
+    color: #282828;
+    font-size: 16px;
+    text-align: center;
+    border: solid 1px #aaa;
+    display: inline-block;
+    cursor: pointer;
+    line-height: 36px;
+
+}
+
+/* IOエキスパンダアイコン */
+.icon_ioxp {
+    display: inline-block;
+    text-align: center;
+    height: 100px;
+    width: 100px;
+    cursor: pointer;
+    background-color: #f8f8f8;
+    border: solid 2px #bbb;
+    border-radius: 12px;
+    margin: 0 5px;
+}
+
+/* モーダルの枠 */
+.azmodal {
+    border-radius: 40px;
+    overflow: hidden;
+    border: solid 2px #444;
+    box-shadow: 6px 6px 8px #888;
+}
+
+/* モーダルの背景 */
+.remodal-overlay {
+    background: rgba(43, 46, 56, 0.3);
+}
+
+/* オプション設定のステップ */
+.option_step {
+    width: 230px;
+    height: 36px;
+    background-color: #eee;
+    color: #aaa;
+    font-size: 16px;
+    text-align: center;
+    display: inline-block;
+    line-height: 36px;
+    border-radius: 20px;   
+}
+/* オプション設定のステップ 完了 */
+.step_ended {
+    font-weight: normal;
+    background-color: #dce8ff;
+    color: #555;
+}
+/* オプション設定のステップ 選択中 */
+.step_selected {
+    font-weight: bold;
+    background-color: #9bb1ff;
+    color: #000;
+    border: solid 1px #666;
+}
+
+/* 下矢印 */
+.triangle_down{
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid #aaa;
+  }

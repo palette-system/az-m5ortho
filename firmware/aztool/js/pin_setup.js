@@ -7,6 +7,9 @@ pinstp.cb_func = null;
 // 受け取ったIOエキスパンダデータ
 pinstp.ioxp_option = {};
 
+// 動作オプション
+pinstp.option = {};
+
 pinstp.zero = function(n, len){
     return n.toString().padStart(len, "0");
 };
@@ -25,9 +28,9 @@ pinstp.init = function() {
 // モーダル用HTML登録
 pinstp.init_html = function() {
     let html = `
-        <div class="remodal" data-remodal-id="pinset_modal" 
+        <div class="remodal azmodal" data-remodal-id="pinset_modal" 
                 data-remodal-options="hashTracking: false, closeOnOutsideClick: false"
-                style="max-width: 1200px;border-radius: 40px;overflow: hidden;">
+                style="max-width: 1200px;">
             <!-- クローズボタン -->
             <!-- button data-remodal-action="close" class="remodal-close"></button> -->
 
@@ -36,14 +39,14 @@ pinstp.init_html = function() {
                 <td style="text-align: center; width: 500px;">
                     <font style="font-size:24;"><b>アドレス：</b></font>　
                     <select id="addr_select" class="addrsl" onChange="javascript:pinstp.ic_update();">
-                        <option value="0" class="addrsl">　0　</option>
-                        <option value="1" class="addrsl">　1　</option>
-                        <option value="2" class="addrsl">　2　</option>
-                        <option value="3" class="addrsl">　3　</option>
-                        <option value="4" class="addrsl">　4　</option>
-                        <option value="5" class="addrsl">　5　</option>
-                        <option value="6" class="addrsl">　6　</option>
-                        <option value="7" class="addrsl">　7　</option>
+                        <option value="0" class="addrsl">　0x20　</option>
+                        <option value="1" class="addrsl">　0x21　</option>
+                        <option value="2" class="addrsl">　0x22　</option>
+                        <option value="3" class="addrsl">　0x23　</option>
+                        <option value="4" class="addrsl">　0x24　</option>
+                        <option value="5" class="addrsl">　0x25　</option>
+                        <option value="6" class="addrsl">　0x26　</option>
+                        <option value="7" class="addrsl">　0x27　</option>
                     </select>
                     <br><br>
                     <b style="font-size: 24px;">mcp23017</b><br>
@@ -70,10 +73,11 @@ pinstp.init_html = function() {
                 <td style="width: 20px;"></td>
                 <td>
                     <div id="pin_setting_right"></div>
-                    <br><br>
+                    <div id="pin_setting_info">　</div>
                     <div style="text-align: right; width: 580px;margin:0;">
                         <a id="pin_set_ok" class="exec-button" onClick="javascript:pinstp.eve_ok_click(1);">決定</a>　
-                        <a id="pin_set_cancel" class="exec-button" onClick="javascript:pinstp.eve_ok_click(0);">キャンセル</a>　
+                        <div id="pin_set_del_box" style="display: none;"><a id="pin_set_del" class="exec-button" onClick="javascript:pinstp.eve_ok_click(2);">削除</a>　</div>
+                        <a id="pin_set_cancel" class="cancel-button" onClick="javascript:pinstp.eve_ok_click(0);">キャンセル</a>
                     </div>
                 </td>
             </tr>
@@ -236,7 +240,7 @@ pinstp.li_html = function(n) {
 
 // OK、キャンセルのクリックイベント(click_type = 0 キャンセル / 1 決定)
 pinstp.eve_ok_click = function(click_type) {
-    let i, r = {};
+    let c, i, r = {};
     // キャンセルならそのまま閉じる
     if (click_type == 0) {
         pinstp.cb_func(click_type, {});
@@ -267,6 +271,12 @@ pinstp.eve_ok_click = function(click_type) {
         r.col.push(parseInt(cols[i].id.split("_")[1]));
     }
     console.log(r);
+    // データチェックで問題があればメッセージ表示
+    c = pinstp.check_func(click_type, r);
+    if (c) {
+        $("#pin_setting_info").html(c);
+        return;
+    }
     // コールバックを実行してモーダルを閉じる
     pinstp.cb_func(click_type, r);
     pinstp.mdl.close();
@@ -275,29 +285,46 @@ pinstp.eve_ok_click = function(click_type) {
 };
 
 // IOエキスパンダ設定のモーダルを開く
-pinstp.open = function(opt, cb_func) {
+// check_func = 決定前のチェック関数(戻り値に文字が帰って来るとエラーと判定する)
+// cb_func = OK後のコールバック
+pinstp.open = function(ioxp_data, opt, check_func, cb_func) {
     // オプション受け取り
-    pinstp.ioxp_option = opt;
+    pinstp.option = opt;
+    // エキスパンダ設定受け取り
+    pinstp.ioxp_option = ioxp_data;
+    // チェック関数受け取り
+    if (!check_func) check_func = function() {};
+    pinstp.check_func = check_func;
     // コールバック受け取り
     if (!cb_func) cb_func = function() {};
     pinstp.cb_func = cb_func;
     // アドレス設定
-    $("#addr_select").val(opt.addr - 32);
+    $("#addr_select").val(ioxp_data.addr - 32);
     let i, h;
     // 設定枠HTML初期化
     pinstp.set_pin_setting_html();
     // direct 設定
     h = "";
-    for (i in opt.direct) h += pinstp.li_html(opt.direct[i]);
+    for (i in ioxp_data.direct) h += pinstp.li_html(ioxp_data.direct[i]);
     $("#list_direct").html(h);
     // row 設定
     h = "";
-    for (i in opt.row) h += pinstp.li_html(opt.row[i]);
+    for (i in ioxp_data.row) h += pinstp.li_html(ioxp_data.row[i]);
     $("#list_row").html(h);
     // col 設定
     h = "";
-    for (i in opt.col) h += pinstp.li_html(opt.col[i]);
+    for (i in ioxp_data.col) h += pinstp.li_html(ioxp_data.col[i]);
     $("#list_col").html(h);
+    // 削除ボタンフラグがあれば削除ボタンも表示
+    if (pinstp.option.btn_delete) {
+        console.log("delete_btn: view");
+        $("#pin_set_del_box").css("display", "inline-block"); // 表示
+    } else {
+        console.log("delete_btn: hidden");
+        $("#pin_set_del_box").css("display", "none"); // 非表示
+    }
+    // infoの表示は空にする
+    $("#pin_setting_info").html("　");
     // ドラッグ動作設定
     pinstp.init_sortable();
     // モーダルを開く
