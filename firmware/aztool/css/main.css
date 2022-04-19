@@ -156,8 +156,8 @@ li {
 .option_step {
     width: 230px;
     height: 36px;
-    background-color: #eee;
-    color: #aaa;
+    background-color: #dddcdc;
+    color: #646363;
     font-size: 16px;
     text-align: center;
     display: inline-block;
@@ -167,7 +167,7 @@ li {
 /* オプション設定のステップ 完了 */
 .step_ended {
     font-weight: normal;
-    background-color: #dce8ff;
+    background-color: #bdd4ff;
     color: #555;
 }
 /* オプション設定のステップ 選択中 */
@@ -186,3 +186,20 @@ li {
     border-right: 10px solid transparent;
     border-top: 10px solid #aaa;
   }
+
+.check_on {
+    width: 17px;
+    height: 17px;
+    margin: 3px;
+    padding: 0;
+    background-color: #95f8b3;
+    display: inline-block;
+}
+.check_off {
+    width: 17px;
+    height: 17px;
+    margin: 3px;
+    padding: 0;
+    background-color: #aaaaaa;
+    display: inline-block;
+}

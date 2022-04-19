@@ -248,8 +248,9 @@ webhid.handle_input_report = function(e) {
 
     } else if (cmd_type == webhid.command_id.get_ioxp_key) {
         // IOエキスパンダからキーの入力データを取得
-        webhid.view_info("key: " + get_data.join(" , "));
-
+        // webhid.view_info("key: " + get_data.join(" , "));
+        // コールバックを実行
+        webhid.get_ioxp_key_cb(get_data);
     }
     
 };
@@ -526,11 +527,13 @@ webhid.m5_restart = function(boot_type) {
 };
 
 // キー入力取得
-webhid.get_ioxp_key = function(rows) {
+webhid.get_ioxp_key = function(ioxp_addr, rows, cb_func) {
     let i;
     if (!rows) rows = [];
+    if (!cb_func) cb_func = function() {};
+    webhid.get_ioxp_key_cb = cb_func;
     // ファイルリスト要求コマンド作成
-    let cmd = [webhid.command_id.get_ioxp_key, 0x00, rows.length];
+    let cmd = [webhid.command_id.get_ioxp_key, ioxp_addr, rows.length];
     for (i=0; i<rows.length; i++) cmd.push(rows[i]);
     // コマンド送信
     webhid.send_command(cmd).then(() => {
