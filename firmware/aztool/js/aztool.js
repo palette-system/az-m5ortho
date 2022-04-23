@@ -62,7 +62,8 @@ aztool.init_html = function() {
     aztool.step_index = 0;
     aztool.option_add = {
         "kle": "",
-        "ioxp": []
+        "ioxp": [],
+        "map": []
     };
     aztool.option_add_layout_view();
 };
@@ -81,6 +82,21 @@ aztool.option_add_layout_view = function() {
     $("#option_setting_form").html(h);
     $("#kle_json_txt").html(aztool.option_add.kle);
     aztool.update_step_box(1);
+};
+
+// オプションのステップ信仰の表示を更新する
+aztool.update_step_box = function(step_num) {
+    let i, c;
+    aztool.step_index = step_num;
+    for (i=1; i<=aztool.step_max; i++) {
+        c = "option_step";
+        if (step_num == i) {
+            c += " step_selected";
+        } else if (step_num > i) {
+            c += " step_ended";
+        }
+        $("#stepbox_" + i).attr("class", c);
+    }
 };
 
 // エキスパンダ設定画面表示
@@ -179,7 +195,7 @@ aztool.option_add_ioxp_click = function(ioxp_num) {
 // IOエキスパンダ確認
 aztool.option_add_ioxp_check_view = function() {
     let h = `
-        <br>
+        キースイッチを押すとDataが緑色になる事を確認して下さい。<br>
         <div id="ioxp_check_info" style="height: 120px;"></div>
         <div style="text-align: right; width: 800px;">
         <a class="cancel-button" onClick="javascript:aztool.option_add_expanda_view();">戻る</a>
@@ -205,7 +221,7 @@ aztool.option_add_ioxp_check_exec = function(step_no) {
         aztool.ioxp_data[aztool.ioxp_check_index] = d;
         aztool.ioxp_check_index++;
         if (aztool.ioxp_check_index >= aztool.option_add.ioxp.length) aztool.ioxp_check_index = 0;
-        let t = 5;
+        let t = 10;
         if (aztool.ioxp_check_index == 0) {
             // 全エキスパンダの情報を取得したら
             aztool.ioxp_check_update_func(); // 画面の情報を更新
@@ -216,11 +232,11 @@ aztool.option_add_ioxp_check_exec = function(step_no) {
     });
 };
 
-// IOエキスパンダチェックが泊まって無いかチェック
+// IOエキスパンダチェックが止まって無いかチェック
 aztool.option_add_ioxp_health_check = function(step_no) {
     let t = webhid.millis();
     // 最後に取得してから2秒以上経ってたら情報取得をもっかい実行
-    if ((aztool.ioxp_lasttime + 2000) < t ) {
+    if ((aztool.ioxp_lasttime + 1000) < t ) {
         aztool.ioxp_check_index = 0;
         aztool.ioxp_lasttime = webhid.millis();
         aztool.option_add_ioxp_check_exec(step_no); // 入力取得
@@ -281,38 +297,12 @@ aztool.ioxp_data_to_array = function(ioxp_setting, get_data) {
 
 // 画面の情報を更新
 aztool.option_add_ioxp_check_update = function() {
-    let d, i, j, o, r, x;
-    let h = "";
+    let m = aztool.option_add_key_stat_update();
     let ok_flag = true;
-    h += "<table>";
-    for (i in aztool.ioxp_data) {
-        d = aztool.ioxp_data[i]; // 受け取った情報
-        x = aztool.option_add.ioxp[i]; // IOエキスパンダ設定
-        r = d[2]; // rowの数
-        if (r == 0) r = 1; // row無しの場合は1つ分だけデータを取る
-        h += "<tr><td>";
-        h += "Addr: 0x" + x.addr.toString(16) + "　";
-        if (d[1] == 0) { 
-            h += "<b style='color: #7bdf48;'>接続</b>";
-        } else if (d[1] == 1) {
-            h += "<b style='color: #ff9a9a;'>使用中</b>";
-            ok_flag = false;
-        } else {
-            h += "<b style='color: #ff9a9a;'>ERROR</b>";
-            ok_flag = false;
-        }
-        o = aztool.ioxp_data_to_array(x, d);
-        h += "　Data: ";
-        h += "</td><td>";
-        for (j=0; j<o.length; j++) {
-            h += (o[j])? "<div class='check_on'></div>": "<div class='check_off'></div>";
-            if ((j % 16) == 15) h += "<br>";
-        }
-        h += "</td></tr>";
+    for (i in m.status) {
+        if (m.status[i] != 0) ok_flag = false;
     }
-    h += "</table>";
-    console.log("option_add_ioxp_check_update");
-    $("#ioxp_check_info").html(h);
+
     if (ok_flag) {
         $("#ioxp_check_comp_btn").css({"display": "inline-block"});
     } else {
@@ -327,7 +317,7 @@ aztool.option_add_btnmap_view = function() {
         <div id="ioxp_check_info" style="height: 120px;"></div>
         <div style="text-align: right; width: 800px;">
         <a class="cancel-button" onClick="javascript:aztool.option_add_ioxp_check_view();">戻る</a>
-        <div id="switch_comp_btn" style="display: none;">　<a class="exec-button" onClick="javascript:aztool.option_add_btnmap_view();">次へ</a></div>
+        <div id="switch_comp_btn" style="display: none;">　<a class="exec-button" onClick="javascript:aztool.option_add_btncheck_view();">次へ</a></div>
         </div>`;
     $("#option_setting_form").html(h);
     aztool.update_step_box(4);
@@ -336,27 +326,19 @@ aztool.option_add_btnmap_view = function() {
         aztool.switch_last_set = -1; // 最後に押したスイッチの番号
         aztool.ioxp_check_index = 0;
         aztool.ioxp_data = [];
+        aztool.map_data = []; // マッピングしたデータ
         aztool.ioxp_lasttime = webhid.millis();
         aztool.ioxp_check_update_func = aztool.option_add_keymap_update_func; // 画面更新用関数
         aztool.option_add_ioxp_health_check(4); // 入力取得が止まって無いか監視
         aztool.option_add_ioxp_check_exec(4); // 入力取得開始
-    }, 1000);
-    /*
-    aztool.switch_check_send = 0;
-    aztool.update_step_box(4);
-    aztool.option_add_key_color_update();
-    aztool.option_add_get_key_input();
-    */
+    }, 700);
 };
 
-
-// キーの入力状態を取得
-aztool.option_add_keymap_update_func = function() {
-    let d, f, i, j, n, o, r, x;
+// キーの入力状態の表示を更新
+aztool.option_add_key_stat_update = function() {
+    let d, i, j, m, o, r, x;
     let h = "";
-    let ok_flag = true;
-    f = -1;
-    n = 0;
+    m = {"status": [], "input": []};
     h += "<table>";
     for (i in aztool.ioxp_data) {
         d = aztool.ioxp_data[i]; // 受け取った情報
@@ -365,36 +347,53 @@ aztool.option_add_keymap_update_func = function() {
         if (r == 0) r = 1; // row無しの場合は1つ分だけデータを取る
         h += "<tr><td>";
         h += "Addr: 0x" + x.addr.toString(16) + "　";
+        m.status.push(d[1]);
         if (d[1] == 0) { 
             h += "<b style='color: #7bdf48;'>接続</b>";
         } else if (d[1] == 1) {
             h += "<b style='color: #ff9a9a;'>使用中</b>";
-            ok_flag = false;
         } else {
             h += "<b style='color: #ff9a9a;'>ERROR</b>";
-            ok_flag = false;
         }
         o = aztool.ioxp_data_to_array(x, d);
+        // m.input.concat(o);
         h += "　Data: ";
         h += "</td><td>";
         for (j=0; j<o.length; j++) {
+            m.input.push(o[j]);
             h += (o[j])? "<div class='check_on'></div>": "<div class='check_off'></div>";
-            if (o[j] && f < 0) f = n; // 最初の１つ目のONが何番目だったか取得
-            n++;
             if ((j % 16) == 15) h += "<br>";
         }
         h += "</td></tr>";
     }
     h += "</table>";
-    console.log("option_add_keymap_update_func");
     $("#ioxp_check_info").html(h);
+    return m;
+};
 
+
+// キーの入力状態を取得
+aztool.option_add_keymap_update_func = function() {
+    let dat = aztool.option_add_key_stat_update(); // キーのステータス表示をする
+    let i, f = -1;
+    // ボタンが押されてるキーを探す(最初の１つだけ取得)
+    for (i=0; i<dat.input.length; i++) {
+        if (dat.input[i]) {
+            f = i;
+            break;
+        }
+    }
+
+    // キーが押されたら次のキー
     if (f >= 0 && aztool.switch_last_set != f && aztool.switch_check_index < aztool.switch_length) {
         aztool.switch_last_set = f;
+        aztool.map_data.push(f);
         aztool.switch_check_index++;
         if (aztool.switch_check_index >= aztool.switch_length) {
             $("#btnmap_info").html("マッピングが完了しました。");
             $("#switch_comp_btn").css({"display": "inline-block"});
+            console.log(aztool.map_data);
+            aztool.option_add.map = aztool.map_data;
         }
     }
     if (f < 0) aztool.switch_last_set = -1;
@@ -415,24 +414,56 @@ aztool.option_add_key_color_update = function() {
     }
 };
 
-// オプションのステップ信仰の表示を更新する
-aztool.update_step_box = function(step_num) {
-    let i, c;
-    aztool.step_index = step_num;
-    for (i=1; i<=aztool.step_max; i++) {
-        c = "option_step";
-        if (step_num == i) {
-            c += " step_selected";
-        } else if (step_num > i) {
-            c += " step_ended";
+// ボタンの入力チェック
+aztool.option_add_btncheck_view = function() {
+    let h = `
+        <div id="btncheck_info">キースイッチを押して該当のスイッチの色が変わるのを確認して下さい。</div>
+        <div id="ioxp_check_info" style="height: 120px;"></div>
+        <div style="text-align: right; width: 800px;">
+        <a class="cancel-button" onClick="javascript:aztool.option_add_btnmap_view();">戻る</a>
+        　<a class="exec-button" onClick="javascript:aztool.option_add_complate();">完了</a>
+        </div>`;
+    $("#option_setting_form").html(h);
+    aztool.update_step_box(5);
+    setTimeout(function(){
+        aztool.ioxp_check_index = 0;
+        aztool.ioxp_data = [];
+        aztool.ioxp_lasttime = webhid.millis();
+        aztool.ioxp_check_update_func = aztool.option_add_map_check_update; // 画面更新用関数
+        aztool.option_add_ioxp_health_check(5); // 入力取得が止まって無いか監視
+        aztool.option_add_ioxp_check_exec(5); // 入力取得開始
+    }, 700);
+};
+
+// マッピングの入力チェック
+aztool.option_add_map_check_update = function() {
+    let dat = aztool.option_add_key_stat_update(); // キーのステータス表示をする
+    let i, x;
+    for (i in aztool.option_add.map) {
+        x = aztool.option_add.map[i];
+        if (dat.input[x]) {
+            $("#sw_" + i).css({"background-color": "#b6fbdb"}); // 押しているキー
+        } else {
+            $("#sw_" + i).css({"background-color": aztool.key_color}); // 押していないキー
         }
-        $("#stepbox_" + i).attr("class", c);
     }
 };
 
-aztool.eve_kle_text_ok = function(type_num) {
-    aztool.klemdl.close();
+// オプション追加完了ページ
+aztool.option_add_complate = function() {
+    let h = `
+        <div id="btncheck_info">オプションを追加しました！</div>
+        <div id="ioxp_complate_info" style="height: 120px;"></div>
+        <div style="text-align: right; width: 800px;">
+        <a class="cancel-button" onClick="javascript:aztool.option_add_btnmap_view();">戻る</a>
+        <div id="switch_comp_btn" style="display: none;">　<a class="exec-button" onClick="javascript:aztool.option_add_complate();">次へ</a></div>
+        </div>`;
+    $("#option_setting_form").html(h);
+    aztool.update_step_box(6);
+    console.log("complate!");
+    console.log(aztool.option_add);
 };
+
 
 // kle JSONからキー配列を表示
 aztool.kle_view = function(json_data, view_id, auto_resize) {

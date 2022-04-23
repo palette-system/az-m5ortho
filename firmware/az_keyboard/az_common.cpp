@@ -146,6 +146,9 @@ int8_t restart_index;
 // 設定メニューを表示しているかどうか
 bool menu_mode_flag;
 
+// aztoolで設定中かどうか
+bool aztool_mode_flag;
+
 // オールクリア送信フラグ
 int press_key_all_clear;
 
@@ -240,7 +243,7 @@ static void background_loop(void* arg) {
 static void background_disp_loop(void* arg) {
   while (true) {
     unsigned long start_time = millis();
-    if (!menu_mode_flag && disp_enable) lv_task_handler();
+    if (!menu_mode_flag && !aztool_mode_flag && disp_enable) lv_task_handler();
     unsigned long work_time = millis() - start_time;
     if (work_time < 30) { vTaskDelay(30 - work_time); }
   }
@@ -298,6 +301,8 @@ void AzCommon::common_start() {
     restart_index = -1;
     // メニューを表示しているかどうか
     menu_mode_flag = false;
+    // aztoolで作業中かどうか
+    aztool_mode_flag = false;
     // LVGL表示インデックス
     lvgl_loop_index = 0;
     // ディスプレイの向き
@@ -689,7 +694,7 @@ void AzCommon::load_setting_json() {
                         // row に設定されている配列を取得(0～7 以外を無視する)
                         i2copt[j].ioxp[n].row_len = setting_obj["i2c_option"][i]["ioxp"][n]["row"].size();
                         i2copt[j].ioxp[n].row = new uint8_t[i2copt[j].ioxp[n].row_len]; // row のピン番号
-                        i2copt[j].ioxp[n].row_output = new uint8_t[i2copt[j].ioxp[n].row_len]; // マトリックスでrow write するデータ
+                        i2copt[j].ioxp[n].row_output = new uint16_t[i2copt[j].ioxp[n].row_len]; // マトリックスでrow write するデータ
                         i2copt[j].ioxp[n].row_mask = 0x00; // row write する時用のマスク
                         o = 0;
                         for (p=0; p<i2copt[j].ioxp[n].row_len; p++) {
@@ -1473,9 +1478,12 @@ int AzCommon::i2c_setup(int p, i2c_option *opt) {
             if (ioxp_status[x] < 0) {
                 ioxp_obj[x] = new Adafruit_MCP23X17();
                 ioxp_status[x] = 0;
-                ioxp_hash[x] = 1;
+            }
+            if (ioxp_status[x] < 1) {
                 if (ioxp_obj[x]->begin_I2C(opt->ioxp[i].addr, &Wire)) {
                     M5.Lcd.printf("begin_I2C option  %D  %D OK\n", i, opt->ioxp[i].addr);
+                    ioxp_hash[x] = 1;
+                    ioxp_status[x] = 1;
                 } else {
                     M5.Lcd.printf("begin_I2C option  %D  %D NG\n", i, opt->ioxp[i].addr);
                     delay(1000);
@@ -1547,9 +1555,12 @@ void AzCommon::pin_setup() {
         x = ioxp_list[i] - 32;
         if (ioxp_status[x] < 0) {
             ioxp_obj[x] = new Adafruit_MCP23X17();
+            ioxp_status[x] = 0;
+        }
+        if (ioxp_status[x] < 1) {
             if (ioxp_obj[x]->begin_I2C(ioxp_list[i], &Wire)) {
                 M5.Lcd.printf("begin_I2C %D  %D OK\n", i, ioxp_list[i]);
-                ioxp_status[x] = 0;
+                ioxp_status[x] = 1;
                 ioxp_hash[x] = 1;
             } else {
                 M5.Lcd.printf("begin_I2C %D  %D NG\n", i, ioxp_list[i]);
@@ -1739,7 +1750,7 @@ int AzCommon::i2c_read(int p, i2c_option *opt, char *read_data) {
     int i, j, k, m, n, r, x;
     unsigned long start_time;
     unsigned long end_time;
-    uint8_t rowput_mask;
+    uint16_t rowput_mask;
     int rowput_len;
     int mxread[8];
     Adafruit_MCP23X17 *ioxp;
@@ -1749,7 +1760,7 @@ int AzCommon::i2c_read(int p, i2c_option *opt, char *read_data) {
         for (i=0; i<opt->ioxp_len; i++) {
             x = opt->ioxp[i].addr - 32; // アドレス
             // まだ初期化されていないIOエキスパンダなら無視
-            if (ioxp_status[x] < 0) continue;
+            if (ioxp_status[x] < 1) continue;
             // row と col があればマトリックス入力
             if (opt->ioxp[i].row_len > 0 && opt->ioxp[i].col_len > 0) {
                 // まずrowでoutputするデータとマスクを用意
@@ -1758,7 +1769,12 @@ int AzCommon::i2c_read(int p, i2c_option *opt, char *read_data) {
                 ioxp = ioxp_obj[x];
                 // rowのoutput分ループ
                 for (j=0; j<rowput_len; j++) {
-                    ioxp->writeGPIO(opt->ioxp[i].row_output[j], 0); // ポートAに出力
+                    if (rowput_mask & 0xff00) { // ポートB
+                        ioxp->writeGPIO((opt->ioxp[i].row_output[j] >> 8) & 0xff, 1); // ポートBに出力
+                    }
+                    if (rowput_mask & 0xff) { // ポートA
+                        ioxp->writeGPIO(opt->ioxp[i].row_output[j] & 0xff, 0); // ポートAに出力
+                    }
                     mxread[j] = ioxp->readGPIOAB(); // ポートA,B両方のデータを取得
                 }
                 // マップデータ分入力を取得
@@ -1802,11 +1818,11 @@ void AzCommon::key_read(void) {
     // IOエキスパンダ
     for (i=0; i<ioxp_len; i++) {
         x = ioxp_list[i] - 32;
-        if (ioxp_status[x] == 0) {
+        if (ioxp_status[x] == 1) {
             m[i] = ioxp_obj[x]->readGPIOAB();
             if (m[i] == 0) {
                 // 全ピン読み込み無しだとIOエキスパンダの接続が切れたかリセットした可能性あり
-                ioxp_status[x] = 1; // 一旦接続切れたステータスにする
+                ioxp_status[x] = 2; // 一旦接続切れたステータスにする
                 m[i] = 0xffff; // 全ボタン離した状態
             }
         } else if (ioxp_status[x] > 256) {
@@ -1816,7 +1832,7 @@ void AzCommon::key_read(void) {
             }
             ioxp_status[x] = 0; // ステータスを接続状態に戻す
             m[i] = 0xffff; // 全ボタン離した状態
-        } else if (ioxp_status[x] > 0) {
+        } else if (ioxp_status[x] > 1) {
             // IOエキスパンダ接続していない間カウントアップ
             ioxp_status[x]++;
             m[i] = 0xffff; // 全ボタン離した状態

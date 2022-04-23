@@ -188,8 +188,8 @@ struct setting_key_press {
 struct ioxp_option {
     uint8_t addr; // IOエキスパンダのアドレス
     uint8_t *row; // row のピン
-    uint8_t row_mask; // row output する時に使う全ROWのOR
-    uint8_t *row_output; // row output する時のピンにwriteするデータ
+    uint16_t row_mask; // row output する時に使う全ROWのOR
+    uint16_t *row_output; // row output する時のピンにwriteするデータ
     uint8_t row_len;
     uint8_t *col;
     uint8_t col_len;
@@ -442,6 +442,9 @@ extern int8_t restart_index;
 
 // 設定メニューを表示しているかどうか
 extern bool menu_mode_flag;
+
+// aztoolで設定中かどうか
+extern bool aztool_mode_flag;
 
 // wifi設定
 extern uint8_t wifi_data_length;

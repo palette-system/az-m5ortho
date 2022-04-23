@@ -1038,8 +1038,8 @@ void AzKeyboard::loop_exec(void) {
     if (pw_update_index >= 0) pw_update_index++;
     if (pw_update_index > 6000) disp->view_power();
 
-    // メニュー表示中はLVGLのみ実行
-    while (menu_mode_flag) {
+    // メニュー表示中、aztool作業中はLVGLのみ実行
+    while (menu_mode_flag || aztool_mode_flag) {
         disp->loop_exec();
         // RGB_LEDを制御する定期処理
         rgb_led_cls.rgb_led_loop_exec();

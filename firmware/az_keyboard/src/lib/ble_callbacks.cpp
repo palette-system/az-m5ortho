@@ -502,7 +502,8 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 		case id_get_ioxp_key: {
 			// IOエキスパンダからキーの読み取り
 			uint8_t rows[8]; // rowのピン
-			uint8_t out_mask; // rowのピンを立てたマスク
+			uint16_t out_mask; // rowのピンを立てたマスク
+			bool sa, sb;
 			x = remap_buf[1]; // エキスパンダのアドレス(0～7)
 			// 既に使用しているIOエキスパンダなら読み込みステータス0で返す
 			if (ioxp_hash[x] == 1) {
@@ -516,6 +517,8 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			if (ioxp_status[x] < 0) {
                 ioxp_obj[x] = new Adafruit_MCP23X17();
                 ioxp_status[x] = 0;
+			}
+			if (ioxp_status[x] < 1) {
 				if (!ioxp_obj[x]->begin_I2C(0x20 + x, &Wire)) {
 					// 初期化失敗
 					send_buf[0] = 0x37; // IOエキスパンダキー読み込み
@@ -524,6 +527,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 					this->sendRawData(send_buf, 32);
 					return;
 				}
+                ioxp_status[x] = 1;
 			}
 			// row の情報を取得
 			s = remap_buf[2]; // row の数
@@ -559,11 +563,18 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 				// row があればマトリックス読み取り
 				// マスク作成
 				out_mask = 0x00;
-				for (i=0; i<s; i++) out_mask |= (0x01 << rows[i]);
+				for (i=0; i<s; i++) {
+					out_mask |= (0x01 << rows[i]);
+				}
 				// マトリックス読み込み
 				for (i=0; i<s; i++) {
 					o = out_mask & ~(0x01 << rows[i]);
-					ioxp_obj[x]->writeGPIO(o, 0); // ポートAに出力
+					if (out_mask & 0xff00) { // ポートB
+						ioxp_obj[x]->writeGPIO((o >> 8) & 0xff, 1); // ポートBに出力
+					}
+					if (out_mask & 0xff) { // ポートA
+						ioxp_obj[x]->writeGPIO(o & 0xff, 0); // ポートAに出力
+					}
 					h = ~(ioxp_obj[x]->readGPIOAB() | out_mask); // ポートA,B両方のデータを取得(rowのピンは全て1)
 					send_buf[p] = (h >> 8) & 0xff;
 					p++;
