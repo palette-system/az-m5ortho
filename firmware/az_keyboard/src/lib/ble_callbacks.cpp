@@ -481,7 +481,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			save_file_data = (uint8_t *)ps_malloc(m);
 			res.toCharArray((char *)save_file_data, m);
 			// 結果を返すコマンドを送信
-			send_buf[0] = 0x35;
+			send_buf[0] = 0x37;
 			send_buf[1] = ((save_file_length >> 24) & 0xff);
 			send_buf[2] = ((save_file_length >> 16) & 0xff);
 			send_buf[3] = ((save_file_length >> 8) & 0xff);
@@ -507,7 +507,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			x = remap_buf[1]; // エキスパンダのアドレス(0～7)
 			// 既に使用しているIOエキスパンダなら読み込みステータス0で返す
 			if (ioxp_hash[x] == 1) {
-				send_buf[0] = 0x37; // IOエキスパンダキー読み込み
+				send_buf[0] = 0x39; // IOエキスパンダキー読み込み
 				send_buf[1] = 0x01; // 使用中
 				for (i=2; i<32; i++) send_buf[i] = 0x00;
 				this->sendRawData(send_buf, 32);
@@ -521,7 +521,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			if (ioxp_status[x] < 1) {
 				if (!ioxp_obj[x]->begin_I2C(0x20 + x, &Wire)) {
 					// 初期化失敗
-					send_buf[0] = 0x37; // IOエキスパンダキー読み込み
+					send_buf[0] = 0x39; // IOエキスパンダキー読み込み
 					send_buf[1] = 0x02; // 初期化失敗
 					for (i=2; i<32; i++) send_buf[i] = 0x00;
 					this->sendRawData(send_buf, 32);
@@ -556,7 +556,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			}
 			// キーの読み込み
 			p = 3;
-			send_buf[0] = 0x37; // IOエキスパンダキー読み込み
+			send_buf[0] = 0x39; // IOエキスパンダキー読み込み
 			send_buf[1] = 0x00; // 読み取り成功
 			send_buf[2] = s; // rowの数
 			if (s) {
@@ -594,7 +594,19 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			this->sendRawData(send_buf, 32);
 			return;
 		}
-		
+		case id_set_mode_flag: {
+			// WEBツール作業中フラグの設定
+		    if (remap_buf[1] == 0) {
+				aztool_mode_flag = false;
+			} else if (remap_buf[1] == 1) {
+				aztool_mode_flag = true;
+			}
+			send_buf[0] = 0x3A; // フラグの設定
+			for (i=1; i<32; i++) send_buf[i] = 0x00; // 残りのデータを0詰め
+			this->sendRawData(send_buf, 32);
+			return;
+			
+		}
 
 		default: {
 			remap_buf[0] = 0xFF;

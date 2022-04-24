@@ -1038,11 +1038,16 @@ void AzKeyboard::loop_exec(void) {
     if (pw_update_index >= 0) pw_update_index++;
     if (pw_update_index > 6000) disp->view_power();
 
-    // メニュー表示中、aztool作業中はLVGLのみ実行
-    while (menu_mode_flag || aztool_mode_flag) {
+    // メニュー表示中
+    while (menu_mode_flag) {
         disp->loop_exec();
         // RGB_LEDを制御する定期処理
         rgb_led_cls.rgb_led_loop_exec();
+    }
+
+    // eztoolツール使用中はループ処理をしない(I2Cの読み込みが走っちゃうと落ちるから)
+    while (aztool_mode_flag) {
+        vTaskDelay(100);
     }
 
     // 表示インデックスがある時だけLVGL処理をする

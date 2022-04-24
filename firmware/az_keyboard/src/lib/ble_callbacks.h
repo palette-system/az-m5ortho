@@ -43,9 +43,12 @@ enum via_command_id {
     id_save_file_start                      = 0x32,
     id_save_file_data                       = 0x33,
     id_save_file_complate                   = 0x34,
-	id_get_file_list                        = 0x35,
-	id_restart                              = 0x36,
-	id_get_ioxp_key                         = 0x37,
+	id_remove_file                          = 0x35,
+	id_move_file                            = 0x36,
+	id_get_file_list                        = 0x37,
+	id_restart                              = 0x38,
+	id_get_ioxp_key                         = 0x39,
+	id_set_mode_flag                        = 0x3A,
 
     // システム用
     id_unhandled                            = 0xFF,

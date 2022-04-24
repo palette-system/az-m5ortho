@@ -69,9 +69,12 @@ webhid.command_id = {
     "file_save_start": 0x32, // ファイル保存開始
     "file_save_data": 0x33, // ファイル保存データ送信
     "file_save_complate": 0x34, // ファイル保存完了
-    "file_list": 0x35, // ファイルリストを取得する
-    "restart": 0x36, // M5StackCore2の再起動
-    "get_ioxp_key": 0x37, // IOエキスパンダからキー入力を取得
+    "file_remove": 0x35, // ファイル削除
+    "file_remove": 0x36, // ファイル名変更
+    "file_list": 0x37, // ファイルリストを取得する
+    "restart": 0x38, // M5StackCore2の再起動
+    "get_ioxp_key": 0x39, // IOエキスパンダからキー入力を取得
+    "set_aztool_mode": 0x3A, // aztoolモードフラグ設定
     "none": 0x00 // 空送信
 };
 
@@ -152,6 +155,7 @@ webhid.view_info = function(msg) {
 
 // HID接続した時呼び出されるイベント
 webhid.handle_connect = function(e) {
+    console.log("hid connect");
     webhid.view_info("接続しました " + e.device.productId + " : " + e.device.vendorId);
 };
 
@@ -159,6 +163,8 @@ webhid.handle_connect = function(e) {
 webhid.handle_disconnect = function(e) {
     webhid.device = null; // デバイス
     webhid.raw_report_id = 0; // 送受信していたレポート番号
+    if (webhid.disconnect_func) webhid.disconnect_func(e);
+    console.log("hid disconnect");
     webhid.view_info("切断しました " + e.device.productId + " : " + e.device.vendorId);
 };
 
@@ -236,6 +242,7 @@ webhid.handle_input_report = function(e) {
             webhid.save_data = []; // 保存データクリア
             webhid.save_file_path = ""; // 保存ファイル名クリア
             webhid.view_info("save complate!");
+            webhid.save_file_cb_func(0); // 保存完了
 
         }
 
@@ -251,6 +258,12 @@ webhid.handle_input_report = function(e) {
         // webhid.view_info("key: " + get_data.join(" , "));
         // コールバックを実行
         webhid.get_ioxp_key_cb(get_data);
+
+    } else if (cmd_type == webhid.command_id.set_aztool_mode) {
+        // aztool モードのフラグ設定
+        // コールバックを実行
+        webhid.set_eztool_mode_cb();
+
     }
     
 };
@@ -321,8 +334,10 @@ webhid.load_data_exec = function(get_data) {
     } else if ((p + i) >= webhid.load_length) {
         // 最後まで取得できたら完了
         webhid.load_file_path = "";
-        let str = webhid.arr2str(webhid.load_data); // 配列をテキストに変換
-        webhid.view_info("<textarea id='json_area' style='width: 800px; height:300px;'>"+str+"</textarea>");
+        // let str = webhid.arr2str(webhid.load_data); // 配列をテキストに変換
+        // webhid.view_info("<textarea id='json_area' style='width: 800px; height:300px;'>"+str+"</textarea>");
+        webhid.view_info("load complate  "+webhid.load_length+" / "+webhid.load_length+" ");
+        webhid.get_file_cb_func(0, webhid.load_data);
     }
 };
 
@@ -406,11 +421,12 @@ webhid.file_save_check = function() {
 }
 
 // HID機器へ接続
-webhid.connect = function() {
+webhid.connect = function(cb_func) {
     // デバイスの選択
     navigator.hid.requestDevice(webhid.hid_request_prm).then((devices) => {
         if (!devices.length || !devices[0] || !devices[0].collections) {
             webhid.view_info("機器が見つかりませんでした。");
+            cb_func(1);
             return;
         }
         // 接続を開始
@@ -419,6 +435,7 @@ webhid.connect = function() {
             let r = webhid.get_report_id(devices[0]);
             if (!r.in || !r.out) {
                 webhid.view_info("接続できませんでした。");
+                cb_func(2);
                 return;
             }
             webhid.raw_report_id = r;
@@ -426,6 +443,7 @@ webhid.connect = function() {
             webhid.device = devices[0];
             // データを受け取った時のイベント登録
             webhid.device.addEventListener("inputreport", webhid.handle_input_report);
+            cb_func(0);
         });
     });
 };
@@ -451,17 +469,20 @@ webhid.get_report_id = function(d) {
 };
 
 // ファイルのデータを取得する
-webhid.get_file = function(file_path) {
+webhid.get_file = function(file_path, cb_func) {
     // コマンドを作成
     webhid.load_file_path = file_path;
     let file_path_arr = webhid.str2arr(file_path);
     let cmd = [webhid.command_id.file_load_start];
     let i;
+    if (!cb_func) cb_func = function() {};
+    webhid.get_file_cb_func = cb_func;
     for (i=0; i<file_path_arr.length; i++) {
         cmd.push(file_path_arr[i]);
     }
     if (cmd.length > 30) {
         webhid.view_info("ファイル名が長すぎます。 [ "+file_path+" ]");
+        webhid.get_file_cb_func(1, []);
         return;
     }
     // コマンド送信
@@ -471,12 +492,14 @@ webhid.get_file = function(file_path) {
 };
 
 // ファイルにデータを書き込む
-webhid.save_file = function(file_path, file_data) {
+webhid.save_file = function(file_path, file_data, cb_func) {
     // 保存するデータを取得(uint8arrayで保持)
     webhid.save_data = (webhid.is_string(file_data))? webhid.str2arr(file_data): new Uint8Array(file_data);
     webhid.save_hash = [];
     webhid.save_seek = 0;
     webhid.save_file_path = file_path;
+    if (!cb_func) cb_func = function() {};
+    webhid.save_file_cb_func = cb_func;
     webhid.last_save_time = webhid.millis(); // 最後にコマンドを投げた時間
     let file_path_arr = webhid.str2arr(file_path); // ファイルパスをuint8Arrayに変換
     let data_len = webhid.save_data.length; // 保存するファイルの容量
@@ -495,6 +518,7 @@ webhid.save_file = function(file_path, file_data) {
     }
     if (cmd.length > 30) {
         webhid.view_info("ファイル名が長すぎます。 [ "+file_path+" ]");
+        webhid.save_file_cb_func(1);
         return;
     }
     // コマンド送信
@@ -539,4 +563,16 @@ webhid.get_ioxp_key = function(ioxp_addr, rows, cb_func) {
     webhid.send_command(cmd).then(() => {
         webhid.view_info("get ioxp key ...");
     });
+};
+
+// eztoolモードのフラグ設定
+webhid.set_eztool_mode = function(set_flag, cb_func) {
+    if (!cb_func) cb_func = function() {};
+    webhid.set_eztool_mode_cb = cb_func;
+    let cmd = [webhid.command_id.set_aztool_mode, set_flag];
+    // コマンド送信
+    webhid.send_command(cmd).then(() => {
+        webhid.view_info("set eztool mode ...");
+    });
+
 };
