@@ -97,6 +97,7 @@ webhid.init = function(opt) {
 webhid.send_command = function(arr) {
     while (arr.length < webhid.raw_report_id.out_size) arr.push(0x00); // 0詰め
     let cmd = new Uint8Array(arr);
+    // console.log("send_command: " + arr.join(","));
     return webhid.device.sendReport(webhid.raw_report_id.out, cmd);
 };
 
@@ -175,14 +176,15 @@ webhid.handle_input_report = function(e) {
     // データをUint8Arrayにする
     let get_data = new Uint8Array(e.data.buffer);
     // console.log("get");
-    // console.log(get_data);
     let cmd_type = get_data[0];
     let cmd;
     let l, i, j, h, p, s;
     if (cmd_type == webhid.command_id.file_load_start) {
         // ファイル読み込み開始(ファイル有無と容量が帰って来る)
         if (!get_data[1]) { // ファイルが無い
+            webhid.load_file_path = ""; // 読み込み終わり
             webhid.view_info("ファイルが存在しませんでした。");
+            webhid.get_file_cb_func(2, []);
             return;
         }
         // ファイルの容量取得

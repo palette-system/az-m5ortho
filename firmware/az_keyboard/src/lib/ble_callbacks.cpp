@@ -287,8 +287,9 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			target_file_path[i - 1] = 0x00;
 		    // ファイルが無ければ0を返す
 			if (!SPIFFS.exists(target_file_path)) {
+				send_buf[0] = 0x30;
 				for (i=1; i<32; i++) send_buf[i] = 0x00;
-				this->sendRawData(remap_buf, 32);
+				this->sendRawData(send_buf, 32);
 				return;
 			}
 			open_file = SPIFFS.open(target_file_path, "r");

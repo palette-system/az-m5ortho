@@ -48,7 +48,7 @@ aztool.txtedit_editpage_view = function() {
     ファイルパス： ${aztool.txtedit_file_path}　サイズ： ${aztool.txtedit_text_size}<br>
     <textarea id='txtedit_txt' style='width: 900; height: 400px;'></textarea><br>
     <div id='console_div'></div><br>
-    <div style="text-align: right; width: 800px;">
+    <div style="text-align: right; width: 900px;">
     <a class="cancel-button" onClick="javascript:aztool.txtedit_cb(0, 0);">キャンセル</a>
     　<a class="exec-button" onClick="javascript:aztool.txtedit_save();">保存</a>
     </div>`;

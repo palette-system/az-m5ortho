@@ -203,3 +203,60 @@ li {
     background-color: #aaaaaa;
     display: inline-block;
 }
+
+.layer_title {
+    position: relative;
+    top: 20px;
+    left: 20px;
+    width: 200px;
+    height: 30px;
+    background-color: #ededed;
+    box-shadow: 5px 3px 0px 0 rgb(201 201 201);
+    line-height: 30px;padding: 0 10px;
+    font-size: 13px;
+}
+
+.layer_list_box {
+    width: 300px;
+    height: 400px;
+    border: solid 1px #333;
+    margin: 0;
+    padding: 0;
+    display: inline-block;
+    overflow-y: scroll;
+}
+
+.list_side_btn {
+    width: 80px;
+    height: 60px;
+    margin: 10px 10px 0 10px;
+    padding: 0;
+    text-align:
+    center;display:
+    inline-block;
+    border: solid 1px #646464;
+    line-height: 60px;
+    background-color: #cfcfcf;
+    color: #282828;
+    cursor: pointer;
+}
+
+.layer_list_box li {
+    margin: 5px;
+    background-color: #e1efff;
+    padding: 0 14px;
+    padding-top: 0px;
+    padding-right: 14px;
+    padding-bottom: 0px;
+    padding-left: 14px;
+    text-align: left;
+    font-size: 15px;
+    height: 50px;
+    line-height: 50px;
+    border: solid 1px #646464;
+}
+
+.layer_input_box {
+    font-size: 24px;
+
+}

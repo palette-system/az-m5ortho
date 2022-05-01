@@ -28,8 +28,33 @@ aztool.init = function() {
     webhid.init({"info_div": "console_div"});
     // ピン設定の初期化
     pinstp.init();
+    // キー設定ページの初期化
+    aztool.setmap_init();
     // 接続ページを表示
     aztool.view_connect_top();
+    // 各イベントを登録
+    // aztool.add_body_event();
+};
+
+// イベント登録
+aztool.add_body_event = function() {
+    let b = $("body");
+    b.keydown(aztool.key_down_eve);
+    b.keyup(aztool.key_up_eve);
+};
+
+// キーダウン
+aztool.key_down_eve = function(e) {
+    console.log("key down: " + e.keyCode);
+    // e.altKey // alt
+    // e.metaKey // win
+    // e.ctrlKey // ctrl
+    // e.shiftKey // shift
+};
+
+// キーアップ
+aztool.key_up_eve = function(e) {
+    console.log("key up: " + e.keyCode);
 };
 
 // キーボードに接続
@@ -85,14 +110,15 @@ aztool.load_i2c_data = function() {
     // IOエキスパンダ
     if (o.type == 1) {
         // kleのJSONロード
+        console.log("get_file: /o" + o.id);
         webhid.get_file("/o" + o.id, function(stat, load_data) {
-            // 読み込み失敗
             if (stat != 0) {
-                setTimeout(aztool.load_i2c_data, 2000); // 時間を空けてもう一回
-                return;
+                // 読み込み失敗 空のデータを入れる
+                aztool.i2c_option_data[ "o" + o.id ] = "[]";
+            } else {
+                // kleJSON取得
+                aztool.i2c_option_data[ "o" + o.id ] = webhid.arr2str(load_data);
             }
-            // kleJSON取得
-            aztool.i2c_option_data[ "o" + o.id ] = webhid.arr2str(load_data);
             // 次のオプションを取得
             aztool.i2c_load_index++;
             aztool.load_i2c_data();
@@ -129,13 +155,17 @@ aztool.view_top_menu = function() {
     h += "キーボード名：" + k.keyboard_name + "<br>";
     h += "キーピン： direct="+k.keyboard_pin.direct.join(",")+"　ioxp="+k.keyboard_pin.ioxp.join(",")+"<br>";
     if (k.ioxp_pin.length == 2) {
-        h += "I2Cピン：  SDA= " + k.ioxp_pin[0] + " / SCL= " + k.ioxp_pin[0] + "<br>";
+        h += "I2Cピン：  SDA= " + k.ioxp_pin[0] + " / SCL= " + k.ioxp_pin[1] + "<br>";
     }
     h += "</td></tr></table>";
+    // h += "<div id='key_layout_box' style='width: 1000px; height: 500px;overflow: hidden; border: solid 1px black; text-align: left;'></div>";
     h += "<br><br>";
+    h += "<a href='#' onClick='javascript:aztool.view_setmap();'>キーマップ設定</a><br>";
     h += "<a href='#' onClick='javascript:aztool.addopt_start(\"main_box\");'>オプション追加</a><br>";
     h += "<a href='#' onClick='javascript:aztool.edit_setting_json();'>設定JSON編集</a><br>";
     $("#main_box").html(h);
+    // キー配列を表示
+    // aztool.view_key_layout();
 };
 
 // キーボードを再起動

@@ -648,12 +648,17 @@ void AzCommon::load_setting_json() {
             ioxp_sda = 26;
             ioxp_scl = 14;
         } else if (keyboard_type_int == 3) { // えむごっち
-            ioxp_sda = 25;
-            ioxp_scl = 26;
+            ioxp_sda = 26;
+            ioxp_scl = 25;
         } else {
             ioxp_sda = -1;
             ioxp_scl = -1;
         }
+    }
+    // えむごっちで、25,26になってるヤツは逆なので勝手の元に戻す(昔の設定ファイルのままの人は逆で保存されちゃってる)
+    if (keyboard_type_int == 3 && ioxp_sda == 25 && ioxp_scl == 26) {
+        ioxp_sda = 26;
+        ioxp_scl = 25;
     }
 
     // I2cオプションの設定
@@ -677,87 +682,85 @@ void AzCommon::load_setting_json() {
                     setting_obj["i2c_option"][i]["enable"].as<signed int>() != 1) continue;
             // オプションのタイプ
             if (setting_obj["i2c_option"][i].containsKey("type")) {
-                i2copt[j].opt_type = setting_obj["i2c_option"][i]["type"].as<signed int>();
+                i2copt[i].opt_type = setting_obj["i2c_option"][i]["type"].as<signed int>();
             } else {
-                i2copt[j].opt_type = 0;
+                i2copt[i].opt_type = 0;
+            }
+            // キーマッピング設定
+            if (setting_obj["i2c_option"][i].containsKey("map") &&
+                    setting_obj["i2c_option"][i]["map"].size() ) {
+                i2copt[i].map_len = setting_obj["i2c_option"][i]["map"].size();
+                i2copt[i].map = new short[i2copt[i].map_len];
+                for (p=0; p<i2copt[i].map_len; p++) {
+                    i2copt[i].map[p] = setting_obj["i2c_option"][i]["map"][p].as<signed int>();
+                }
+            } else {
+                i2copt[i].map_len = 0;
+            }
+            i2c_key_len += i2copt[i].map_len;
+            // キー設定の開始番号
+            if (setting_obj["i2c_option"][i].containsKey("map_start")) {
+                i2copt[i].map_start = setting_obj["i2c_option"][i]["map_start"].as<signed int>();
+            } else {
+                i2copt[i].map_start = 0;
             }
             // 使用するIOエキスパンダの情報
             if (setting_obj["i2c_option"][i].containsKey("ioxp") && setting_obj["i2c_option"][i]["ioxp"].size()) {
-                i2copt[j].ioxp_len = setting_obj["i2c_option"][i]["ioxp"].size();
-                i2copt[j].ioxp = new ioxp_option[i2copt[j].ioxp_len];
-                for (n=0; n<i2copt[j].ioxp_len; n++) {
+                i2copt[i].ioxp_len = setting_obj["i2c_option"][i]["ioxp"].size();
+                i2copt[i].ioxp = new ioxp_option[i2copt[i].ioxp_len];
+                for (n=0; n<i2copt[i].ioxp_len; n++) {
                     // IOエキスパンダのアドレス
-                    i2copt[j].ioxp[n].addr = setting_obj["i2c_option"][i]["ioxp"][n]["addr"];
+                    i2copt[i].ioxp[n].addr = setting_obj["i2c_option"][i]["ioxp"][n]["addr"];
                     // row に設定しているピン
                     if (setting_obj["i2c_option"][i]["ioxp"][n].containsKey("row") &&
                             setting_obj["i2c_option"][i]["ioxp"][n]["row"].size() ) {
                         // row に設定されている配列を取得(0～7 以外を無視する)
-                        i2copt[j].ioxp[n].row_len = setting_obj["i2c_option"][i]["ioxp"][n]["row"].size();
-                        i2copt[j].ioxp[n].row = new uint8_t[i2copt[j].ioxp[n].row_len]; // row のピン番号
-                        i2copt[j].ioxp[n].row_output = new uint16_t[i2copt[j].ioxp[n].row_len]; // マトリックスでrow write するデータ
-                        i2copt[j].ioxp[n].row_mask = 0x00; // row write する時用のマスク
+                        i2copt[i].ioxp[n].row_len = setting_obj["i2c_option"][i]["ioxp"][n]["row"].size();
+                        i2copt[i].ioxp[n].row = new uint8_t[i2copt[i].ioxp[n].row_len]; // row のピン番号
+                        i2copt[i].ioxp[n].row_output = new uint16_t[i2copt[i].ioxp[n].row_len]; // マトリックスでrow write するデータ
+                        i2copt[i].ioxp[n].row_mask = 0x00; // row write する時用のマスク
                         o = 0;
-                        for (p=0; p<i2copt[j].ioxp[n].row_len; p++) {
+                        for (p=0; p<i2copt[i].ioxp[n].row_len; p++) {
                             r = setting_obj["i2c_option"][i]["ioxp"][n]["row"][p].as<signed int>();
-                            if (r < 0 || r >= 8) continue; // ポートA以外の場合は取得しない
-                            i2copt[j].ioxp[n].row[o] = r;
+                            // if (r < 0 || r >= 8) continue; // ポートA以外の場合は取得しない
+                            i2copt[i].ioxp[n].row[o] = r;
                             o++;
-                            i2copt[j].ioxp[n].row_mask |= 0x01 << r;
+                            i2copt[i].ioxp[n].row_mask |= 0x01 << r;
                         }
-                        i2copt[j].ioxp[n].row_len = o;
+                        i2copt[i].ioxp[n].row_len = o;
                         // マトリックス出力する時用のデータ作成
                         for (p=0; p<o; p++) {
-                            i2copt[j].ioxp[n].row_output[p] = i2copt[j].ioxp[n].row_mask & ~(0x01 << i2copt[j].ioxp[n].row[p]);
+                            i2copt[i].ioxp[n].row_output[p] = i2copt[i].ioxp[n].row_mask & ~(0x01 << i2copt[i].ioxp[n].row[p]);
                         }
                     } else {
-                        i2copt[j].ioxp[n].row_len = 0;
+                        i2copt[i].ioxp[n].row_len = 0;
                     }
                     // col に設定しているピン
                     if (setting_obj["i2c_option"][i]["ioxp"][n].containsKey("col") &&
                             setting_obj["i2c_option"][i]["ioxp"][n]["col"].size() ) {
-                        i2copt[j].ioxp[n].col_len = setting_obj["i2c_option"][i]["ioxp"][n]["col"].size();
-                        i2copt[j].ioxp[n].col = new uint8_t[i2copt[j].ioxp[n].col_len];
-                        for (p=0; p<i2copt[j].ioxp[n].col_len; p++) {
-                            i2copt[j].ioxp[n].col[p] = setting_obj["i2c_option"][i]["ioxp"][n]["col"][p].as<signed int>();
+                        i2copt[i].ioxp[n].col_len = setting_obj["i2c_option"][i]["ioxp"][n]["col"].size();
+                        i2copt[i].ioxp[n].col = new uint8_t[i2copt[i].ioxp[n].col_len];
+                        for (p=0; p<i2copt[i].ioxp[n].col_len; p++) {
+                            i2copt[i].ioxp[n].col[p] = setting_obj["i2c_option"][i]["ioxp"][n]["col"][p].as<signed int>();
                         }
                     } else {
-                        i2copt[j].ioxp[n].col_len = 0;
+                        i2copt[i].ioxp[n].col_len = 0;
                     }
                     // direct に設定しているピン
                     if (setting_obj["i2c_option"][i]["ioxp"][n].containsKey("direct") &&
                             setting_obj["i2c_option"][i]["ioxp"][n]["direct"].size() ) {
-                        i2copt[j].ioxp[n].direct_len = setting_obj["i2c_option"][i]["ioxp"][n]["direct"].size();
-                        i2copt[j].ioxp[n].direct = new uint8_t[i2copt[j].ioxp[n].direct_len];
-                        for (p=0; p<i2copt[j].ioxp[n].direct_len; p++) {
-                            i2copt[j].ioxp[n].direct[p] = setting_obj["i2c_option"][i]["ioxp"][n]["direct"][p].as<signed int>();
+                        i2copt[i].ioxp[n].direct_len = setting_obj["i2c_option"][i]["ioxp"][n]["direct"].size();
+                        i2copt[i].ioxp[n].direct = new uint8_t[i2copt[i].ioxp[n].direct_len];
+                        for (p=0; p<i2copt[i].ioxp[n].direct_len; p++) {
+                            i2copt[i].ioxp[n].direct[p] = setting_obj["i2c_option"][i]["ioxp"][n]["direct"][p].as<signed int>();
                         }
                     } else {
-                        i2copt[j].ioxp[n].direct_len = 0;
-                    }
-                    // キーマッピング設定
-                    if (setting_obj["i2c_option"][i].containsKey("map") &&
-                            setting_obj["i2c_option"][i]["map"].size() ) {
-                        i2copt[j].map_len = setting_obj["i2c_option"][i]["map"].size();
-                        i2copt[j].map = new short[i2copt[j].map_len];
-                        for (p=0; p<i2copt[j].map_len; p++) {
-                            i2copt[j].map[p] = setting_obj["i2c_option"][i]["map"][p].as<signed int>();
-                        }
-                    } else {
-                        i2copt[j].map_len = 0;
-                    }
-                    i2c_key_len += i2copt[j].map_len;
-                    // キー設定の開始番号
-                    if (setting_obj["i2c_option"][i].containsKey("map_start")) {
-                        i2copt[j].map_start = setting_obj["i2c_option"][i]["map_start"].as<signed int>();
-                    } else {
-                        i2copt[j].map_start = 0;
+                        i2copt[i].ioxp[n].direct_len = 0;
                     }
                 }
             } else {
-                i2copt[j].ioxp_len = 0;
+                i2copt[i].ioxp_len = 0;
             }
-
-
 
         }
 
@@ -1469,6 +1472,7 @@ int AzCommon::i2c_setup(int p, i2c_option *opt) {
     int i, j, k, m, x;
     int r = 0;
     int set_type[16];
+    M5.Lcd.printf("i2c_setup: %d\n", p);
     if (opt->opt_type == 1) {
         // IOエキスパンダ
         for (i=0; i<opt->ioxp_len; i++) {
@@ -1852,7 +1856,7 @@ void AzCommon::key_read(void) {
     // I2Cオプション
     start_time = micros();
     for (i=0; i<i2copt_len; i++) {
-        p = i2c_read(p, &i2copt[i], input_key);
+        p += i2c_read(p, &i2copt[i], input_key);
     }
     end_time = micros();
     /*
@@ -1861,7 +1865,7 @@ void AzCommon::key_read(void) {
         Serial.printf(" %D", input_key[i]);
     }
     Serial.printf("] %D\n", (end_time - start_time));
-    delay(1000);
+    // delay(1000);
     /*
     M5.Lcd.fillScreen(BLACK);
     M5.Lcd.setCursor(0, 0, 2);

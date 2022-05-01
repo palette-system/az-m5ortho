@@ -11,6 +11,10 @@ aztool.ioxp_default = {"addr": 32, "row":[], "col":[], "direct":[0,1,2,3,4,5,6,7
 
 // キーの色
 aztool.key_color = "#fff";
+// 選択中のキーのカラー
+aztool.select_key_color = "#ffb5b5";
+// 設定が終わったキーのカラー
+aztool.enable_key_color = "#b6fbdb";
 
 // オプションを追加しているかどうかのフラグ
 aztool.option_add_added_flag = false;
@@ -427,9 +431,9 @@ aztool.option_add_key_color_update = function() {
     let i;
     for (i=0; i<aztool.switch_length; i++) {
         if (i == aztool.switch_check_index) {
-            $("#sw_" + i).css({"background-color": "#ffb5b5"}); // 読み取り中のキー
+            $("#sw_" + i).css({"background-color": aztool.select_key_color}); // 読み取り中のキー
         } else if (i < aztool.switch_check_index) {
-            $("#sw_" + i).css({"background-color": "#b6fbdb"}); // 読み取りが終わったキー
+            $("#sw_" + i).css({"background-color": aztool.enable_key_color}); // 読み取りが終わったキー
         } else {
             $("#sw_" + i).css({"background-color": aztool.key_color}); // まだ読み込んでいないキー
         }
@@ -464,7 +468,7 @@ aztool.option_add_map_check_update = function() {
     for (i in aztool.option_add.map) {
         x = aztool.option_add.map[i];
         if (dat.input[x]) {
-            $("#sw_" + i).css({"background-color": "#b6fbdb"}); // 押しているキー
+            $("#sw_" + i).css({"background-color": aztool.enable_key_color}); // 押しているキー
         } else {
             $("#sw_" + i).css({"background-color": aztool.key_color}); // 押していないキー
         }
@@ -553,7 +557,7 @@ aztool.option_add_restart = function () {
 };
 
 // kle JSONからキー配列を表示
-aztool.kle_view = function(json_text, view_id, auto_resize) {
+aztool.kle_view = function(json_text, view_id, auto_resize, set_coef, set_prefix) {
     try {
       var json_data = aztool.kle_json_parse(json_text);
       aztool.serial_data = $serial.deserialize(json_data);
@@ -561,6 +565,8 @@ aztool.kle_view = function(json_text, view_id, auto_resize) {
       var str="";
       let coef = parseInt($("#coef_input").val());
       if (auto_resize) coef = 60; // 最大は60
+      if (set_coef) coef = set_coef;
+      if (!set_prefix) set_prefix = "sw_";
       // 最大topとleftを取得
       let mtop = 0;
       let mleft = 0;
@@ -603,7 +609,7 @@ aztool.kle_view = function(json_text, view_id, auto_resize) {
   
         str += "<div style='" + wrapperStyle + "'>\n";
         // str += "<div id='sw_"+aztool.switch_length+"' style='" + innerStyle + "'><table cellpadding='0' cellspacing='0' style='user-select: none; width: 100%; height: 100%;font-size: 10px;'><tr><td align='center'>" + label + "</td></tr></table></div>\n";
-        str += "<div id='sw_"+aztool.switch_length+"' style='" + innerStyle + "'>&nbsp</div>\n";
+        str += "<div id='"+set_prefix+aztool.switch_length+"' style='" + innerStyle + "'>&nbsp</div>\n";
         str += "</div>\n";
         aztool.switch_length++;
       });
@@ -611,7 +617,7 @@ aztool.kle_view = function(json_text, view_id, auto_resize) {
   
       $(view_id).html(str);
       $(view_id).css({"background-color": "#eee"});
-      return true;
+      return aztool.serial_data;
     } catch(err) {
       window.err = err;
       $(view_id).html("error: " + err.message);
