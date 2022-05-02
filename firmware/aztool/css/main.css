@@ -3,6 +3,16 @@ div {
     user-select: none;
 }
 
+ul {
+    padding: 0;
+    margin: 0;
+}
+
+li {
+    padding: 0;
+    margin: 0;
+}
+
 .pbox {
     height: 34px;
     width: 170px;
@@ -209,12 +219,40 @@ li {
     top: 20px;
     left: 20px;
     width: 200px;
-    height: 30px;
+    min-height: 30px;
     background-color: #ededed;
     box-shadow: 5px 3px 0px 0 rgb(201 201 201);
-    line-height: 30px;padding: 0 10px;
+    line-height: 30px;
     font-size: 13px;
 }
+
+.layer_title_name {
+    padding: 0 10px;
+    width: 200px;
+    overflow: hidden;
+}
+
+.layer_title_menu {
+    display: none;
+}
+
+.layer_title_menu ul {
+    max-height: 230px;
+    overflow-y: scroll;
+}
+
+.layer_title_menu li {
+    background-color: #fbfbfb;
+    padding: 0 10px;
+    overflow: hidden;
+    cursor: pointer;
+    height: 30px;
+}
+
+.layer_title_menu li:hover {
+    background-color: #e1efff;
+}
+
 
 .layer_list_box {
     width: 300px;
@@ -260,3 +298,4 @@ li {
     font-size: 24px;
 
 }
+

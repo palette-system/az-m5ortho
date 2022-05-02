@@ -4,7 +4,7 @@
 if (!window.aztool) aztool = {};
 
 // 今選択中のレイヤー番号
-aztool.setmap_select_layer = 0;
+aztool.setmap_select_layer = "";
 
 aztool.setmap_layer_keys = [];
 
@@ -22,13 +22,15 @@ aztool.view_setmap = function() {
 
     <a href='#' onClick='javascript:aztool.setmap_layer_set();'>レイヤー設定</a><br><br>
 
+    <a href='#' onClick='javascript:aztool.setmap_save();'>設定を保存して再起動</a><br><br>
+
     <a href='#' onClick='javascript:aztool.view_top_menu();'>もどる</a><br>
     `;
     $("#main_box").html(h);
     // レイヤーのリスト取得
     aztool.setmap_get_layer_list();
     // 選択中のレイヤーをデフォルトにする
-    aztool.setmap_select_layer_default();
+    aztool.setmap_select_layer = "layer_" + aztool.setting_json_data.default_layer;
     // キーのレイアウト表示
     aztool.view_key_layout();
     // ボタンに設定されている文字を表示
@@ -95,26 +97,46 @@ aztool.setmap_init = function() {
     });
 };
 
+// オプションが有効か
+aztool.on_i2coption = function(option_data) {
+    // 有効でない場合
+    if (option_data.enable == 0) return false;
+    // それ以外は有効
+    return true;
+};
+
 // キーレイアウトを表示
 aztool.view_key_layout = function() {
     let h = "";
     let i, j, o, s;
     // キー配列を表示する枠を表示
+    h += "<div id='odiv_0' style='position: relative; top: 250px;'></div>"; // 本体のキー配列用
     for (i in aztool.setting_json_data.i2c_option) {
         o = aztool.setting_json_data.i2c_option[i];
-        h += "<div id='odiv_"+o.id+"' style='position: relative; top: 250px;'></div>";
+        if (!aztool.on_i2coption(o)) continue; // 有効でないオプションは無視
+        h += "<div id='odiv_"+o.id+"' style='position: relative; top: 250px;'></div>"; // オプションのキー配列用
     }
     h += "<div id='layer_title_info' class='layer_title'>レイヤー名</div>";
     $("#key_layout_box").html(h);
     // キー配列を表示
     aztool.key_layout_data = [];
+    // 本体のキー配列を表示
+    aztool.key_layout_data.push({
+        "option": {"id": 0, "map_start": 0},
+        "kle": aztool.kle_view(aztool.main_kle[aztool.setting_json_data.keyboard_type], "#odiv_0", false, 40, "sw_0_")
+    });
+    // オプションのキー配列を表示
     for (i in aztool.setting_json_data.i2c_option) {
         o = aztool.setting_json_data.i2c_option[i];
-        aztool.key_layout_data[i] = aztool.kle_view(aztool.i2c_option_data["o"+o.id], "#odiv_"+o.id, false, 40, "sw_" + i + "_");
+        if (!aztool.on_i2coption(o)) continue; // 有効でないオプションは無視
+        aztool.key_layout_data.push({
+            "option": aztool.setting_json_data.i2c_option[i],
+            "kle": aztool.kle_view(aztool.i2c_option_data["o"+o.id], "#odiv_"+o.id, false, 40, "sw_" + o.id + "_")
+        });
     }
     // それぞれのオプションをドラッグで移動できるようにする
-    for (i in aztool.setting_json_data.i2c_option) {
-        o = aztool.setting_json_data.i2c_option[i];
+    for (i in aztool.key_layout_data) {
+        o = aztool.key_layout_data[i].option;
         $("#odiv_"+o.id).draggable({
             "stop": function() { // ドラッグ終了
                 // ドラッグが終わった時間を記録(クリックイベントとかぶらないよう時間で判定)
@@ -124,10 +146,11 @@ aztool.view_key_layout = function() {
     }
     // ボタンのクリックイベント
     for (i in aztool.key_layout_data) { // kleのデータループ
-        s = aztool.key_layout_data[i];
+        s = aztool.key_layout_data[i].kle;
+        o = aztool.key_layout_data[i].option;
         for (j in s.keys) { // kle のキー分ループ
             // ボタンにクリックイベント登録
-            $("#sw_"+i+"_"+j).click(function(e) {
+            $("#sw_"+o.id+"_"+j).click(function(e) {
                 let t;
                 // ドラッグ処理から10ミリ秒以下ならばドラッグ処理でのクリックなので何もしない
                 if ((aztool.millis() - aztool.setmap_dragg_last_time) < 10) {
@@ -140,6 +163,12 @@ aztool.view_key_layout = function() {
             });
         }
     }
+    // レイヤー名のドロップダウン表示非表示イベント
+    $("#layer_title_info").hover(function(){
+        $("#layer_menu_list").show();
+    }, function(){
+        $("#layer_menu_list").hide();
+    });
 };
 
 // １ボタン設定
@@ -163,13 +192,16 @@ aztool.setmap_key_setting_one_keydown = function(e) {
     let target_data = aztool.setmap_setting_one_target.split("_"); // setmap_setting_one_target に sw_0_0 が入ってる
     let target_option = parseInt(target_data[1]);
     let target_key = parseInt(target_data[2]);
-    let option_set = aztool.setting_json_data.i2c_option[target_option];
+    let i, option_set;
+    for (i in aztool.setting_json_data.i2c_option) {
+        if (aztool.setting_json_data.i2c_option[i].id == target_option) {
+            option_set = aztool.setting_json_data.i2c_option[i];
+        }
+    }
     let key_id = option_set.map_start + target_key;
-    let k = aztool.setmap_layer_keys[aztool.setmap_select_layer]; // 選択中のレイヤーのキー名
+    let k = aztool.setmap_select_layer; // 選択中のレイヤーのキー名
     // 入力データを設定
     aztool.setting_json_data.layers[k].keys["key_"+key_id] = aztool.setmap_create_one_key_data(input_key);
-    // 設定データのJSONテキストも更新
-    aztool.setting_json_txt = JSON.stringify(aztool.setting_json_data);
     // ボタンの文字と色を更新
     aztool.setmap_key_string_update();
     // キーダウンイベント削除
@@ -180,14 +212,14 @@ aztool.setmap_key_setting_one_keydown = function(e) {
 
 // 選択してるレイヤーの設定をボタンに表示する
 aztool.setmap_key_string_update = function() {
-    let d, i, j, k, l, o, s;
+    let d, h, i, j, k, l, o, s;
     let str;
-    l = aztool.setmap_layer_keys[aztool.setmap_select_layer]; // 選択中のレイヤーのキー名
+    l = aztool.setmap_select_layer; // 選択中のレイヤーのキー名
     d = aztool.setting_json_data.layers[l]; // 選択レイヤーの設定されている情報
     // ボタンに文字を表示
     for (i in aztool.key_layout_data) { // kleのデータループ
-        s = aztool.key_layout_data[i];
-        o = aztool.setting_json_data.i2c_option[i];
+        s = aztool.key_layout_data[i].kle;
+        o = aztool.key_layout_data[i].option;
         for (j in s.keys) { // kle のキー分ループ
             str = "&nbsp;"; // 表示文字のデフォルトは空
             k = o.map_start + parseInt(j); // 設定JSON上で設定されてるkey_{n}の番号
@@ -195,12 +227,34 @@ aztool.setmap_key_string_update = function() {
                 str = aztool.setmap_get_key_string(d.keys["key_" + k]);
             }
             // 設定文字を反映
-            $("#sw_"+i+"_"+j).html(str); // ボタンに文字を表示
-            $("#sw_"+i+"_"+j).css({"background-color": aztool.key_color}); // ボタンの色もデフォルトに
+            $("#sw_"+o.id+"_"+j).html(str); // ボタンに文字を表示
+            $("#sw_"+o.id+"_"+j).css({"background-color": aztool.key_color}); // ボタンの色もデフォルトに
         }
     }
     // レイヤー名の更新
-    $("#layer_title_info").html(d.name);
+    h = "<div id='layer_menu_top' class='layer_title_name'>" + d.name + "</div>";
+    if (Object.keys(aztool.setting_json_data.layers).length > 1) { // レイヤーが2個以上あればドロップダウンリスト追加
+        h += "<div id='layer_menu_list' class='layer_title_menu'>";
+        h += "<ul>";
+        for (k in aztool.setting_json_data.layers) {
+            s = (k == l)? " style='background-color: #aed4ff;'": ""; // 選択中のレイヤーは色を変える
+            o = (k == "layer_" + aztool.setting_json_data.default_layer)? " <font style='font-size: 11px;'>デフォルト</font>": ""; // デフォルトのレイヤーはデフォルト文字追加
+            h += "<li id='layer_menu_item_"+k+"'"+s+">"+aztool.setting_json_data.layers[k].name+ o +"</li>";
+        }
+        h += "</ul>";
+        h += "</div>";
+    }
+    $("#layer_title_info").html(h);
+    if (Object.keys(aztool.setting_json_data.layers).length > 1) { // レイヤーが2個以上あればドロップダウン動作追加
+        for (k in aztool.setting_json_data.layers) {
+            $("#layer_menu_item_"+k).click(function(e){
+                let tid = (e.target.id)? e.target.id: e.currentTarget.id;
+                let s = tid.split("_");
+                aztool.setmap_select_layer = s[3] + "_" + s[4];
+                aztool.setmap_key_string_update();
+            });
+        }
+    }
 };
 
 // キーデータから表示用の文字取得
@@ -212,7 +266,6 @@ aztool.setmap_get_key_string = function(key_data) {
         // 通常入力
         r = "";
         for (i in k.key) {
-            console.log(i);
             if (parseInt(i)) r += " + "
             d = aztool.get_key_data(2, k.key[i]); // hid コードからキーデータ取得
             r += d.str;
@@ -225,17 +278,6 @@ aztool.setmap_get_key_string = function(key_data) {
 aztool.setmap_get_layer_list = function() {
     aztool.setmap_layer_keys = Object.keys(aztool.setting_json_data.layers);
 };
-
-// 選択中のレイヤーをデフォルトレイヤーにする
-aztool.setmap_select_layer_default = function() {
-    let i;
-    for (i in aztool.setmap_layer_keys) {
-        if (aztool.setmap_layer_keys[i] == "layer_" + aztool.setting_json_data.default_layer) {
-            aztool.setmap_select_layer = i;
-        }
-    };
-};
-
 
 // キーマップ一括登録開始
 aztool.setmap_all_set = function() {
@@ -258,17 +300,18 @@ aztool.setmap_all_set = function() {
 
 // 一括設定の表示処理
 aztool.setmap_all_set_view = function() {
-    let i, j, p, s;
+    let i, j, o, p, s;
     p = 0;
     for (i in aztool.key_layout_data) {
-        s = aztool.key_layout_data[i];
+        s = aztool.key_layout_data[i].kle;
+        o = aztool.key_layout_data[i].option;
         for (j in s.keys) {
             if (p == aztool.setmap_all_index) {
-                $("#sw_"+i+"_"+j).css({"background-color": aztool.select_key_color}); // 選択して欲しいキー
+                $("#sw_"+o.id+"_"+j).css({"background-color": aztool.select_key_color}); // 選択して欲しいキー
             } else if (p < aztool.setmap_all_index) {
-                $("#sw_"+i+"_"+j).css({"background-color": aztool.enable_key_color}); // 選択が終わったキー
+                $("#sw_"+o.id+"_"+j).css({"background-color": aztool.enable_key_color}); // 選択が終わったキー
             } else {
-                $("#sw_"+i+"_"+j).css({"background-color": aztool.key_color}); // まだ読み込んでいないキー
+                $("#sw_"+o.id+"_"+j).css({"background-color": aztool.key_color}); // まだ読み込んでいないキー
             }
             p++;
         }
@@ -294,16 +337,17 @@ aztool.setmap_all_set_keydown = function(e) {
     p = 0;
     f = false;
     for (i in aztool.key_layout_data) {
-        s = aztool.key_layout_data[i];
-        o = aztool.setting_json_data.i2c_option[i];
+        s = aztool.key_layout_data[i].kle;
+        o = aztool.key_layout_data[i].option;
         for (j in s.keys) {
             if (p == aztool.setmap_all_index) {
                 k = o.map_start + parseInt(j);
                 aztool.setmap_all_set_data["key_" + k] = aztool.setmap_create_one_key_data(input_key); // 入力データを追加
                 str = aztool.setmap_get_key_string(aztool.setmap_all_set_data["key_" + k]); // 表示用の文字取得
-                $("#sw_"+i+"_"+j).html(str); // ボタンに文字を表示
+                $("#sw_"+o.id+"_"+j).html(str); // ボタンに文字を表示
                 str = p + " - " + k + " - " + input_key.str + "<br>";
-                str += "<a href='#' onClick='javascript:aztool.setmap_all_set_keydown_back();'>ひとつ前のボタンに戻る</a><br><br>";
+                str += "<a href='#' onClick='javascript:aztool.setmap_all_set_keydown_back();'>ひとつ前のボタンに戻る</a><br>";
+                str += "<a href='#' onClick='javascript:aztool.setmap_all_set_keydown_cancel();'>キャンセル</a><br><br>";
                 $("#setmap_info").html(str); // インフォメーションに設定内容を表示
                 f = true;
             }
@@ -322,9 +366,8 @@ aztool.setmap_all_set_keydown = function(e) {
         // キーダウンイベント削除
         document.body.removeEventListener("keydown", aztool.setmap_all_set_keydown, false);
         // 設定データに追加
-        k = aztool.setmap_layer_keys[aztool.setmap_select_layer]; // 選択中のレイヤーのキー名
+        k = aztool.setmap_select_layer; // 選択中のレイヤーのキー名
         aztool.setting_json_data.layers[k].keys = aztool.setmap_all_set_data; // 設定データのレイヤーを変更
-        aztool.setting_json_txt = JSON.stringify(aztool.setting_json_data); // 設定データのJSONテキストも更新
         // ボタンの文字と色を更新
         aztool.setmap_key_string_update();
     }
@@ -339,7 +382,17 @@ aztool.setmap_all_set_keydown_back = function() {
     aztool.setmap_all_index--;
     // キーに色を付ける
     aztool.setmap_all_set_view();
+};
 
+// 一括登録キャンセル
+aztool.setmap_all_set_keydown_cancel = function() {
+        // 一括登録終了
+        aztool.setmap_stat = 0;
+        $("#setmap_info").html("");
+        // キーダウンイベント削除
+        document.body.removeEventListener("keydown", aztool.setmap_all_set_keydown, false);
+        // ボタンの文字と色を更新
+        aztool.setmap_key_string_update();
 };
 
 // レイヤー設定
@@ -364,8 +417,8 @@ aztool.setmap_layer_list_update = function() {
     // リストアイテムを生成しなおす
     for (k in aztool.setmap_layer_edit_data) {
         s = k.split("_");
-        d = (aztool.setmap_layer_edit_default == parseInt(s[1]))? "★ ": "";
-        h += "<li id='list_"+k+"'>" + d + aztool.setmap_layer_edit_data[k].name + "</li>";
+        d = (aztool.setmap_layer_edit_default == parseInt(s[1]))? " <font style='color: #a2a2a2;font-size: 12px;margin: 5px;'>デフォルト</font>": "";
+        h += "<li id='list_"+k+"'>" + aztool.setmap_layer_edit_data[k].name + d + "</li>";
     }
     $("#layer_list").html(h);
     // アイテムクリックイベント登録
@@ -383,10 +436,11 @@ aztool.setmap_layer_list_update = function() {
 
 // レイヤーアイテムクリック
 aztool.setmap_layer_item_click = function(e) {
-    console.log(e.target.id);
-    let s = e.target.id.split("_");
-    // 選択レイヤーにキーを設定
-    aztool.setmap_layer_edit_select = s[1] + "_" + s[2];
+    let tid = (e.target.id)? e.target.id: e.currentTarget.id;
+    let s = tid.split("_");
+    let lid = s[1] + "_" + s[2];
+    // 選択レイヤーにキーを設定(既に選択中のレイヤーなら選択を外す)
+    aztool.setmap_layer_edit_select = (aztool.setmap_layer_edit_select == lid)? "": lid;
     // アイテムの色を変える
     let k;
     for (k in aztool.setmap_layer_edit_data) {
@@ -397,12 +451,17 @@ aztool.setmap_layer_item_click = function(e) {
         }
     }
     // フォームに内容を入れる
-    $("#layer_num_edit").val(s[2]);
-    k = (aztool.setmap_layer_edit_select)? aztool.setmap_layer_edit_data[aztool.setmap_layer_edit_select].name: "";
-    $("#layer_name_edit").val(k);
-    $("#layer_edit_form_info").html("");
-    // フォーム表示
-    $("#layer_edit_form").show();
+    if (aztool.setmap_layer_edit_select == "") {
+        // 選択が無ければフォーム表示
+        $("#layer_edit_form").hide();
+    } else {
+        $("#layer_num_edit").val(s[2]);
+        k = (aztool.setmap_layer_edit_select)? aztool.setmap_layer_edit_data[aztool.setmap_layer_edit_select].name: "";
+        $("#layer_name_edit").val(k);
+        $("#layer_edit_form_info").html("");
+        // フォーム表示
+        $("#layer_edit_form").show();
+    }
 
 };
 
@@ -515,3 +574,21 @@ aztool.setmap_layer_edit_close = function(end_type) {
     aztool.view_setmap();
 };
 
+// 設定を保存して再起動
+aztool.setmap_save = function() {
+    // 設定を保存
+    $("#main_box").html("保存中<br><div id='console_div'></div>");
+    aztool.setting_json_save(function(stat) {
+        // 保存失敗
+        if (stat != 0) {
+            aztool.view_setmap(); // キー設定ページ再表示
+            $("#setmap_info").html("設定JSONの保存に失敗しました。");
+            return;
+        }
+        $("#main_box").html("保存完了。再起動します。");
+        // 2秒ほど待ってからキーボード再起動
+        setTimeout(function() {
+            aztool.keyboard_restart(0); // キーボードを再起動
+        }, 2000);
+    });
+};
