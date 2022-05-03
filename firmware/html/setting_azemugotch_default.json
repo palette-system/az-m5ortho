@@ -31,8 +31,7 @@
 						"action_type": 1,
 						"key": [
 							4
-						],
-						"repeat_interval": "51"
+						]
 					}
 				},
 				"key_1": {
@@ -40,8 +39,7 @@
 						"action_type": 1,
 						"key": [
 							5
-						],
-						"repeat_interval": "51"
+						]
 					}
 				},
 				"key_2": {
@@ -49,8 +47,7 @@
 						"action_type": 1,
 						"key": [
 							6
-						],
-						"repeat_interval": "51"
+						]
 					}
 				},
 				"key_3": {
@@ -58,8 +55,7 @@
 						"action_type": 1,
 						"key": [
 							7
-						],
-						"repeat_interval": "51"
+						]
 					}
 				},
 				"key_4": {
@@ -67,8 +63,7 @@
 						"action_type": 1,
 						"key": [
 							8
-						],
-						"repeat_interval": "51"
+						]
 					}
 				},
 				"key_5": {
@@ -76,8 +71,7 @@
 						"action_type": 1,
 						"key": [
 							9
-						],
-						"repeat_interval": "51"
+						]
 					}
 				}
 			}

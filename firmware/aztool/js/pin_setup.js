@@ -101,49 +101,56 @@ pinstp.set_pin_setting_html = function() {
 
 // ドラッグイベントの登録
 pinstp.init_sortable = function() {
+    var ph, pw;
     $('.sortable').selectable({
-    cancel: '.sort-handle, .ui-selected',
-    filter: '> li'
+        cancel: '.sort-handle, .ui-selected',
+        filter: '> li'
     }).sortable({
-    opacity: 0.9,
-    items: "> li",
-    handle: 'div, .sort-handle, .ui-selected',
-    connectWith: ".iopinbox",
-    //ヘルパー生成時（ドラッグ時）処理
-    helper: function(e, item) {
-        if ( ! item.hasClass('ui-selected') ) {
-        item.parent().children('.ui-selected').removeClass('ui-selected');
-        item.addClass('ui-selected');
+        opacity: 0.9,
+        items: "> li",
+        handle: 'div, .sort-handle, .ui-selected',
+        connectWith: ".iopinbox",
+        //ヘルパー生成時（ドラッグ時）処理
+        helper: function(e, item) { // item はドラッグした1つだけ入って来る
+            if ( ! item.hasClass('ui-selected') ) {
+                item.parent().children('.ui-selected').removeClass('ui-selected');
+                item.addClass('ui-selected');
+            }
+            var selected = item.parent().children('.ui-selected').clone(); // selectable で選ばれたヤツを全部コピー
+            //placeholder用の高さを取得しておく
+            ph = item.outerHeight() * selected.length;
+            pw = (item.outerWidth() + 20) * selected.length; // ドラッグしたアイテムのサイズ×選択したアイテムの数
+            // ↑ 本当は選択した要素の部分の高さと幅を取得したいけど縦に複数選択した場合などの高さ、幅の取得方法が分からない
+            console.log(item);
+            console.log("ph: " + ph + "    pw: " + pw);
+            item.data('multidrag', selected).siblings('.ui-selected').remove(); // 
+            console.log(selected);
+            return $("<li style='background-color: transparent; width: "+pw+"px;' />").append(selected); // 移動で持って行くDOMにselectable で選ばれたヤツを突っ込んで返す
+        },
+        //ドラッグした時にplaceholderの高さを選択要素分取る
+        start: function(e, ui) {
+            console.log(ph);
+            console.log(ui.placeholder);
+            // ui.placeholder.css({'height':ph});
+            // ui.placeholder.css({"height": 0, "width": 0});
+        },
+        //ドロップ時処理
+        stop: function(e, ui) { // ui.item はドラッグした1つだけ入って来る
+            var selected = ui.item.data("multidrag"); // 渡されたアイテムに突っ込んだ選択したアイテムを取得(選択したアイテムの中にドラッグしたアイテムのクローンも入ってる)
+            ui.item.after(selected); // 受け取ったアイテム(ドラッグしたアイテム)の隣に選択したアイテムを並べる
+            ui.item.remove(); // 受け取ったアイテム(ドラッグしたアイテム)事態は削除(じゃないとドラッグしたアイテムが２つになる)
+            // 選択を解除
+            selected.removeClass("ui-selected");
+            // アイテムをピン名順にソート
+            let sort_func = function(a, b){
+                return ((parseInt($(a).attr("id").split("_")[1]) > parseInt($(b).attr("id").split("_")[1]))? 1 : -1);
+            };
+            $("#list_direct").html($("ul#list_direct li").sort(sort_func));
+            $("#list_row").html($("ul#list_row li").sort(sort_func));
+            $("#list_col").html($("ul#list_col li").sort(sort_func));
+            // ピン情報更新
+            pinstp.ic_update();
         }
-        var selected = item.parent().children('.ui-selected').clone();
-        //placeholder用の高さを取得しておく
-        ph = item.outerHeight() * selected.length;
-        item.data('multidrag', selected).siblings('.ui-selected').remove();
-        return $('<li/>').append(selected);
-    },
-    //ドラッグした時にplaceholderの高さを選択要素分取る
-    start: function(e, ui) {
-        console.log(ph);
-        console.log(ui.placeholder);
-        // ui.placeholder.css({'height':ph});
-        ui.placeholder.css({'height': 0});
-    },
-    //ドロップ時処理
-    stop: function(e, ui) {
-        var selected = ui.item.data("multidrag");
-        ui.item.after(selected);
-        ui.item.remove();
-        console.log("end");
-        selected.removeClass("ui-selected");
-        console.log(selected);
-        let sort_func = function(a, b){
-            return ((parseInt($(a).attr("id").split("_")[1]) > parseInt($(b).attr("id").split("_")[1]))? 1 : -1);
-        };
-        $("#list_direct").html($("ul#list_direct li").sort(sort_func));
-        $("#list_row").html($("ul#list_row li").sort(sort_func));
-        $("#list_col").html($("ul#list_col li").sort(sort_func));
-        pinstp.ic_update(); // ピン情報更新
-    }
     });
 
     pinstp.ic_update(); // ピン情報更新
