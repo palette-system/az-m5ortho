@@ -2,6 +2,12 @@
 
 if (!window.aztool) aztool = {};
 
+
+// 0詰め
+pinstp.zero = function(n, len){
+    return n.toString().padStart(len, "0");
+};
+
 // ランダムな数字を生成
 aztool.random_num = function(n) {
     let r = [];
@@ -9,6 +15,11 @@ aztool.random_num = function(n) {
         r.push(Math.floor( Math.random() * 10 ));
     }
     return r.join("");
+};
+
+// 16進数で表示
+aztool.to_hex = function(n, len=2) {
+    return "0x" + n.toString(16).padStart(len, "0");
 };
 
 // ミリ秒の時間を取得

@@ -30,7 +30,7 @@ aztool.addopt_start = function(div_id) {
 
 aztool.addopt_init_html = function() {
     let html = `
-    <div  style="max-width: 1200px;">
+    <div  style="width: 1200px;">
     <table><tr><td valign="top" align="center" style="width: 270px; background-color: #f8f8f8; padding: 20px 0;">
     <table>
     <tr><td align="center"><div id="stepbox_1" class="option_step">レイアウト設定</div></td></tr>
@@ -98,8 +98,8 @@ aztool.option_add_layout_view = function() {
     if (aztool.option_add_added_flag) {
         $("#can_btn").html("<a class='cancel-button' onClick='javascript:aztool.option_add_complate();'>キャンセル</a>");
     } else {
-        // オプション追加していなければトップメニューに戻る
-        $("#can_btn").html("<a class='cancel-button' onClick='javascript:aztool.option_add_end(aztool.view_top_menu);'>キャンセル</a>");
+        // オプション追加していなければオプション設定メニューに戻る
+        $("#can_btn").html("<a class='cancel-button' onClick='javascript:aztool.option_add_end(aztool.view_setopt);'>キャンセル</a>");
     }
     aztool.update_step_box(1);
     aztool.option_add_kle_change();

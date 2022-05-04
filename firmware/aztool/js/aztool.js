@@ -161,7 +161,7 @@ aztool.view_top_menu = function() {
     // h += "<div id='key_layout_box' style='width: 1000px; height: 500px;overflow: hidden; border: solid 1px black; text-align: left;'></div>";
     h += "<br><br>";
     h += "<a href='#' onClick='javascript:aztool.view_setmap();'>キーマップ設定</a><br>";
-    h += "<a href='#' onClick='javascript:aztool.addopt_start(\"main_box\");'>オプション追加</a><br>";
+    h += "<a href='#' onClick='javascript:aztool.view_setopt();'>オプション設定</a><br>";
     h += "<a href='#' onClick='javascript:aztool.edit_setting_json();'>設定JSON編集</a><br>";
     $("#main_box").html(h);
     // キー配列を表示

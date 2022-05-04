@@ -466,6 +466,35 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			this->sendRawData(send_buf, 32);
 			return;
 		}
+		case id_remove_file: { // 0x35 ファイル削除要求
+			// ファイル名を取得
+			i = 1;
+			while (remap_buf[i]) {
+				target_file_path[i - 1] = remap_buf[i];
+				i++;
+				if (i >= 32) break;
+			}
+			target_file_path[i - 1] = 0x00;
+			send_buf[0] = 0x35;
+		    // ファイルがあればファイルを消す
+			if (SPIFFS.exists(target_file_path)) {
+				if (!SPIFFS.remove(target_file_path)) {
+					// 削除失敗したら2にする
+					send_buf[1] = 0x02;
+				} else {
+					// 成功は0
+					send_buf[1] = 0x00;
+				}
+			} else {
+				// ファイルが無ければ1
+				send_buf[1] = 0x01;
+			}
+			// 完了を返す
+			for (i=2; i<32; i++) send_buf[i] = 0x00;
+			this->sendRawData(send_buf, 32);
+			return;
+
+		}
 		case id_get_file_list: {
 			// ファイルリストの取得
 			File dirp = SPIFFS.open("/");

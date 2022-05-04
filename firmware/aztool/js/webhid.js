@@ -70,7 +70,7 @@ webhid.command_id = {
     "file_save_data": 0x33, // ファイル保存データ送信
     "file_save_complate": 0x34, // ファイル保存完了
     "file_remove": 0x35, // ファイル削除
-    "file_remove": 0x36, // ファイル名変更
+    "file_rename": 0x36, // ファイル名変更
     "file_list": 0x37, // ファイルリストを取得する
     "restart": 0x38, // M5StackCore2の再起動
     "get_ioxp_key": 0x39, // IOエキスパンダからキー入力を取得
@@ -247,6 +247,9 @@ webhid.handle_input_report = function(e) {
             webhid.save_file_cb_func(0); // 保存完了
 
         }
+    } else if (cmd_type == webhid.command_id.file_remove) {
+        // ファイル削除の結果取得
+        webhid.file_remove_cb_func(get_data[1]);
 
     } else if (cmd_type == webhid.command_id.file_list) {
         // ファイルリスト取得開始
@@ -529,6 +532,30 @@ webhid.save_file = function(file_path, file_data, cb_func) {
     });
     // 保存データ送信が止まらないかチェック開始
     webhid.file_save_check();
+};
+
+// ファイル削除
+webhid.file_remove = function(file_path, cb_func) {
+    // コマンドを作成
+    webhid.remove_file_path = file_path;
+    let file_path_arr = webhid.str2arr(file_path);
+    let cmd = [webhid.command_id.file_remove];
+    let i;
+    if (!cb_func) cb_func = function() {};
+    webhid.file_remove_cb_func = cb_func;
+    for (i=0; i<file_path_arr.length; i++) {
+        cmd.push(file_path_arr[i]);
+    }
+    if (cmd.length > 30) {
+        webhid.view_info("ファイル名が長すぎます。 [ "+file_path+" ]");
+        webhid.get_file_cb_func(1, []);
+        return;
+    }
+    // コマンド送信
+    webhid.send_command(cmd).then(() => {
+        webhid.view_info("removeing ...");
+    });
+
 };
 
 // ファイルリストを取得する

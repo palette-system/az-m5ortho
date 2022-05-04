@@ -1,7 +1,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>test</title>
+<title>aztool</title>
 <link rel="stylesheet" type="text/css" href="./css/remodal.css">
 <link rel="stylesheet" type="text/css" href="./css/remodal-default-theme.css">
 <link rel="stylesheet" type="text/css" href="./css/main.css">
@@ -16,43 +16,13 @@
 <script type="text/javascript" src="./js/aztool_keycode.js"></script>
 <script type="text/javascript" src="./js/aztool_util.js"></script>
 <script type="text/javascript" src="./js/aztool_setmap.js"></script>
+<script type="text/javascript" src="./js/aztool_setopt.js"></script>
 <script type="text/javascript" src="./js/aztool_addopt.js"></script>
 <script type="text/javascript" src="./js/aztool_txtedit.js"></script>
-
 </head>
 <body>
 
-<div id="main_box">
-    <input type="button" value="connect" onClick="javascript:aztool.connect();">
-</div>
-<!--
-<h3>webhid</h3>
-<br>
-<input type="button" value="file_list" onClick="javascript:var f = async function() {webhid.get_file_list();}; f();"><br>
-<br>
-<input type="button" value="get_file" onClick="javascript:var f = async function() {webhid.get_file('/setting.json');}; f();"><br>
-<input type="button" value="save_file" onClick="javascript:var f = async function() {webhid.save_file('/setting.json', $('#json_area').val());}; f();"><br>
-<br>
-<input type="button" value="restart" onClick="javascript:var f = async function() {webhid.m5_restart(0);}; f();"><br>
-
-<br>
-<input type="button" value="get_ioxp_key r2" onClick="javascript:var f = async function() {webhid.get_ioxp_key([6,7]);}; f();"><br>
-<input type="button" value="get_ioxp_key dr" onClick="javascript:var f = async function() {webhid.get_ioxp_key();}; f();"><br>
-
-
-<div id="console_div"></div>
-<br>
-
-<h3>IOエキスパンダ設定</h3>
-<input type="button" value="modal" onClick='javascript:pinstp.open({"addr": 33, "row":[0,1,2], "col":[], "direct":[3,4,5,6,7,8,9,10,11,12,13,14,15]});'><br>
-<br><br>
-
-<h3>KLE</h3>
-<input type="button" value="modal" onClick='javascript:aztool.klemdl.open();'><br>
-<br><br>
-
--->
-
+<div id="main_box"></div>
 
 <script language="JavaScript">
 $(function(){
