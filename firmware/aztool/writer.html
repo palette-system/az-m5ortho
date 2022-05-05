@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>aztool 対応ファーム書込み</title>
+<script language="JavaScript" src="./js/jquery-2.1.4.min.js"></script>
+<script language="JavaScript" src="./js/jquery-ui.js"></script>
+<script language="JavaScript" src="./js/esploader/fixmenu_pagetop.js"></script>
+<script language="JavaScript" src="./js/esploader/utilities.js"></script>
+<script language="JavaScript" src="./js/esploader/esptool.js"></script>
+<script language="JavaScript" src="./js/esploader/az_esploader.js"></script>
+<script language="JavaScript" src="./data/aztool.ino.bin.js"></script>
+<script language="JavaScript" src="./data/aztool.ino.partitions.bin.js"></script>
+<script>
+var az = {};
+var espTool;
+var write_flag = false;
+
+az.info_div_id = "#write_info";
+
+// 初期化処理
+az.init = function() {
+	// EspLoader初期化
+	espTool = new AzEspLoader({
+		"updateProgress": az.updateProgress, // アップロードステータス取得
+		"logMsg": az.logMsg // 動作ログ取得
+	});
+};
+
+// アップロードステータス
+az.updateProgress = function(part, percentage) {
+	$(az.info_div_id).html("ステータス： writing at ... " +  part + " - " + percentage + " %");
+};
+
+// 動作ログ
+az.logMsg = function(text) {
+	if (!text) {
+		$(az.info_div_id).html("");
+		return;
+	}
+	$(az.info_div_id).html("ステータス： " + text);
+	console.log("ステータス： " + text);
+};
+
+// ファームウェア書込み
+az.write_firm = async function(bin_data, div_id) {
+	if (write_flag) return;
+	az.info_div_id = div_id;
+	write_flag = true;
+	await espTool.writeFlash(bin_data, 921600);
+	write_flag = false;
+};
+
+$(function(){
+	az.init();
+	
+	$("#write_firm").click(function() {
+		az.write_firm([
+			{"address": 0x8000, "data": aztool_ino_partitions_bin_bin},
+			{"address": 0x10000, "data": aztool_ino_bin_bin}
+		], "#write_info");
+		return false;
+	});
+
+
+});
+</script>
+</head>
+
+<body>
+
+
+<a id="write_firm" href="#write_firm">aztool 対応ファーム書込み</a><br>
+<div id="write_info"></div>
+<br><br>
+
+
+
+</body>
+</html>

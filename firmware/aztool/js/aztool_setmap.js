@@ -14,16 +14,12 @@ aztool.setmap_stat = 0; // 0=何もしてない / 1=一括設定中 / 2=1キー�
 // キーマップ設定画面表示
 aztool.view_setmap = function() {
     let h = `
-    <div  style="width: 1500px;">
+    <div  style="width: 1400px;">
     <table><tr><td valign="top" style="width: 200px; background-color: #f8f8f8; padding: 20px; overflow-y: scroll;">
-    <a href='#' onClick='javascript:aztool.setmap_all_set(0);'>一括設定</a><br><br>
-
-    <a href='#' onClick='javascript:aztool.setmap_layer_set();'>レイヤー設定</a><br><br>
-
-    <a href='#' onClick='javascript:aztool.setmap_save();'>設定を保存して再起動</a><br><br>
-
-    <a href='#' onClick='javascript:aztool.view_top_menu();'>もどる</a><br>
-
+    <a class="leftmenu-button" onClick="javascript:aztool.setmap_all_set(0);">一括設定</a><br>
+    <a class="leftmenu-button" onClick="javascript:aztool.setmap_layer_set();">レイヤー設定</a><br>
+    <a class="leftmenu-button" onClick="javascript:aztool.setmap_save();">保存して再起動</a><br>
+    <a class="leftmenu-button" onClick="javascript:aztool.view_top_menu();">もどる</a><br>
     </td><td valign="top" style="padding: 20px;">
     <div id='key_layout_box' style='width: 1000px; height: 400px;overflow: hidden; border: solid 1px black; text-align: left;'></div>
     <div id='key_set_list' style='width: 1000px; height: 350px;overflow-x: hidden; overflow-y: scroll; background-color: #e8e8f8; text-align: left;'></div>

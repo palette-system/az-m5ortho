@@ -32,30 +32,8 @@ aztool.init = function() {
     aztool.setmap_init();
     // 接続ページを表示
     aztool.view_connect_top();
-    // 各イベントを登録
-    // aztool.add_body_event();
 };
 
-// イベント登録
-aztool.add_body_event = function() {
-    let b = $("body");
-    b.keydown(aztool.key_down_eve);
-    b.keyup(aztool.key_up_eve);
-};
-
-// キーダウン
-aztool.key_down_eve = function(e) {
-    console.log("key down: " + e.keyCode);
-    // e.altKey // alt
-    // e.metaKey // win
-    // e.ctrlKey // ctrl
-    // e.shiftKey // shift
-};
-
-// キーアップ
-aztool.key_up_eve = function(e) {
-    console.log("key up: " + e.keyCode);
-};
 
 // キーボードに接続
 aztool.connect = function() {

@@ -133,8 +133,45 @@ li {
     display: inline-block;
     cursor: pointer;
     line-height: 36px;
-
 }
+
+/* 左メニュー用ボタン */
+.leftmenu-button {
+    width: 150px;
+    height: 36px;
+    background-color: #dddddd;
+    color: #141414;
+    font-size: 16px;
+    display: inline-block;
+    cursor: pointer;
+    line-height: 36px;
+    font-size: 14px;
+    text-align: left;
+    padding: 0 10px;
+    margin: 2px;
+}
+
+.leftmenu-button:hover {
+    background-color: #dbebfb;
+}
+
+/* 左メニュー用決定ボタン */
+.leftmenu-exec-button {
+    width: 150px;
+    height: 36px;
+    font-size: 16px;
+    display: inline-block;
+    cursor: pointer;
+    line-height: 36px;
+    font-size: 14px;
+    padding: 0 10px;
+    margin: 2px;
+    background-color: #2183c0;
+    color: #eee;
+    text-align: center;
+    border: solid 1px #aaa;
+}
+
 
 /* IOエキスパンダアイコン */
 .icon_ioxp {

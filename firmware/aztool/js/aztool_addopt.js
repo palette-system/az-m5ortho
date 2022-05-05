@@ -589,7 +589,6 @@ aztool.kle_view = function(json_text, view_id, auto_resize, set_coef, set_prefix
       aztool.switch_length = 0;
       str += '<div style="position: relative;">\n';
       aztool.serial_data.keys.forEach(key => {
-        if (key.rotation_angle) console.log(key);
         let wrapperStyle = ''
         wrapperStyle += 'user-select: none; position: absolute;'
         wrapperStyle += `transform: rotate(${key.rotation_angle}deg);`

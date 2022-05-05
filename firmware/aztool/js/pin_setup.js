@@ -123,7 +123,7 @@ pinstp.init_sortable = function() {
             // ↑ 本当は選択した要素の部分の高さと幅を取得したいけど縦に複数選択した場合などの高さ、幅の取得方法が分からない
             console.log(item);
             console.log("ph: " + ph + "    pw: " + pw);
-            item.data('multidrag', selected).siblings('.ui-selected').remove(); // 
+            item.data('multidrag', selected).siblings('.ui-selected').remove(); // ？
             console.log(selected);
             return $("<li style='background-color: transparent; width: "+pw+"px;' />").append(selected); // 移動で持って行くDOMにselectable で選ばれたヤツを突っ込んで返す
         },
