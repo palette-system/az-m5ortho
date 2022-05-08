@@ -6,8 +6,6 @@ if (!window.aztool) aztool = {};
 // 今選択中のレイヤー番号
 aztool.setmap_select_layer = "";
 
-aztool.setmap_layer_keys = [];
-
 // 設定操作中フラグ
 aztool.setmap_stat = 0; // 0=何もしてない / 1=一括設定中 / 2=1キー設定中 / 3=レイヤー設定
 
@@ -18,6 +16,7 @@ aztool.view_setmap = function() {
     <table><tr><td valign="top" style="width: 200px; background-color: #f8f8f8; padding: 20px; overflow-y: scroll;">
     <a class="leftmenu-button" onClick="javascript:aztool.setmap_all_set(0);">一括設定</a><br>
     <a class="leftmenu-button" onClick="javascript:aztool.setmap_layer_set();">レイヤー設定</a><br>
+    <a class="leftmenu-button" onClick="javascript:aztool.setmap_layer_copy();">コピーレイヤーを作成</a><br>
     <a class="leftmenu-button" onClick="javascript:aztool.setmap_save();">保存して再起動</a><br>
     <a class="leftmenu-button" onClick="javascript:aztool.view_top_menu();">もどる</a><br>
     </td><td valign="top" style="padding: 20px;">
@@ -27,8 +26,6 @@ aztool.view_setmap = function() {
     </td></tr></table>
     `;
     $("#main_box").html(h);
-    // レイヤーのリスト取得
-    aztool.setmap_get_layer_list();
     // 選択中のレイヤーをデフォルトにする
     aztool.setmap_select_layer = "layer_" + aztool.setting_json_data.default_layer;
     // キーのレイアウト表示
@@ -366,11 +363,6 @@ aztool.setmap_get_key_string = function(key_data) {
     return "<table cellpadding='0' cellspacing='0' style='user-select: none; width: 100%; height: 100%;font-size: 12px;'><tr><td align='center'>" + r + "</td></tr></table>";
 };
 
-// レイヤーのリスト取得
-aztool.setmap_get_layer_list = function() {
-    aztool.setmap_layer_keys = Object.keys(aztool.setting_json_data.layers);
-};
-
 // キーマップ一括登録開始
 aztool.setmap_all_set = function() {
     // 他の設定動作中であれば無視
@@ -492,6 +484,26 @@ aztool.setmap_all_set_keydown_cancel = function() {
         document.body.removeEventListener("keydown", aztool.setmap_all_set_keydown, false);
         // ボタンの文字と色を更新
         aztool.setmap_key_string_update();
+};
+
+// コピーしたレイヤーを作成
+aztool.setmap_layer_copy = function() {
+    let i, k;
+    for (i=0; i<100; i++) {
+        // 空いているレイヤー番号を探す
+        k = "layer_" + i;
+        if (!aztool.setting_json_data.layers[k]) {
+            // 今のレイヤーをコピーする
+            aztool.setting_json_data.layers[k] = aztool.crone(aztool.setting_json_data.layers[aztool.setmap_select_layer]);
+            // 名前に[copy]を追加
+            aztool.setting_json_data.layers[k].name += "copy";
+            // 選択中のレイヤーを新しいレイヤーにする
+            aztool.setmap_select_layer = k;
+            // 新しいレイヤーで表示を更新
+            aztool.setmap_key_string_update();
+            return;
+        }
+    }
 };
 
 // レイヤー設定
