@@ -8,6 +8,11 @@ aztool.key_category = [
     {
         "category": "標準",
         "list": [
+            // 削除
+            {
+                "name": "削除",
+                "list": [0]
+            },
             // A - Z
             {
                 "name": "英字",
@@ -46,7 +51,7 @@ aztool.key_category = [
 
 // Eng, Jp, hid, js
 aztool.keycode = [
-    ['','',0,0],
+    ['✖','',0,0],
     ['A','',4,65],
     ['B','',5,66],
     ['C','',6,67],

@@ -43,11 +43,10 @@ aztool.view_setmap = function() {
 aztool.setmap_init = function() {
     // モーダル用HTML登録
     let html = `
+        <!-- レイヤー設定用モーダル -->
         <div class="remodal azmodal" data-remodal-id="setmap_layer_modal" 
                 data-remodal-options="hashTracking: false, closeOnOutsideClick: false"
                 style="max-width: 1200px; width: 1200px; min-height: 600px;">
-            <!-- クローズボタン -->
-            <!-- button data-remodal-action="close" class="remodal-close"></button> -->
             <table style="display: inline-block; margin: 50px 0;"><tr><td valign="top">
             <font style="font-size: 14px;">レイヤーリスト</font><br>
             <ul id="layer_list" class="layer_list_box"></ul>
@@ -177,6 +176,7 @@ aztool.view_key_layout = function() {
     for (i in aztool.key_layout_data) {
         o = aztool.key_layout_data[i].option;
         $("#odiv_"+o.id).draggable({
+            "distance": 10, // ドラッグ開始までの移動距離
             "stop": function(event, ui) { // ドラッグ終了
                 // ドラッグが終わった時間を記録(クリックイベントとかぶらないよう時間で判定するため)
                 aztool.setmap_dragg_last_time = aztool.millis();
@@ -193,6 +193,8 @@ aztool.view_key_layout = function() {
         s = aztool.key_layout_data[i].kle;
         o = aztool.key_layout_data[i].option;
         for (j in s.keys) { // kle のキー分ループ
+            // ボタンのhover時のマウスカーソルをポインタにする
+            $("#sw_"+o.id+"_"+j).css({"cursor": "pointer"});
             // ボタンにクリックイベント登録
             $("#sw_"+o.id+"_"+j).click(function(e) {
                 // ドラッグ処理から10ミリ秒以下ならばドラッグ処理でのクリックなので何もしない
@@ -202,7 +204,7 @@ aztool.view_key_layout = function() {
                 // クリックされたdivのid取得
                 let t = (e.target.id)? e.target.id: e.currentTarget.id;
                 // クリックしたボタンのキー設定
-                aztool.setmap_key_setting_one(t);
+                aztool.keyact_open( aztool.get_key_id(t) );
             });
             // ボタンをドロップボックスにする(コードリストからドラッグしてきたコードを受け取る用)
             $("#sw_"+o.id+"_"+j).droppable({
@@ -263,43 +265,25 @@ aztool.setmap_get_layout_data = function(optid) {
     return false;
 };
 
-// １ボタン設定
-aztool.setmap_key_setting_one = function(target_id) {
-    // 他の設定操作中であれば何もしない
-    if (aztool.setmap_stat != 0) return;
-    // １ボタン設定開始
-    aztool.setmap_stat = 2;
-    aztool.setmap_setting_one_target = target_id;
-    // 該当のキーの色を選択中にする
-    $("#"+target_id).css({"background-color": aztool.select_key_color});
-    // info 表示
-    $("#setmap_info").html("設定したいキーを押して下さい。");
-    // キーダウンイベント登録
-    document.body.addEventListener("keydown", aztool.setmap_key_setting_one_keydown, false);
-};
-
-// １ボタン設定でキーが押された
-aztool.setmap_key_setting_one_keydown = function(e) {
-    let input_key = aztool.get_key_data(3, e.keyCode); // 押されたキーの情報を取得
-    let target_data = aztool.setmap_setting_one_target.split("_"); // setmap_setting_one_target に sw_0_0 が入ってる
-    let target_option = parseInt(target_data[1]);
-    let target_key = parseInt(target_data[2]);
-    let i, option_set;
-    for (i in aztool.setting_json_data.i2c_option) {
-        if (aztool.setting_json_data.i2c_option[i].id == target_option) {
-            option_set = aztool.setting_json_data.i2c_option[i];
+// スイッチdivのID(sw_0_0)からキーのID(key_0)を取得
+aztool.get_key_id = function(div_id) {
+    let s = div_id.split("_"); // setmap_setting_one_target に sw_0_0 が入ってる
+    let ms = 0; // マッピングスタートの位置
+    let i;
+    for (i in aztool.setting_json_data.i2c_option) { // 該当のオプションを探す
+        if (aztool.setting_json_data.i2c_option[i].id == s[1]) {
+            ms = aztool.setting_json_data.i2c_option[i].map_start; // 該当のオプションのマッピングスタート位置を取得
+            break;
         }
     }
-    let key_id = option_set.map_start + target_key;
-    let k = aztool.setmap_select_layer; // 選択中のレイヤーのキー名
-    // 入力データを設定
-    aztool.setting_json_data.layers[k].keys["key_"+key_id] = aztool.setmap_create_one_key_data(input_key);
-    // ボタンの文字と色を更新
-    aztool.setmap_key_string_update();
-    // キーダウンイベント削除
-    document.body.removeEventListener("keydown", aztool.setmap_key_setting_one_keydown, false);
-    // １ボタン設定終了
-    aztool.setmap_stat = 0;
+    // keyidの番号を計算して返す
+    return "key_" + (ms + parseInt(s[2]));
+};
+
+// 指定したレイヤー番号のレイヤー名を取得する
+aztool.setmap_get_layer_name = function(layer_num) {
+    if (!aztool.setting_json_data.layers["layer_" + layer_num]) return "";
+    return aztool.setting_json_data.layers["layer_" + layer_num].name;
 };
 
 // 選択してるレイヤーの設定をボタンに表示する
@@ -362,6 +346,22 @@ aztool.setmap_get_key_string = function(key_data) {
             d = aztool.get_key_data(2, k.key[i]); // hid コードからキーデータ取得
             r += d.str;
         }
+    } else if (k.action_type == 2) {
+        // テキスト入力
+        r = "text";
+
+    } else if (k.action_type == 3) {
+        // レイヤー切り替え
+        r = "layer";
+
+    } else if (k.action_type == 4) {
+        // WEBフック
+        r = "WEB";
+
+    } else if (k.action_type == 5) {
+        // マウス移動
+        r = "mouse";
+ 
     }
     return "<table cellpadding='0' cellspacing='0' style='user-select: none; width: 100%; height: 100%;font-size: 12px;'><tr><td align='center'>" + r + "</td></tr></table>";
 };
@@ -412,12 +412,20 @@ aztool.setmap_all_set_view = function() {
 
 // 1キーの入力データ作成
 aztool.setmap_create_one_key_data = function(keycode_data) {
-    return {
-        "press":{
-            "action_type":1,
-            "key":[keycode_data.hid]
-        }
-    };
+    if (keycode_data.hid) {
+        return {
+            "press":{
+                "action_type":1,
+                "key":[keycode_data.hid]
+            }
+        };
+    } else {
+        return {
+            "press":{
+                "action_type":0
+            }
+        };
+    }
 };
 
 // キーマップ一括登録表示

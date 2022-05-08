@@ -60,3 +60,19 @@ aztool.is_num = function(str) {
     return (str.match(/[^0-9]+/))? false: true;
 };
 
+// 渡された半角文字のみかどうか
+aztool.is_han = function(str) {
+    return (str.match(/^[a-zA-Z0-9!-/:-@¥[-`{-~]*$/))? true: false;
+};
+
+// URLチェック
+aztool.on_url = function(url) {
+    // 入力が無い場合はOK
+    if (!url.length) return true;
+    // 頭7文字が http:// で始まらなければNG
+    if (url.slice(0, 7) != "http://" && url.slice(0, 8) != "https://") {
+        return false;
+    }
+    // それ以外はOK
+    return true;
+};

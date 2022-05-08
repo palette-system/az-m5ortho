@@ -30,6 +30,8 @@ aztool.init = function() {
     pinstp.init();
     // キー設定ページの初期化
     aztool.setmap_init();
+    // キー動作設定用のモーダル初期化
+    aztool.keyact_init();
     // 接続ページを表示
     aztool.view_connect_top();
 };
@@ -42,6 +44,7 @@ aztool.connect = function() {
         // コネクション失敗
         if (stat != 0) {
             aztool.view_connect_top("接続できませんでした。"); // 接続ページを表示
+            return;
         }
         // aztool.addopt_start("main_box"); // オプション追加
         // 接続成功したら設定JSON読み込み
@@ -52,7 +55,7 @@ aztool.connect = function() {
 // 接続が切れた時に呼び出される
 aztool.hid_disconn_func = function(e) {
     // 接続ページを表示
-    aztool.view_connect_top("切断しました " + e.device.productId + " : " + e.device.vendorId);
+    aztool.view_connect_top("切断しました " + aztool.to_hex(e.device.productId, 4) + " : " + aztool.to_hex(e.device.vendorId, 4));
 };
 
 // 設定JSONの読み込み
@@ -127,11 +130,14 @@ aztool.view_connect_top = function(msg) {
 aztool.view_top_menu = function() {
     let k = aztool.setting_json_data;
     let h = "";
+    let d, x;
     h += "<table><tr>";
     h += "<td>";
     h += "vendorId / productId： " + k.vendorId + " / " + k.productId + "<br>";
     h += "キーボード名：" + k.keyboard_name + "<br>";
-    h += "キーピン： direct="+k.keyboard_pin.direct.join(",")+"　ioxp="+k.keyboard_pin.ioxp.join(",")+"<br>";
+    x = (k.keyboard_pin.ioxp)? k.keyboard_pin.ioxp.join(","): "";
+    d = (k.keyboard_pin.direct)? k.keyboard_pin.direct.join(","): "";
+    h += "キーピン： direct="+d+"　ioxp="+x+"<br>";
     if (k.ioxp_pin.length == 2) {
         h += "I2Cピン：  SDA= " + k.ioxp_pin[0] + " / SCL= " + k.ioxp_pin[1] + "<br>";
     }

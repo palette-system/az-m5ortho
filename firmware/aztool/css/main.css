@@ -334,3 +334,30 @@ li {
 .layer_input_box {
     font-size: 24px;
 }
+
+.keyaction_key_btn {
+    width: 80px;
+    height: 40px;
+    line-height: 40px;
+    border: solid 1px #eee;
+    display: inline-block;
+    padding: 0 10px;
+    margin: 0 10px;
+    overflow: hidden;
+    text-align: center;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.keyaction_stg_btn {
+    padding: 6px;
+    margin: 4px;
+    width: 30px;
+    height: 30px;
+    display: inline-block;
+    border: solid 1px #b9b9b9;
+    font-size: 12px;
+    text-align: center;
+    overflow: hidden;
+    cursor: pointer;
+}

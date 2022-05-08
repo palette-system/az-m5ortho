@@ -128,10 +128,9 @@ mst.key_pattern_list["az_m5ortho"] = {
 mst.key_pattern_list["az_emugotch"] = {
 	"name": "えむごっち",
 	"keyboard_pin": {
-		"row": [],
-		"col": [],
 		"direct": [34, 19, 27, 13, 36, 35],
-		"touch": []
+		"touch": [],
+		"ioxp": []
 	},
 	"ioxp_pin": [25, 26],
 	"status_pin": -1,
