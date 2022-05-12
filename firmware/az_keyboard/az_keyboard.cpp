@@ -206,6 +206,8 @@ void AzKeyboard::press_mouse_list_clean() {
         press_mouse_list[i].key_num = -1;
         press_mouse_list[i].move_x = 0;
         press_mouse_list[i].move_y = 0;
+        press_mouse_list[i].move_wheel = 0;
+        press_mouse_list[i].move_hWheel = 0;
         press_mouse_list[i].move_speed = 0;
         press_mouse_list[i].move_index = 0;
     }
@@ -213,7 +215,7 @@ void AzKeyboard::press_mouse_list_clean() {
 
 
 // マウス移動リストに追加
-void AzKeyboard::press_mouse_list_push(int key_num, short move_x, short move_y, short move_speed) {
+void AzKeyboard::press_mouse_list_push(int key_num, short move_x, short move_y, short move_wheel, short move_hWheel, short move_speed) {
     int i;
     for (i=0; i<PRESS_MOUSE_MAX; i++) {
         // データが入っていれば次
@@ -222,6 +224,8 @@ void AzKeyboard::press_mouse_list_push(int key_num, short move_x, short move_y, 
         press_mouse_list[i].key_num = key_num;
         press_mouse_list[i].move_x = move_x;
         press_mouse_list[i].move_y = move_y;
+        press_mouse_list[i].move_wheel = move_wheel;
+        press_mouse_list[i].move_hWheel = move_hWheel;
         press_mouse_list[i].move_speed = move_speed;
         press_mouse_list[i].move_index = 0;
         break;
@@ -239,6 +243,8 @@ void AzKeyboard::press_mouse_list_remove(int key_num) {
         press_mouse_list[i].key_num = -1;
         press_mouse_list[i].move_x = 0;
         press_mouse_list[i].move_y = 0;
+        press_mouse_list[i].move_wheel = 0;
+        press_mouse_list[i].move_hWheel = 0;
         press_mouse_list[i].move_speed = 0;
         press_mouse_list[i].move_index = 0;
     }
@@ -249,17 +255,24 @@ void AzKeyboard::press_mouse_list_remove(int key_num) {
 void AzKeyboard::move_mouse_loop() {
     int i;
     int mx, my;
+    int wx, wy;
     for (i=0; i<PRESS_MOUSE_MAX; i++) {
         // 入力無しならば何もしない
         if (press_mouse_list[i].key_num < 0) continue;
         if (press_mouse_list[i].move_speed == 0 && press_mouse_list[i].move_index == 0) {
             // スピード0なら最初の1回だけ移動
-            bleKeyboard.mouse_move(press_mouse_list[i].move_x, press_mouse_list[i].move_y, 0, 0);
+            bleKeyboard.mouse_move(
+                press_mouse_list[i].move_x,
+                press_mouse_list[i].move_y,
+                press_mouse_list[i].move_wheel,
+                press_mouse_list[i].move_hWheel);
         } else {
             // スピードで割った分だけ移動
             mx = ((press_mouse_list[i].move_x * press_mouse_list[i].move_speed) / 100);
             my = ((press_mouse_list[i].move_y * press_mouse_list[i].move_speed) / 100);
-            bleKeyboard.mouse_move(mx, my, 0, 0);
+            wx = ((press_mouse_list[i].move_wheel * press_mouse_list[i].move_speed) / 100);
+            wy = ((press_mouse_list[i].move_hWheel * press_mouse_list[i].move_speed) / 100);
+            bleKeyboard.mouse_move(mx, my, wx, wy);
             delay(5);
         }
         // index をカウント
@@ -372,7 +385,7 @@ void AzKeyboard::soft_key_click_action(int layer, int key_num) {
         // マウス移動
         setting_mouse_move mouse_move_input;
         memcpy(&mouse_move_input, key_set.data, sizeof(setting_mouse_move));
-        bleKeyboard.mouse_move(mouse_move_input.x, mouse_move_input.y, 0, 0);
+        bleKeyboard.mouse_move(mouse_move_input.x, mouse_move_input.y, mouse_move_input.wheel, mouse_move_input.hWheel);
         sound_cls.daken_down(0); // サウンドクラスに押したよを送る
 
     }
@@ -500,9 +513,12 @@ void AzKeyboard::key_down_action(int key_num) {
         // マウス移動
         setting_mouse_move mouse_move_input;
         memcpy(&mouse_move_input, key_set.data, sizeof(setting_mouse_move));
+        // カーソル移動は押したよリストに入れておき後で移動
         press_mouse_list_push(key_num,
             mouse_move_input.x,
             mouse_move_input.y,
+            mouse_move_input.wheel,
+            mouse_move_input.hWheel,
             mouse_move_input.speed);
         // キー押したよリストに追加
         press_key_list_push(action_type, key_num, -1, select_layer_no, -1);

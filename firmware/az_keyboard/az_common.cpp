@@ -990,6 +990,8 @@ void AzCommon::get_keymap(JsonObject setting_obj, char *key_name) {
                 // マウス移動
                 mouse_move_input.x = press_obj["move"]["x"].as<signed int>();
                 mouse_move_input.y = press_obj["move"]["y"].as<signed int>();
+                mouse_move_input.wheel = press_obj["move"]["wheel"].as<signed int>();
+                mouse_move_input.hWheel = press_obj["move"]["hWheel"].as<signed int>();
                 mouse_move_input.speed = press_obj["move"]["speed"].as<signed int>();
                 setpt[i].data = (char *)new setting_mouse_move;
                 memcpy(setpt[i].data, &mouse_move_input, sizeof(setting_mouse_move));

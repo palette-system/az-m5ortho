@@ -106,6 +106,8 @@ struct press_mouse_data {
     short key_num; // キー番号
     short move_x; // X座標
     short move_y; // Y座標
+    short move_wheel; // 縦ホイール
+    short move_hWheel; // 横ホイール
     short move_speed; // 移動速度
     short move_index; // 移動index
 };
@@ -165,6 +167,8 @@ struct setting_normal_input {
 struct setting_mouse_move {
     int16_t x;
     int16_t y;
+    int16_t wheel;
+    int16_t hWheel;
     int16_t speed;
 };
 
