@@ -750,7 +750,7 @@ mst.select_input_type = function() {
             if (!("webhook" in mst.key_edit_data.press)) mst.key_edit_data.press.webhook = {"url": "http://palette-system.com/ct/", "header": [], "post": "", "keyoutput": 0};
         } else if (mst.key_edit_data.press.action_type == 5) {
             // マウス移動
-            if (!("move" in mst.key_edit_data.press)) mst.key_edit_data.press.move = {"x": 0, "y": 0, "speed": 100};
+            if (!("move" in mst.key_edit_data.press)) mst.key_edit_data.press.move = {"x": 0, "y": 0, "wheel": 0, "hWheel": 0, "speed": 0};
         } else if (mst.key_edit_data.press.action_type == 6) {
             // 暗記ボタン
             if (!("ankey_file" in mst.key_edit_data.press)) {
@@ -995,6 +995,8 @@ mst.view_key_setting = function(key_id) {
         s += "<tr><td colspan='2'>";
         s += "<b>Ｘ：</b><font id='move_x_val'>"+pss.move.x+"</font><br><input type='range' id='move_x' name='move_x' min='-100' max='100' style='width: 400px;' value='"+pss.move.x+"' onChange='javascript:mst.view_move_input(\"x\");'><br><br>"
         s += "<b>Ｙ：</b><font id='move_y_val'>"+pss.move.y+"</font><br><input type='range' id='move_y' name='move_y' min='-100' max='100' style='width: 400px;' value='"+pss.move.y+"' onChange='javascript:mst.view_move_input(\"y\");'><br><br>"
+        s += "<b>縦スクロール：</b><font id='move_wheel_val'>"+pss.move.wheel+"</font><br><input type='range' id='move_wheel' min='-10' max='10' style='width: 400px;' value='"+pss.move.wheel+"' onChange='javascript:mst.view_move_input(\"wheel\");'><br><br>"
+        s += "<b>横スクロール：</b><font id='move_hWheel_val'>"+pss.move.hWheel+"</font><br><input type='range' id='move_hWheel' min='-10' max='10' style='width: 400px;' value='"+pss.move.hWheel+"' onChange='javascript:mst.view_move_input(\"hWheel\");'><br><br>"
         s += "<b>スピード：</b><font id='move_speed_val'>"+pss.move.speed+"</font><br><input type='range' id='move_speed' name='move_speed' min='0' max='100' style='width: 400px;' value='"+pss.move.speed+"' onChange='javascript:mst.view_move_input(\"speed\");'><br><br>"
         s += "</td></tr>";
 
@@ -1176,7 +1178,12 @@ mst.key_setting_btn_click = function(type_id) {
             mst.key_edit_data.press.webhook.keyoutput = parseInt($("webhook_keyoutput").value);
             s.press.webhook =  mst.key_edit_data.press.webhook;
         } else if (s.press.action_type == 5) { // マウス移動
-            s.press.move = {"x": $("move_x").value, "y": $("move_y").value, "speed": $("move_speed").value};
+            s.press.move = {
+                "x": $("move_x").value,
+                "y": $("move_y").value,
+                "wheel": $("move_wheel").value,
+                "hWheel": $("move_hWheel").value,
+                "speed": $("move_speed").value};
         } else if (s.press.action_type == 6) { // 暗記ボタン
             s.press.ankey_file = mst.key_edit_data.press.ankey_file;
         } else if (s.press.action_type == 7) { // LED設定ボタン

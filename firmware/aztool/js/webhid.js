@@ -190,7 +190,7 @@ webhid.handle_input_report = function(e) {
         // ファイルの容量取得
         s = (get_data[2] << 24) + (get_data[3] << 16) + (get_data[4] << 8) + get_data[5];
         // 読み込み開始
-        webhid.load_start_exec(s);
+        webhid.load_start_exec(s, webhid.get_file_cb_func);
 
     } else if (cmd_type == webhid.command_id.file_load_data) {
         // データロード処理
@@ -251,12 +251,16 @@ webhid.handle_input_report = function(e) {
         // ファイル削除の結果取得
         webhid.file_remove_cb_func(get_data[1]);
 
+    } else if (cmd_type == webhid.command_id.file_rename) {
+        // ファイル名変更の結果取得
+        webhid.file_rename_cb_func(get_data[1]);
+
     } else if (cmd_type == webhid.command_id.file_list) {
         // ファイルリスト取得開始
         // ファイルリストのサイズ取得
         s = (get_data[1] << 24) + (get_data[2] << 16) + (get_data[3] << 8) + get_data[4];
         // 読み込み開始
-        webhid.load_start_exec(s);
+        webhid.load_start_exec(s, webhid.file_list_cb_func);
 
     } else if (cmd_type == webhid.command_id.get_ioxp_key) {
         // IOエキスパンダからキーの入力データを取得
@@ -274,7 +278,7 @@ webhid.handle_input_report = function(e) {
 };
 
 // データロード開始処理
-webhid.load_start_exec = function(data_size) {
+webhid.load_start_exec = function(data_size, cb_func) {
     let i, cmd;
     // ロードするサイズ
     webhid.load_length = data_size;
@@ -284,6 +288,7 @@ webhid.load_start_exec = function(data_size) {
     // データ取得コマンド作成
     cmd = [webhid.command_id.file_load_data, webhid.load_step, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
     // コマンド送信
+    webhid.load_cb_func = cb_func;
     webhid.load_index = 0;
     webhid.load_hash = [];
     webhid.last_load_time = webhid.millis(); // 最後にコマンドを投げた時間
@@ -342,7 +347,8 @@ webhid.load_data_exec = function(get_data) {
         // let str = webhid.arr2str(webhid.load_data); // 配列をテキストに変換
         // webhid.view_info("<textarea id='json_area' style='width: 800px; height:300px;'>"+str+"</textarea>");
         webhid.view_info("load complate  "+webhid.load_length+" / "+webhid.load_length+" ");
-        webhid.get_file_cb_func(0, webhid.load_data);
+        // コールバック実行
+        webhid.load_cb_func(0, webhid.load_data);
     }
 };
 
@@ -548,7 +554,7 @@ webhid.file_remove = function(file_path, cb_func) {
     }
     if (cmd.length > 30) {
         webhid.view_info("ファイル名が長すぎます。 [ "+file_path+" ]");
-        webhid.get_file_cb_func(1, []);
+        webhid.file_remove_cb_func(1, []);
         return;
     }
     // コマンド送信
@@ -558,8 +564,43 @@ webhid.file_remove = function(file_path, cb_func) {
 
 };
 
+// ファイル名変更
+webhid.file_rename = function(file_path, rename_path, cb_func) {
+    // コマンドを作成
+    webhid.remove_file_path = file_path;
+    let file_path_arr = webhid.str2arr(file_path);
+    let rename_path_arr = webhid.str2arr(rename_path);
+    let cmd = [webhid.command_id.file_rename];
+    let i;
+    if (!cb_func) cb_func = function() {};
+    webhid.file_rename_cb_func = cb_func;
+    // ファイル名をコマンドに入れる
+    for (i=0; i<file_path_arr.length; i++) {
+        cmd.push(file_path_arr[i]);
+    }
+    cmd.push(0x00); // 区切り
+    // 変更後ファイル名をコマンドに入れる
+    for (i=0; i<rename_path_arr.length; i++) {
+        cmd.push(rename_path_arr[i]);
+    }
+    cmd.push(0x00); // 区切り
+    if (cmd.length > 30) {
+        webhid.view_info("ファイル名が長すぎます。 [ "+file_path+" , "+rename_path+" ]");
+        webhid.file_rename_cb_func(1, []);
+        return;
+    }
+    console.log(cmd);
+    // コマンド送信
+    webhid.send_command(cmd).then(() => {
+        webhid.view_info("renameing ...");
+    });
+
+};
+
 // ファイルリストを取得する
-webhid.get_file_list = function() {
+webhid.get_file_list = function(cb_func) {
+    if (!cb_func) cb_func = function() {};
+    webhid.file_list_cb_func = cb_func;
     // ファイルリスト要求コマンド作成
     let cmd = [webhid.command_id.file_list];
     // コマンド送信
