@@ -608,7 +608,7 @@ aztool.kle_view = function(json_text, view_id, auto_resize, set_coef, set_prefix
   
         str += "<div style='" + wrapperStyle + "'>\n";
         // str += "<div id='sw_"+aztool.switch_length+"' style='" + innerStyle + "'><table cellpadding='0' cellspacing='0' style='user-select: none; width: 100%; height: 100%;font-size: 10px;'><tr><td align='center'>" + label + "</td></tr></table></div>\n";
-        str += "<div id='"+set_prefix+aztool.switch_length+"' style='" + innerStyle + "'>&nbsp</div>\n";
+        str += "<div id='"+set_prefix+aztool.switch_length+"' data_label='"+label+"' style='" + innerStyle + "'>&nbsp</div>\n";
         str += "</div>\n";
         aztool.switch_length++;
       });

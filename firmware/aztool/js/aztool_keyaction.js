@@ -290,7 +290,7 @@ aztool.keyact_key_list_open = function(list_num, hid_id) {
         h += "<tr><td>";
         h += "<table>";
         for (j in k.list) {
-            h += "<tr><td valign='top' style='padding: 15px 10px;white-space:nowrap;'>"+k.list[j].name+"</td><td style='padding: 10px 0;'>";
+            h += "<tr><td valign='top' align='right' style='padding: 15px 10px;white-space:nowrap;'>"+k.list[j].name+"</td><td style='padding: 10px 0;'>";
             for (n in k.list[j].list) {
                 c = k.list[j].list[n]; // HIDの番号
                 d = aztool.get_key_data(2, c); // キーコードの情報

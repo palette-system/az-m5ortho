@@ -107,7 +107,7 @@ aztool.key_set_list_init = function() {
         h += "<tr><td>";
         h += "<table>";
         for (j in k.list) {
-            h += "<tr><td valign='top' style='padding: 15px 10px;white-space:nowrap;'>"+k.list[j].name+"</td><td style='padding: 10px 0;'>";
+            h += "<tr><td valign='top' align='right' style='padding: 15px 10px;white-space:nowrap;'>"+k.list[j].name+"</td><td style='padding: 10px 0;'>";
             for (n in k.list[j].list) {
                 c = k.list[j].list[n];
                 d = aztool.get_key_data(2, c);
@@ -209,14 +209,12 @@ aztool.view_key_layout = function() {
                     let s = ui.draggable[0].id.split("_"); // idにks_00 が入って来る
                     if (s[0] != "ks") return; // キーコード以外のドラッグは無視
                     let hid = parseInt(s[1]);
-                    s = $(this).attr("id").split("_");
-                    let o = aztool.setmap_get_layout_data(parseInt(s[1]));
-                    let k = o.option.map_start + parseInt(s[2]);
-                    console.log(aztool.setmap_select_layer + "[key_" + k + "] = " + hid);
+                    let k = aztool.get_key_id($(this).attr("id"));
+                    console.log(aztool.setmap_select_layer + "[" + k + "] = " + hid);
                     // 入力データを設定
                     let sl = aztool.setmap_select_layer; // 選択中のレイヤーのキー名
                     let input_key = aztool.get_key_data(2, hid); // 押されたキーの情報を取得
-                    aztool.setting_json_data.layers[sl].keys["key_" + k] = aztool.setmap_create_one_key_data(input_key);
+                    aztool.setting_json_data.layers[sl].keys[k] = aztool.setmap_create_one_key_data(input_key);
                     // ボタンの文字と色を更新
                     aztool.setmap_key_string_update();
                 },
@@ -266,7 +264,17 @@ aztool.setmap_get_layout_data = function(optid) {
 aztool.get_key_id = function(div_id) {
     let s = div_id.split("_"); // setmap_setting_one_target に sw_0_0 が入ってる
     let ms = 0; // マッピングスタートの位置
-    let i;
+    let i, label_str;
+    // 本体のキーだった場合
+    if (s[1] == "0") {
+        label_str = $("#" + div_id).attr("data_label");
+        if (aztool.is_num(label_str)) {
+            return "key_" + label_str; // ラベルが数字ならばラベルをキーIDとして利用
+        } else {
+            return "key_" + s[2]; // 分からんラベルが入ってたらKLEの番号をキーIDとして利用
+        }
+    }
+    // i2cオプションだった場合
     for (i in aztool.setting_json_data.i2c_option) { // 該当のオプションを探す
         if (aztool.setting_json_data.i2c_option[i].id == s[1]) {
             ms = aztool.setting_json_data.i2c_option[i].map_start; // 該当のオプションのマッピングスタート位置を取得
@@ -295,9 +303,9 @@ aztool.setmap_key_string_update = function() {
         o = aztool.key_layout_data[i].option;
         for (j in s.keys) { // kle のキー分ループ
             str = "&nbsp;"; // 表示文字のデフォルトは空
-            k = o.map_start + parseInt(j); // 設定JSON上で設定されてるkey_{n}の番号
-            if (d.keys["key_" + k]) { // 設定がある
-                str = aztool.setmap_get_key_string(d.keys["key_" + k]);
+            k = aztool.get_key_id("sw_"+o.id+"_"+j); // 設定JSON上で設定されてるkey_{n}の番号
+            if (d.keys[k]) { // 設定がある
+                str = aztool.setmap_get_key_string(d.keys[k]);
             }
             // 設定文字を反映
             $("#sw_"+o.id+"_"+j).html(str); // ボタンに文字を表示
