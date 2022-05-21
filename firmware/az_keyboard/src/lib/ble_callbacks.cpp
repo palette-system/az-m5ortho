@@ -167,15 +167,6 @@ int check_step() {
 	return r;
 };
 
-// crc32のハッシュ値を計算
-int crc32(uint8_t* d, int len) {
-	int i;
-    uint32_t r = 0 ^ (-1);
-    for (i=0; i<len; i++) {
-        r = (r >> 8) ^ crc_table_crc32[(r ^ d[i]) & 0xFF];
-    }
-    return (r ^ (-1));
-};
 
 RemapOutputCallbacks::RemapOutputCallbacks(void) {
 	remap_change_flag = 0;
@@ -321,7 +312,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			h = (remap_buf[5] << 24) + (remap_buf[6] << 16) + (remap_buf[7] << 8) + remap_buf[8]; // ハッシュ値
 			if (h != 0) {
 				l = s * (data_length - 4); // ステップ数 x 1コマンドで送るデータ数
-				m = crc32(&save_file_data[p - l], l); // 前回送った所のハッシュを計算
+				m = azcrc32(&save_file_data[p - l], l); // 前回送った所のハッシュを計算
 				if (h != m) { // ハッシュ値が違えば前に送った所をもう一回送る
 					// Serial.printf("NG : [%d %d] [ %d -> %d ]\n", h, m, p, (p - l));
 				    p = p - l;
@@ -419,7 +410,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 					k = j + l;
 				}
 				// 書き込む
-				h = crc32(&save_file_data[j], l);
+				h = azcrc32(&save_file_data[j], l);
 				if (k < save_file_length) {
 					// まだデータを全部受け取って無ければ次を要求するコマンドを送信
 					send_buf[0] = 0x33;
@@ -438,7 +429,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 				} else {
 					// データを全部受け取り終わり
 					// 完了を送る
-					h = crc32(save_file_data, save_file_length);
+					h = azcrc32(save_file_data, save_file_length);
 					send_buf[0] = 0x34; // 保存完了
 					send_buf[1] = 0x00; // データ受信完了
 					send_buf[2] = (h >> 24) & 0xff; // データ確認用ハッシュ 1
@@ -603,7 +594,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 				rows[i] = remap_buf[3 + i]; // row の番号取得
 			}
 			// ピンの初期化
-			h = crc32(remap_buf, 32); // 受け取ったデータのハッシュを取得
+			h = azcrc32(remap_buf, 32); // 受け取ったデータのハッシュを取得
 			if (h != ioxp_hash[x]) { // 最後に設定したピン情報と違えばピンの初期化をする
 				for (i=0; i<16; i++) {
 					// row のピンかチェックして rowならOUTPUTに指定

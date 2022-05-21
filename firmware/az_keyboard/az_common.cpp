@@ -1,5 +1,5 @@
 #include "az_common.h"
-
+#include "src/lib/cnc_table.h"
 
 // キーが押された時の設定
 uint16_t setting_length;
@@ -226,6 +226,17 @@ void getRandomNumbers(int le, char *cbuf) {
     }
     cbuf[i] = '\0';
 }
+
+// crc32のハッシュ値を計算
+int azcrc32(uint8_t* d, int len) {
+	int i;
+    uint32_t r = 0 ^ (-1);
+    for (i=0; i<len; i++) {
+        r = (r >> 8) ^ crc_table_crc32[(r ^ d[i]) & 0xFF];
+    }
+    return (r ^ (-1));
+};
+
 
 static void background_loop(void* arg) {
   while (true) {

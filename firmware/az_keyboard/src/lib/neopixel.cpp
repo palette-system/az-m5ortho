@@ -2,6 +2,8 @@
 #include "Arduino.h"
 #include "neopixel.h"
 
+#include "../../az_common.h"
+
 
 // コンストラクタ
 Neopixel::Neopixel() {
@@ -280,6 +282,14 @@ void Neopixel::hide_all() {
 };
 
 
+// NeoPixelに設定したデータのCRC32を取得
+int Neopixel::get_data_crc32() {
+	uint8_t *p;
+	p = this->rgb_led->getPixels();
+	return azcrc32(p, this->_led_length * 3);
+};
+
+
 //    2
 //  3 1 4
 //    5
@@ -298,6 +308,7 @@ void Neopixel::rgb_led_loop_exec() {
 	}
 	// LED のステータスOFFならば何もしない
 	if (this->_setting.status == 0) return;
+	int start_crc = this->get_data_crc32();
 	if (this->_setting.shine_type == 0) {
 		this->rgb_led_loop_type_0();
 	} else if (this->_setting.shine_type == 1) {
@@ -311,8 +322,9 @@ void Neopixel::rgb_led_loop_exec() {
 	}
 	// 選択キーを点灯
 	this->select_key_show();
+	int end_crc = this->get_data_crc32();
 	// LEDにデータを送る
-    this->rgb_led->show();
+    if (start_crc != end_crc) this->rgb_led->show();
 }
 
 

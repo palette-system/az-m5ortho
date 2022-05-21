@@ -1001,11 +1001,13 @@ void AzKeyboard::mouse_loop_none() {
 
 // 定期実行の処理
 void AzKeyboard::loop_exec(void) {
-  unsigned long n;
+  unsigned long ns, ne;
+  unsigned long s;
   unsigned long lix;
-  n = millis();
   lix = 0;
   while (true) {
+
+    ns = millis();
 
     // 入力モードが変わっていたら変更
     if (bleKeyboard.keyboard_language != keyboard_language) {
@@ -1078,7 +1080,8 @@ void AzKeyboard::loop_exec(void) {
     lix++;
     if (lix >= 256) lix = 0;
 
-    vTaskDelay(7);
+    ne = millis();
+    vTaskDelay(7 - (ne - ns));
 
   }
 }

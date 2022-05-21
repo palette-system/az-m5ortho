@@ -87,7 +87,6 @@
 #define ANKEY_DATA_MAX_LENGTH  32
 
 
-
 // 今押されているボタンの情報
 struct press_key_data {
     short action_type; // キーの動作タイプ 0=設定なし / 1=通常入力 / 2=テキスト入力 / 3=レイヤー変更 / 4=WEBフック
@@ -482,6 +481,8 @@ extern lv_disp_buf_t disp_buf;
 extern lv_color_t lvbuf[LV_HOR_RES_MAX * 10];
 extern int8_t lvgl_loop_index;
 
+// ハッシュ値計算用
+int azcrc32(uint8_t* d, int len);
 
 
 #endif

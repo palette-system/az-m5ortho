@@ -89,6 +89,7 @@ class Neopixel
 		void select_key_add(int8_t layer_id, uint8_t key_num);
 		void select_key_show();
 		void hide_all(); // 全てのLEDを消す
+		int get_data_crc32(); // NeoPixcelに設定したデータのCRC32を取得
 		void rgb_led_loop_exec();
 		void rgb_led_loop_type_0(); // ずっと光ってる
 		void rgb_led_loop_type_1(); // ボタンを押した所から周りに広がっていく
