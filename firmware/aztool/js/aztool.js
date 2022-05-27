@@ -138,8 +138,9 @@ aztool.view_top_menu = function() {
     x = (k.keyboard_pin.ioxp)? k.keyboard_pin.ioxp.join(","): "";
     d = (k.keyboard_pin.direct)? k.keyboard_pin.direct.join(","): "";
     h += "キーピン： direct="+d+"　ioxp="+x+"<br>";
-    if (k.ioxp_pin.length == 2) {
-        h += "I2Cピン：  SDA= " + k.ioxp_pin[0] + " / SCL= " + k.ioxp_pin[1] + "<br>";
+    console.log(k);
+    if (k.i2c_set && k.i2c_set.length == 3) {
+        h += "I2Cピン：  SDA= " + k.i2c_set[0] + " / SCL= " + k.i2c_set[1] + " / " + k.i2c_set[1] + " Hz<br>";
     }
     h += "</td></tr></table>";
     // h += "<div id='key_layout_box' style='width: 1000px; height: 500px;overflow: hidden; border: solid 1px black; text-align: left;'></div>";

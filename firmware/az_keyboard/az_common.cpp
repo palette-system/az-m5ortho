@@ -173,6 +173,7 @@ short ioxp_len;
 short *ioxp_list;
 short ioxp_sda;
 short ioxp_scl;
+int ioxp_hz;
 short ioxp_status[8];
 int ioxp_hash[8];
 
@@ -297,6 +298,7 @@ void AzCommon::common_start() {
     // ioエキスパンダピン
     ioxp_sda = -1;
     ioxp_scl = -1;
+    ioxp_hz = 400000;
     // ioエキスパンダフラグ
     for (i=0; i<8; i++) {
       ioxp_status[i] = -1;
@@ -651,19 +653,23 @@ void AzCommon::load_setting_json() {
         ioxp_list[i] = setting_obj["keyboard_pin"]["ioxp"][i].as<signed int>();
     }
     // IOエキスパンダピン
-    if (setting_obj.containsKey("ioxp_pin") && setting_obj["ioxp_pin"].size() == 2) {
-        ioxp_sda = setting_obj["ioxp_pin"][0].as<signed int>();
-        ioxp_scl = setting_obj["ioxp_pin"][1].as<signed int>();
+    if (setting_obj.containsKey("i2c_set") && setting_obj["i2c_set"].size() == 2) {
+        ioxp_sda = setting_obj["i2c_set"][0].as<signed int>();
+        ioxp_scl = setting_obj["i2c_set"][1].as<signed int>();
+        ioxp_hz = setting_obj["i2c_set"][2].as<signed int>();
     } else {
         if (keyboard_type_int == 2) { // AZ-M5ortho
             ioxp_sda = 26;
             ioxp_scl = 14;
+            ioxp_hz = 400000;
         } else if (keyboard_type_int == 3) { // えむごっち
             ioxp_sda = 26;
             ioxp_scl = 25;
+            ioxp_hz = 400000;
         } else {
             ioxp_sda = -1;
             ioxp_scl = -1;
+            ioxp_hz = 400000;
         }
     }
     // えむごっちで、25,26になってるヤツは逆なので勝手の元に戻す(昔の設定ファイルのままの人は逆で保存されちゃってる)
@@ -1559,7 +1565,7 @@ void AzCommon::pin_setup() {
   if (ioxp_sda >= 0 && ioxp_scl >= 0) {
 
     if (Wire.begin(ioxp_sda, ioxp_scl)) {
-        Wire.setClock(1700000);
+        Wire.setClock(ioxp_hz);
         M5.Lcd.printf("Wire1 begin ok\n");
     } else {
         M5.Lcd.printf("Wire1 begin ng\n");

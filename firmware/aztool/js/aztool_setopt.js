@@ -59,7 +59,7 @@ aztool.setopt_optlist_view = function() {
         h += "キー数： " + o.map.length;
         h += "</td></tr>";
         h += "<tr><td valign='bottom' align='right'>";
-        h += "<a class='exec-button' onClick='javascript:aztool.setopt_opt_remove("+o.id+");'>削除</a>";
+        h += "<a class='exec-button' onClick='javascript:aztool.setopt_opt_remove(\""+o.id+"\");'>削除</a>";
         h += "</td></tr>";
         h += "</table>";
         h += "</div>";

@@ -214,7 +214,7 @@ pinstp.ic_update = function() {
     }
 
     // 固定ピン
-    pinstp.vset("12", "SCK", "#d9fbfd");
+    pinstp.vset("12", "SCL", "#d9fbfd");
     pinstp.vset("13", "SDA", "#d9fbfd");
     pinstp.vset("09", "VCC", "#ff8081");
     pinstp.vset("10", "GND", "#a4c5f9");

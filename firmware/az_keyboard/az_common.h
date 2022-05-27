@@ -305,6 +305,7 @@ extern short ioxp_len;
 extern short *ioxp_list;
 extern short ioxp_sda;
 extern short ioxp_scl;
+extern int ioxp_hz;
 extern short ioxp_status[8];
 extern int ioxp_hash[8];
 
