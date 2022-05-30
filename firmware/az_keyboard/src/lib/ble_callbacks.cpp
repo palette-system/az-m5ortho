@@ -57,30 +57,30 @@ void CharacteristicCallbacks::onNotify(NimBLECharacteristic* pCharacteristic) {
 };
 
 void CharacteristicCallbacks::onStatus(NimBLECharacteristic* pCharacteristic, Status status, int code) {
-    String str = ("Notf/Ind stscode: ");
-    str += status;
-    str += ", retcode: ";
-    str += code;
-    str += ", "; 
-    str += NimBLEUtils::returnCodeToString(code);
-    //Serial.print(str);
+    // String str = ("Notf/Ind stscode: ");
+    // str += status;
+    // str += ", retcode: ";
+    // str += code;
+    // str += ", "; 
+    // str += NimBLEUtils::returnCodeToString(code);
+    // Serial.print(str);
 };
 
 void CharacteristicCallbacks::onSubscribe(NimBLECharacteristic* pCharacteristic, ble_gap_conn_desc* desc, uint16_t subValue) {
-    String str = "Client ID: ";
-    str += desc->conn_handle;
-    str += " Address: ";
-    str += std::string(NimBLEAddress(desc->peer_ota_addr)).c_str();
-    if(subValue == 0) {
-        str += " Unsubscribed to ";
-    }else if(subValue == 1) {
-        str += " Subscribed to notfications for ";
-    } else if(subValue == 2) {
-        str += " Subscribed to indications for ";
-    } else if(subValue == 3) {
-        str += " Subscribed to notifications and indications for ";
-    }
-    str += std::string(pCharacteristic->getUUID()).c_str();
+    // String str = "Client ID: ";
+    // str += desc->conn_handle;
+    // str += " Address: ";
+    // str += std::string(NimBLEAddress(desc->peer_ota_addr)).c_str();
+    // if(subValue == 0) {
+    //     str += " Unsubscribed to ";
+    // }else if(subValue == 1) {
+    //     str += " Subscribed to notfications for ";
+    // } else if(subValue == 2) {
+    //     str += " Subscribed to indications for ";
+    // } else if(subValue == 3) {
+    //     str += " Subscribed to notifications and indications for ";
+    // }
+    // str += std::string(pCharacteristic->getUUID()).c_str();
 
     // Serial.println(str);
 };
@@ -93,7 +93,7 @@ DescriptorCallbacks::DescriptorCallbacks(void) {
 };
 
 void DescriptorCallbacks::onWrite(NimBLEDescriptor* pDescriptor) {
-    std::string dscVal((char*)pDescriptor->getValue(), pDescriptor->getLength());
+    // std::string dscVal((char*)pDescriptor->getValue(), pDescriptor->getLength());
     // Serial.print("Descriptor witten value:");
     // Serial.println(dscVal.c_str());
 };
@@ -110,14 +110,49 @@ void DescriptorCallbacks::onRead(NimBLEDescriptor* pDescriptor) {
 BleConnectionStatus::BleConnectionStatus(void) {
 };
 
+// ペアリング完了（先に呼ばれる）
 void BleConnectionStatus::onConnect(NimBLEServer* pServer)
 {
-  this->connected = true;
+	NimBLEDevice::stopAdvertising();
+	Serial.printf("onConnect 1: stopAdvertising\n");
 };
 
+// ペアリング完了（後から呼ばれる）
+void BleConnectionStatus::onConnect(NimBLEServer* pServer, ble_gap_conn_desc* desc)
+{
+	Serial.printf("onConnect 2: sec_state = %x \n", desc->sec_state);
+	Serial.printf("onConnect 2: our_id_addr = %x \n", desc->our_id_addr);
+	Serial.printf("onConnect 2: peer_id_addr = %x \n", desc->peer_id_addr);
+	Serial.printf("onConnect 2: our_ota_addr = %x \n", desc->our_ota_addr);
+	Serial.printf("onConnect 2: peer_ota_addr = %x \n", desc->peer_ota_addr);
+	Serial.printf("onConnect 2: conn_handle = %x \n", desc->conn_handle);
+	Serial.printf("onConnect 2: conn_itvl = %x \n", desc->conn_itvl);
+	Serial.printf("onConnect 2: conn_latency = %x \n", desc->conn_latency);
+	this->target_handle = desc->conn_handle;
+	this->connected = true;
+	pServer->updateConnParams(desc->conn_handle, 0x10, 0x20, 0, 600);
+	// 新しい機器接続中でペアリングされたらアドレスリストに追加
+	if (blemac_stat == 1) {
+		blemac_stat = 0;
+		common_cls.blemac_add(macaddr_new); // MACアドレスリストに追加
+		blemac_index = blemac_len - 1; // 選択してるMACアドレスを今追加したヤツにする
+		disp->view_pairing_newcomp(); // 画面をペアリング完了にする
+	}
+};
+
+// 切断
 void BleConnectionStatus::onDisconnect(NimBLEServer* pServer)
 {
-  this->connected = false;
+	Serial.printf("onDisconnect\n");
+	if (!this->connected) {
+		NimBLEDevice::startAdvertising();
+		Serial.printf("startAdvertising\n");
+	}
+	this->connected = false;
+};
+
+// ペアリング時のセキュリティ設定
+void BleConnectionStatus::onAuthenticationComplete(ble_gap_conn_desc* desc) {
 };
 
 /* ====================================================================================================================== */
@@ -128,8 +163,8 @@ KeyboardOutputCallbacks::KeyboardOutputCallbacks(void) {
 }
 
 void KeyboardOutputCallbacks::onWrite(NimBLECharacteristic* me) {
-  uint8_t* value = (uint8_t*)(me->getValue().c_str());
-  ESP_LOGI(LOG_TAG, "special keys: %d", *value);
+  // uint8_t* value = (uint8_t*)(me->getValue().c_str());
+  // ESP_LOGI(LOG_TAG, "special keys: %d", *value);
 }
 
 
@@ -141,14 +176,14 @@ RemapDescriptorCallbacks::RemapDescriptorCallbacks(void) {
 };
 
 void RemapDescriptorCallbacks::onWrite(NimBLEDescriptor* pDescriptor) {
-    std::string dscVal((char*)pDescriptor->getValue(), pDescriptor->getLength());
-    Serial.print("RemapDescriptorCallbacks: onWrite: ");
-    Serial.println(dscVal.c_str());
+    // std::string dscVal((char*)pDescriptor->getValue(), pDescriptor->getLength());
+    // Serial.print("RemapDescriptorCallbacks: onWrite: ");
+    // Serial.println(dscVal.c_str());
 };
 
 void RemapDescriptorCallbacks::onRead(NimBLEDescriptor* pDescriptor) {
-    Serial.print("RemapDescriptorCallbacks: onRead: ");
-    Serial.println(pDescriptor->getUUID().toString().c_str());
+    // Serial.print("RemapDescriptorCallbacks: onRead: ");
+    // Serial.println(pDescriptor->getUUID().toString().c_str());
 };
 
 /* ====================================================================================================================== */

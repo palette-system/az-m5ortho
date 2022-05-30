@@ -23,7 +23,9 @@
 #include "src/lib/display.h"
 #include "src/lib/sound.h"
 #include "src/lib/HTTPClient_my.h"
+#include "src/lib/ble_keyboard_jis.h"
 
+#include "az_keyboard.h"
 
 // キーボード別のデフォルト設定ファイル
 #include "src/keyboard/setting_emugotch_default.h"
@@ -67,6 +69,9 @@
 
 // 画面設定を保存するファイルのパス
 #define  MONITER_SETTING_PATH  "/moniter_data"
+
+// BLE用のMACアドレスを保存するファイルのパス
+#define  BLEMAC_ADDR_PATH  "/blemac"
 
 // メモリに保持するキーの数(メモリを確保するサイズ)
 #define KEY_INPUT_MAX  128
@@ -136,7 +141,11 @@ struct moniterset_data_set {
     uint8_t value_2;
 };
 
-// レイヤーの名前
+// BLE 用macアドレス
+struct ble_mac_addr {
+    uint8_t addr[6];
+    char *name;
+};
 
 
 // ArduinoJSON SPRAM用の定義
@@ -252,6 +261,8 @@ class AzCommon
         int mouse_pad_save(); // マウスパッド設定保存
         int moniterset_load(); // 画面設定読み込み
         int moniterset_save(); // 画面設定保存
+        void blemac_load(); // BLE用macアドレスリスト読み込み
+        void blemac_add(uint8_t *addr); // BLE用macアドレス追加
         void moniter_brightness(int set_type); // 画面の明るさ設定
         int i2c_setup(int p, i2c_option *opt); // IOエキスパンダの初期化(戻り値：増えるキーの数)
         void pin_setup(); // キーの入力ピンの初期化
@@ -408,6 +419,12 @@ extern uint8_t key_count_auto_save;
 // 共通クラスリンク
 extern AzCommon common_cls;
 
+// キーボードモードクラス
+extern AzKeyboard azkb;
+
+// BLEクラス
+extern BleKeyboardJIS bleKeyboard;
+
 // 設定JSONオブジェクト
 extern JsonObject setting_obj;
 
@@ -465,6 +482,17 @@ extern mousepad_data_set mouse_pad_setting;
 
 // 画面設定
 extern moniterset_data_set moniter_setting;
+
+// BLE 用macアドレスリスト
+extern ble_mac_addr *blemac_list;
+
+// BLE macアドレス(現在どれを利用しているか、何件あるか)
+extern uint8_t blemac_index;
+extern uint8_t blemac_len;
+
+// BLE 新しいmacアドレス取得用ステータス
+extern uint8_t blemac_stat;
+extern uint8_t macaddr_new[6];
 
 // RGBLED
 extern int8_t rgb_pin;

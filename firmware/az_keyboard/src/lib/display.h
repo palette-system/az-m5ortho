@@ -104,6 +104,7 @@ class Display
 		void open_movie(); // 起動ムービー
 		void view_setting_menu(); // 設定メニュー表示
 		void view_keyboard_setting(); // キーボード選択画面表示
+		void view_pairing_newcomp(); // 新しい機器接続完了ページ表示
 		void view_raw_image(uint8_t *img_data); // 渡された画像データを表示
 		void view_power(); // バッテリー残量表示
 		void view_info_layer_name(); // インフォメーションにレイヤー名を表示

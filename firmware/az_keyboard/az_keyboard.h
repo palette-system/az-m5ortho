@@ -1,8 +1,6 @@
 #ifndef AzKeyboard_h
 #define AzKeyboard_h
 
-#include "az_common.h"
-
 
 // クラスの定義
 class AzKeyboard

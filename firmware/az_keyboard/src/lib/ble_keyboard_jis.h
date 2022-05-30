@@ -11,8 +11,6 @@
 #include "NimBLECharacteristic.h"
 
 #include "ble_callbacks.h"
-#include "../../az_common.h"
-
 
 #define JIS_SHIFT 0x1000
 #define MOUSE_CODE 0x2000
@@ -34,6 +32,8 @@ typedef struct
   uint8_t reserved;
   uint8_t keys[6];
 } KeyReport;
+
+#define HID_KEYBOARD 0x03C1
 
 // HIDのデバイスID
 #define REPORT_KEYBOARD_ID 0x01
@@ -164,26 +164,30 @@ const uint8_t _hidReportDescriptorDefault[] PROGMEM = {
   END_COLLECTION(0)          // END_COLLECTION
 
   // ------------------------------------------------- remap
-        ,
-        0x06, 0x60, 0xFF,
-        0x09, 0x61,
-        0xa1, 0x01,
-        0x85, INPUT_REP_REF_RAW_ID,
-        
-        0x09, 0x62, 
-        0x15, 0x00, 
-        0x26, 0xFF, 0x00, 
-        0x95, INPUT_REPORT_RAW_MAX_LEN,
-        0x75, 0x08, 
-        0x81, 0x06, 
-      
-        0x09, 0x63, 
-        0x15, 0x00, 
-        0x26, 0xFF, 0x00, 
-        0x95, OUTPUT_REPORT_RAW_MAX_LEN, //REPORT_COUNT(32)
-        0x75, 0x08, //REPORT_SIZE(8)
-        0x91, 0x83, 
-        0xC0             // End Collection (Application)
+  ,
+    0x06, 0x60, 0xFF,
+    0x09, 0x61,
+
+    0xA1, 0x01,                                  // Collection (Application)
+    0x85, INPUT_REP_REF_RAW_ID,
+
+    // Data to host
+    0x09, 0x62,             //   Usage (Vendor Defined)
+    // 0x15, 0x00,             //   Logical Minimum (0)
+    // 0x26, 0xFF, 0x00,       //   Logical Maximum (255)
+    0x95, INPUT_REPORT_RAW_MAX_LEN,  //   Report Count
+    0x75, 0x08,             //   Report Size (8)
+    0x81, 0x02,             //   Input (Data, Variable, Absolute)
+
+    // Data from host
+    0x09, 0x63,             //   Usage (Vendor Defined)
+    // 0x15, 0x00,             //   Logical Minimum (0)
+    // 0x26, 0xFF, 0x00,       //   Logical Maximum (255)
+    0x95, OUTPUT_REPORT_RAW_MAX_LEN,  //   Report Count
+    0x75, 0x08,             //   Report Size (8)
+    0x91, 0x02,             //   Output (Data, Variable, Absolute)
+    0xC0                    // End Collection
+
 
 };
 
@@ -396,6 +400,7 @@ class BleKeyboardJIS
     NimBLECharacteristic* pBatteryLevelCharacteristic; // バッテリーサービス レベル
     NimBLE2904* pBatteryLevelDescriptor; // バッテリーサービス レベル
     NimBLEAdvertising* pAdvertising; // アドバタイズ (ペアリングを待つ情報を送信)
+    uint8_t mac_setting[6]; // 本体MACアドレス
     uint8_t *_hidReportDescriptor; // HID レポート設定
     unsigned short _hidReportDescriptorSize; // HID レポートのサイズ
     uint8_t keyboard_language; // 入力タイプ 0=jis, 1=us
@@ -414,6 +419,7 @@ class BleKeyboardJIS
     void set_keyboard_language(uint8_t kl);
     void set_report_map(uint8_t * report_map, unsigned short report_size);
     void begin(std::string deviceName = "BleKeyboardJIS", std::string deviceManufacturer = "PaletteSystem");
+    void changeMac(uint8_t * mac_addr);
     void end(void);
     bool isConnected(void);
     unsigned short modifiers_press(unsigned short k);

@@ -39,7 +39,6 @@ int8_t *key_matrix;
 uint8_t led_num_length;
 uint8_t key_matrix_length;
 
-
 // hid
 uint16_t hid_vid;
 uint16_t hid_pid;
@@ -58,6 +57,17 @@ mousepad_data_set mouse_pad_setting;
 
 // 画面設定
 moniterset_data_set moniter_setting;
+
+// BLE 用macアドレスリスト
+ble_mac_addr *blemac_list;
+
+// BLE macアドレス(現在どれを利用しているか)
+uint8_t blemac_index;
+uint8_t blemac_len;
+
+// BLE 新しいmacアドレス取得用ステータス
+uint8_t blemac_stat;
+uint8_t macaddr_new[6];
 
 // 液晶表示用オブジェクト
 Display *disp;
@@ -304,6 +314,9 @@ void AzCommon::common_start() {
       ioxp_status[i] = -1;
       ioxp_hash[i] = 0;
     }
+
+    // macアドレス設定ステータス
+    blemac_stat = 0;
 
     // マウスパッドステータス
     mouse_pad_status = 0;
@@ -1456,6 +1469,52 @@ int AzCommon::moniterset_save() {
     if (!i) return 0;
     fp.close();
     return 1;
+}
+
+
+// BLE用macアドレスリスト読み込み
+void AzCommon::blemac_load() {
+    int i;
+    uint8_t addr[6];
+    File fp;
+    blemac_index = 0;
+    // ファイルが無ければデフォルトMACのみのファイルを作成
+    if (!SPIFFS.exists(BLEMAC_ADDR_PATH)) {
+        fp = SPIFFS.open(BLEMAC_ADDR_PATH, "w");
+        esp_efuse_mac_get_default(addr); // 本体に設定されているMACアドレスを取得
+        fp.write(addr, 6);
+        fp.close();
+    }
+    // ファイルから読み込み
+    fp = SPIFFS.open(BLEMAC_ADDR_PATH, "r");
+    // ファイルオープン失敗したらデフォルトMACのみのデータを作る
+    if (!fp) {
+        blemac_len = 1;
+        blemac_list = new ble_mac_addr[blemac_len];
+        esp_efuse_mac_get_default(blemac_list[0].addr); // 本体に設定されているMACアドレスを取得
+        return;
+    }
+    // ファイルサイズから保存件数を計算
+    blemac_len = fp.size() / 6;
+    // 格納用のメモリ確保
+    blemac_list = new ble_mac_addr[blemac_len];
+    // データ取得
+    for (i=0; i<blemac_len; i++) {
+        fp.read(blemac_list[i].addr, 6);
+    }
+    fp.close();
+}
+
+// BLE用macアドレス追加
+void AzCommon::blemac_add(uint8_t *addr) {
+    // ファイルに新らしいアドレス追記
+    File fp = SPIFFS.open(BLEMAC_ADDR_PATH, "a");
+    fp.write(addr, 6);
+    fp.close();
+    // メモリに確保しているリストを解放
+    delete blemac_list;
+    // 読み込みなおす
+    blemac_load();
 }
 
 

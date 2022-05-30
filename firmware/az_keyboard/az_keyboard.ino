@@ -25,6 +25,8 @@ void setup() {
     common_cls.load_data();
     // 画面設定読み込み
     common_cls.moniterset_load();
+    // BLE用 MACアドレス取得
+    common_cls.blemac_load();
     // common_cls.delete_all();
     // キーボードが選択されていなければキーボード選択画面表示
     if (strlen(eep_data.keyboard_type) == 0) {

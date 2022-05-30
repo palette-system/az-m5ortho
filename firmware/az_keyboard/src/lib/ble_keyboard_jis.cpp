@@ -5,6 +5,7 @@
 #include <driver/adc.h>
 #include "sdkconfig.h"
 
+#include "../../az_common.h"
 #include "ble_keyboard_jis.h"
 #include "ble_callbacks.h"
 
@@ -18,7 +19,6 @@ BleKeyboardJIS::BleKeyboardJIS(void)
 {
   this->_MouseButtons = 0x00;
   this->batteryLevel = 100;
-  this->connectionStatus = new BleConnectionStatus();
   this->keyboard_language = 0;
   this->_hidReportDescriptor = (uint8_t *)_hidReportDescriptorDefault;
   this->_hidReportDescriptorSize = sizeof(_hidReportDescriptorDefault);
@@ -46,8 +46,42 @@ void BleKeyboardJIS::begin(std::string deviceName, std::string deviceManufacture
 {
   this->deviceName = deviceName;
   this->deviceManufacturer = deviceManufacturer;
-  xTaskCreate(this->taskServer, "server", 20000, (void *)this, 5, NULL); // BLE HID 開始処理
+  esp_efuse_mac_get_default(this->mac_setting); // 本体に設定されているMACアドレスを取得
+  int i;
+  for (i=0; i<6; i++) {
+    this->mac_setting[i] = blemac_list[1].addr[i];
+  }
+  // xTaskCreate(this->taskServer, "server", 20000, (void *)this, 5, NULL); // BLE HID 開始処理
   // xTaskCreatePinnedToCore(this->taskServer, "ble", 20000, (void *)this, 5, NULL, 0);
+  this->taskServer((void *)this);
+};
+
+// 本体のMacアドレスを変更してBLE初期化（マルチペアリング用）
+void BleKeyboardJIS::changeMac(uint8_t * mac_addr)
+{
+  Serial.printf("changeMac: %02x %02x %02x %02x %02x %02x\n", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+  // BLE接続中であれば切断
+  if (this->connectionStatus->connected) {
+    this->pServer->disconnect(this->connectionStatus->target_handle);
+    delay(200);
+  }
+  // BLEをクリア
+  NimBLEDevice::deinit(true);
+    delay(200);
+  // 本体に設定されるMACアドレスを変える
+  int i;
+  for (i=0; i<6; i++) {
+    this->mac_setting[i] = mac_addr[i];
+  }
+  // MACアドレス書換え
+  // esp_base_mac_addr_set(mac_addr);
+  // ESP32再起動
+  // delay(300);
+  // ESP.restart(); // ESP32再起動
+
+  // BLE 初期化
+  this->taskServer((void *)this);
+
 };
 
 // BLEキーボード終了
@@ -65,14 +99,27 @@ bool BleKeyboardJIS::isConnected(void)
 void BleKeyboardJIS::taskServer(void* pvParameter)
 {
 
-   BleKeyboardJIS *bleKeyboardInstance = (BleKeyboardJIS *) pvParameter; //static_cast<BleKeyboard *>(pvParameter);
+    BleKeyboardJIS *bleKeyboardInstance = (BleKeyboardJIS *) pvParameter; //static_cast<BleKeyboard *>(pvParameter);
+
+    // BLE初期化前に本体のMACアドレスを変更（マルチペアリングするため）
+    esp_base_mac_addr_set(bleKeyboardInstance->mac_setting);
+    delay(5000);
+
+    // ble の createService するアドレス類のドキュメント
+    // https://docs.springcard.com/books/SpringCore/Host_interfaces/Physical_and_Transport/Bluetooth/HID_(RFID_Scanner)
+    // nimble のドキュメント
+    // https://h2zero.github.io/esp-nimble-cpp/class_nim_b_l_e_service.html
+
+    // BLE初期化
 
     /** sets device name */
     NimBLEDevice::init(bleKeyboardInstance->deviceName);
-    NimBLEDevice::setPower(ESP_PWR_LVL_P9); /** +9db */
+    //BatteryService
+    // NimBLEDevice::setPower(ESP_PWR_LVL_P9); /** +9db */
     NimBLEDevice::setSecurityAuth(BLE_SM_PAIR_AUTHREQ_BOND);
 
     bleKeyboardInstance->pServer = NimBLEDevice::createServer();
+    bleKeyboardInstance->connectionStatus = new BleConnectionStatus();
     bleKeyboardInstance->pServer->setCallbacks(bleKeyboardInstance->connectionStatus);
 
     //DeviceInfoService
@@ -101,21 +148,16 @@ void BleKeyboardJIS::taskServer(void* pvParameter)
     bleKeyboardInstance->pHidInfoCharacteristic->setCallbacks(&chrCallbacks);
 
     //HidService-reportMap
-    ESP_LOGD(LOG_TAG, "reportMap set: start");
-    ESP_LOGD(LOG_TAG, "reportMap set: size %D", bleKeyboardInstance->_hidReportDescriptorSize);
     bleKeyboardInstance->pReportMapCharacteristic = bleKeyboardInstance->pHidService->createCharacteristic("2A4B",NIMBLE_PROPERTY::READ); // HID Report Map (ここでHIDのいろいろ設定
     bleKeyboardInstance->pReportMapCharacteristic->setValue((uint8_t*)bleKeyboardInstance->_hidReportDescriptor, bleKeyboardInstance->_hidReportDescriptorSize);
-    bleKeyboardInstance->pReportMapCharacteristic->setCallbacks(&chrCallbacks);
 
     //HidService-HidControl
     bleKeyboardInstance->pHidControlCharacteristic = bleKeyboardInstance->pHidService->createCharacteristic("2A4C", NIMBLE_PROPERTY::WRITE_NR);// HID Control Point
-    bleKeyboardInstance->pHidControlCharacteristic->setCallbacks(&chrCallbacks);
 
     //HidService-protocolMode
     bleKeyboardInstance->pProtocolModeCharacteristic = bleKeyboardInstance->pHidService->createCharacteristic("2A4E",NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ); // Protocol Mode
     const uint8_t pMode[] = { 0x01 }; // 0: Boot Protocol 1: Rport Protocol
     bleKeyboardInstance->pProtocolModeCharacteristic->setValue((uint8_t*) pMode, 1);
-    bleKeyboardInstance->pProtocolModeCharacteristic->setCallbacks(&chrCallbacks);
 
     //HidService-input
     bleKeyboardInstance->pInputCharacteristic = bleKeyboardInstance->pHidService->createCharacteristic("2A4D", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC); // Report
@@ -124,14 +166,12 @@ void BleKeyboardJIS::taskServer(void* pvParameter)
     bleKeyboardInstance->pDesc1->setValue((uint8_t*) desc1_val, 2);
     bleKeyboardInstance->pDesc1->setCallbacks(&dscCallbacks);
 
-
     // HidService-output
     bleKeyboardInstance->pOutputCharacteristic = bleKeyboardInstance->pHidService->createCharacteristic("2A4D", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC);
     bleKeyboardInstance->pOutputCharacteristic->setCallbacks(new KeyboardOutputCallbacks());
     bleKeyboardInstance->pDesc2 = bleKeyboardInstance->pOutputCharacteristic->createDescriptor("2908", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC, 20);
     uint8_t desc1_val2[] = { 0x01, 0x02}; // Report ID 1 を Output に設定
     bleKeyboardInstance->pDesc2->setValue((uint8_t*) desc1_val2, 2);
-
 
     //HidService-input2 media port
     bleKeyboardInstance->pInputCharacteristic2 = bleKeyboardInstance->pHidService->createCharacteristic("2A4D", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC); // Report
@@ -140,7 +180,6 @@ void BleKeyboardJIS::taskServer(void* pvParameter)
     bleKeyboardInstance->pDesc3->setValue((uint8_t*) desc1_val3, 2);
     bleKeyboardInstance->pDesc3->setCallbacks(&dscCallbacks);
 
-
     //HidService-input3 media port
     bleKeyboardInstance->pInputCharacteristic3 = bleKeyboardInstance->pHidService->createCharacteristic("2A4D", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC); // Report
     bleKeyboardInstance->pDesc4 = bleKeyboardInstance->pInputCharacteristic3->createDescriptor("2908", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC, 20);
@@ -148,25 +187,12 @@ void BleKeyboardJIS::taskServer(void* pvParameter)
     bleKeyboardInstance->pDesc4->setValue((uint8_t*) desc1_val4, 2);
     bleKeyboardInstance->pDesc4->setCallbacks(&dscCallbacks);
 
-    
-    //BatteryService
-    bleKeyboardInstance->pBatteryService = bleKeyboardInstance->pServer->createService("180F");
-    bleKeyboardInstance->pBatteryLevelCharacteristic = bleKeyboardInstance->pBatteryService->createCharacteristic("2A19", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
-    bleKeyboardInstance->pBatteryLevelDescriptor = (NimBLE2904*)bleKeyboardInstance->pBatteryLevelCharacteristic->createDescriptor("2904"); 
-    bleKeyboardInstance->pBatteryLevelDescriptor->setFormat(NimBLE2904::FORMAT_UTF8);
-    bleKeyboardInstance->pBatteryLevelDescriptor->setNamespace(1);
-    bleKeyboardInstance->pBatteryLevelDescriptor->setUnit(0x27ad);
-    bleKeyboardInstance->pBatteryLevelDescriptor->setCallbacks(&dscCallbacks);
-
-
-
     // remap Input
     bleKeyboardInstance->pInputCharacteristic4 = bleKeyboardInstance->pHidService->createCharacteristic("2A4D", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC); // Report
     bleKeyboardInstance->pDesc5 = bleKeyboardInstance->pInputCharacteristic4->createDescriptor( "2908", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ_ENC | NIMBLE_PROPERTY::WRITE_ENC, 20); // Report Reference
     uint8_t desc5_val[] = { INPUT_REP_REF_RAW_ID, 0x01 }; // Report ID 4 を Input に設定
     bleKeyboardInstance->pDesc5->setValue((uint8_t*) desc5_val, 2);
     bleKeyboardInstance->pDesc5->setCallbacks(&RemapDscCallbacks);
-
 
     // remap Output
     RemapOutputCallbacks* remapOutputClass = new RemapOutputCallbacks();
@@ -177,13 +203,26 @@ void BleKeyboardJIS::taskServer(void* pvParameter)
     uint8_t desc6_val[] = { INPUT_REP_REF_RAW_ID, 0x02}; // Report ID 4 を Output に設定
     bleKeyboardInstance->pDesc6->setValue((uint8_t*) desc6_val, 2);
 
-
-
+    //BatteryService
+    /*
+    バッテリー系のサービスを作るとマルチペアリング時に、一回目の接続はうまく行くけど、別の端末でペアリングした後MACアドレスを戻して
+    もう一回元の端末とつなごうとすると接続した瞬間ペアリングが切れる。最後にペアリングした端末とはまた接続できる。
+    （バッテリーサービスの使い方が悪くてPC側にはじかれてる気がする。でも1回目成功するし最後にペアリングしたPCとは繋がるので謎
+    bleKeyboardInstance->pBatteryService = bleKeyboardInstance->pServer->createService("180F");
+    bleKeyboardInstance->pBatteryLevelCharacteristic = bleKeyboardInstance->pBatteryService->createCharacteristic("2A19", NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
+    bleKeyboardInstance->pBatteryLevelDescriptor = (NimBLE2904*)bleKeyboardInstance->pBatteryLevelCharacteristic->createDescriptor("2904"); 
+    bleKeyboardInstance->pBatteryLevelDescriptor->setFormat(NimBLE2904::FORMAT_UTF8);
+    bleKeyboardInstance->pBatteryLevelDescriptor->setNamespace(1);
+    bleKeyboardInstance->pBatteryLevelDescriptor->setUnit(0x27ad);
+    bleKeyboardInstance->pBatteryLevelDescriptor->setCallbacks(&dscCallbacks);
+    */
 
     /** Start the services when finished creating all Characteristics and Descriptors */
     bleKeyboardInstance->pDeviceInfoService->start();
     bleKeyboardInstance->pHidService->start();
-    bleKeyboardInstance->pBatteryService->start();
+    //BatteryService
+    // bleKeyboardInstance->pBatteryService->start();
+    bleKeyboardInstance->pServer->advertiseOnDisconnect(false);
 
     bleKeyboardInstance->pAdvertising = NimBLEDevice::getAdvertising();
     bleKeyboardInstance->pAdvertising->setAppearance(HID_KEYBOARD); //HID_KEYBOARD / HID_MOUSE
@@ -191,12 +230,7 @@ void BleKeyboardJIS::taskServer(void* pvParameter)
     bleKeyboardInstance->pAdvertising->setScanResponse(true);
     bleKeyboardInstance->pAdvertising->start();
 
-    // bleKeyboardInstance->inputKeyboard = pInputCharacteristic;
-    // bleKeyboardInstance->inputMediaKeys = pInputCharacteristic2;
-    // bleKeyboardInstance->outputKeyboard = pOutputCharacteristic;
-
-    ESP_LOGD(LOG_TAG, "Advertising started!");
-    vTaskDelay(portMAX_DELAY); //delay(portMAX_DELAY);
+    // vTaskDelay(portMAX_DELAY); //delay(portMAX_DELAY);
 };
 
 unsigned short BleKeyboardJIS::modifiers_press(unsigned short k) {

@@ -1081,7 +1081,8 @@ void AzKeyboard::loop_exec(void) {
     if (lix >= 256) lix = 0;
 
     ne = millis();
-    vTaskDelay(7 - (ne - ns));
+    // Serial.printf("sleep: %d\n", (ne - ns));
+    vTaskDelay(7);
 
   }
 }
