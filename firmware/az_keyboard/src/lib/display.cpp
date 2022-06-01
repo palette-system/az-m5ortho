@@ -750,9 +750,11 @@ void view_setting_pairing_newpea(lv_obj_t * obj, lv_event_t event) {
 		macaddr_new[i] = random(0, 255);
 	}
 	*/
-	esp_efuse_mac_get_default(macaddr_new); // 本体に設定されているMACアドレスを取得
-	macaddr_new[5] += 4;
-	bleKeyboard.changeMac(macaddr_new);
+	// esp_efuse_mac_get_default(macaddr_new); // 本体に設定されているMACアドレスを取得
+	// macaddr_new[5] += 4;
+	// bleKeyboard.changeMac(macaddr_new);
+	// 全ての接続を切断
+	bleKeyboard.connectionStatus->allDisconnect();
 
 	// モニタ描画停止
 	disp_enable = false;
@@ -785,11 +787,34 @@ void view_setting_pairing_change(lv_obj_t * obj, lv_event_t event) {
 	// リスト変更以外のイベントは無視
     if(event != LV_EVENT_VALUE_CHANGED) return;
 
-	// 選択しているMACアドレスを変更
+	// 何番が選択されたか
 	blemac_index = lv_dropdown_get_selected(obj);
 
 	// 選択したMACアドレスにしてBLE再起動
-	bleKeyboard.changeMac(blemac_list[blemac_index].addr);
+	// bleKeyboard.changeMac(blemac_list[blemac_index].addr);
+	int i;
+	for (i=0; i<6; i++) {
+		bleKeyboard.connectionStatus->target_addr.val[i] = blemac_list[blemac_index].addr[i];
+	}
+	/*
+	if (blemac_index == 0) {
+		bleKeyboard.connectionStatus->target_addr.val[0] = 0xf5;
+		bleKeyboard.connectionStatus->target_addr.val[1] = 0xdf;
+		bleKeyboard.connectionStatus->target_addr.val[2] = 0xbf;
+		bleKeyboard.connectionStatus->target_addr.val[3] = 0x18;
+		bleKeyboard.connectionStatus->target_addr.val[4] = 0xb3;
+		bleKeyboard.connectionStatus->target_addr.val[5] = 0xe4;
+	} else {
+		bleKeyboard.connectionStatus->target_addr.val[0] = 0x1e;
+		bleKeyboard.connectionStatus->target_addr.val[1] = 0x99;
+		bleKeyboard.connectionStatus->target_addr.val[2] = 0xab;
+		bleKeyboard.connectionStatus->target_addr.val[3] = 0xea;
+		bleKeyboard.connectionStatus->target_addr.val[4] = 0xd0;
+		bleKeyboard.connectionStatus->target_addr.val[5] = 0x28;
+	}
+	*/
+	// 全ての接続を切断
+	bleKeyboard.connectionStatus->allDisconnect();
 }
 
 // ペアリング設定画面表示

@@ -84,11 +84,15 @@ class BleConnectionStatus : public NimBLEServerCallbacks {
   public:
     BleConnectionStatus(void);
     bool connected = false;
+    bool conn_list[8];
+    ble_addr_t target_addr;
 	uint16_t target_handle;
     void onConnect(NimBLEServer* pServer);
 	void onConnect(NimBLEServer* pServer, ble_gap_conn_desc* desc);
     void onDisconnect(NimBLEServer* pServer);
+    void onDisconnect(NimBLEServer* pServer, ble_gap_conn_desc* desc);
 	void onAuthenticationComplete(ble_gap_conn_desc* desc);
+  void allDisconnect();
 };
 
 // Output コールバック クラス

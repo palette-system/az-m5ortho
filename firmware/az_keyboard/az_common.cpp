@@ -1471,6 +1471,15 @@ int AzCommon::moniterset_save() {
     return 1;
 }
 
+// アドレス１とアドレス２が同じかどうかチェック
+bool AzCommon::addrcmp(uint8_t *addr1, uint8_t *addr2) {
+    int i;
+    for (i=0; i<6; i++) {
+        if (addr1[i] != addr2[i]) return false;
+    }
+    return true;
+}
+
 
 // BLE用macアドレスリスト読み込み
 void AzCommon::blemac_load() {
@@ -1478,20 +1487,16 @@ void AzCommon::blemac_load() {
     uint8_t addr[6];
     File fp;
     blemac_index = 0;
-    // ファイルが無ければデフォルトMACのみのファイルを作成
+    // ファイルが無ければデータなしで終了
     if (!SPIFFS.exists(BLEMAC_ADDR_PATH)) {
-        fp = SPIFFS.open(BLEMAC_ADDR_PATH, "w");
-        esp_efuse_mac_get_default(addr); // 本体に設定されているMACアドレスを取得
-        fp.write(addr, 6);
-        fp.close();
+        blemac_len = 0;
+        return;
     }
     // ファイルから読み込み
     fp = SPIFFS.open(BLEMAC_ADDR_PATH, "r");
-    // ファイルオープン失敗したらデフォルトMACのみのデータを作る
+    // ファイルオープン失敗したらデータなしで終了
     if (!fp) {
-        blemac_len = 1;
-        blemac_list = new ble_mac_addr[blemac_len];
-        esp_efuse_mac_get_default(blemac_list[0].addr); // 本体に設定されているMACアドレスを取得
+        blemac_len = 0;
         return;
     }
     // ファイルサイズから保存件数を計算

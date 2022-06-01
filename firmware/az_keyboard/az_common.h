@@ -261,6 +261,7 @@ class AzCommon
         int mouse_pad_save(); // マウスパッド設定保存
         int moniterset_load(); // 画面設定読み込み
         int moniterset_save(); // 画面設定保存
+        bool addrcmp(uint8_t *addr1, uint8_t *addr2); // アドレス１とアドレス２が同じかどうかチェック
         void blemac_load(); // BLE用macアドレスリスト読み込み
         void blemac_add(uint8_t *addr); // BLE用macアドレス追加
         void moniter_brightness(int set_type); // 画面の明るさ設定

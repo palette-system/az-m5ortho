@@ -46,11 +46,7 @@ void BleKeyboardJIS::begin(std::string deviceName, std::string deviceManufacture
 {
   this->deviceName = deviceName;
   this->deviceManufacturer = deviceManufacturer;
-  esp_efuse_mac_get_default(this->mac_setting); // 本体に設定されているMACアドレスを取得
-  int i;
-  for (i=0; i<6; i++) {
-    this->mac_setting[i] = blemac_list[1].addr[i];
-  }
+  // esp_efuse_mac_get_default(this->mac_setting); // 本体に設定されているMACアドレスを取得
   // xTaskCreate(this->taskServer, "server", 20000, (void *)this, 5, NULL); // BLE HID 開始処理
   // xTaskCreatePinnedToCore(this->taskServer, "ble", 20000, (void *)this, 5, NULL, 0);
   this->taskServer((void *)this);
@@ -69,10 +65,10 @@ void BleKeyboardJIS::changeMac(uint8_t * mac_addr)
   NimBLEDevice::deinit(true);
     delay(200);
   // 本体に設定されるMACアドレスを変える
-  int i;
-  for (i=0; i<6; i++) {
-    this->mac_setting[i] = mac_addr[i];
-  }
+  // int i;
+  // for (i=0; i<6; i++) {
+    // this->mac_setting[i] = mac_addr[i];
+  // }
   // MACアドレス書換え
   // esp_base_mac_addr_set(mac_addr);
   // ESP32再起動
@@ -102,8 +98,8 @@ void BleKeyboardJIS::taskServer(void* pvParameter)
     BleKeyboardJIS *bleKeyboardInstance = (BleKeyboardJIS *) pvParameter; //static_cast<BleKeyboard *>(pvParameter);
 
     // BLE初期化前に本体のMACアドレスを変更（マルチペアリングするため）
-    esp_base_mac_addr_set(bleKeyboardInstance->mac_setting);
-    delay(5000);
+    // esp_base_mac_addr_set(bleKeyboardInstance->mac_setting);
+    // delay(5000);
 
     // ble の createService するアドレス類のドキュメント
     // https://docs.springcard.com/books/SpringCore/Host_interfaces/Physical_and_Transport/Bluetooth/HID_(RFID_Scanner)
@@ -229,6 +225,8 @@ void BleKeyboardJIS::taskServer(void* pvParameter)
     bleKeyboardInstance->pAdvertising->addServiceUUID(bleKeyboardInstance->pHidService->getUUID());
     bleKeyboardInstance->pAdvertising->setScanResponse(true);
     bleKeyboardInstance->pAdvertising->start();
+    NimBLEDevice::setMTU(127);
+    Serial.printf("getMTU = %d\n", NimBLEDevice::getMTU());
 
     // vTaskDelay(portMAX_DELAY); //delay(portMAX_DELAY);
 };
