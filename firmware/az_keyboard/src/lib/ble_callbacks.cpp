@@ -149,7 +149,7 @@ void BleConnectionStatus::onConnect(NimBLEServer* pServer, ble_gap_conn_desc* de
 	// Serial.printf("onConnect 2: our_id_addr = %x \n", desc->our_id_addr);
 	// Serial.printf("onConnect 2: peer_id_addr = %x \n", desc->peer_id_addr);
 	// Serial.printf("onConnect 2: our_ota_addr = %x \n", desc->our_ota_addr);
-	Serial.printf("onConnect 2: %x [ %x %x %x %x %x %x ] \n", desc->conn_handle, desc->peer_ota_addr.val[0], desc->peer_ota_addr.val[1], desc->peer_ota_addr.val[2], desc->peer_ota_addr.val[3], desc->peer_ota_addr.val[4], desc->peer_ota_addr.val[5]);
+	Serial.printf("onConnect 2: %x %x [ %x %x %x %x %x %x ] \n", desc->conn_handle, desc->sec_state.encrypted, desc->peer_ota_addr.val[0], desc->peer_ota_addr.val[1], desc->peer_ota_addr.val[2], desc->peer_ota_addr.val[3], desc->peer_ota_addr.val[4], desc->peer_ota_addr.val[5]);
 	// Serial.printf("onConnect 2: conn_handle = %x \n", desc->conn_handle);
 	// Serial.printf("onConnect 2: conn_itvl = %x \n", desc->conn_itvl);
 	// Serial.printf("onConnect 2: conn_latency = %x \n", desc->conn_latency);
@@ -187,7 +187,7 @@ void BleConnectionStatus::onConnect(NimBLEServer* pServer, ble_gap_conn_desc* de
 	// this->target_handle = desc->conn_handle;
 	// this->connected = true;
 	Serial.printf("onConnect 2: updateConnParams(%x) \n", desc->conn_handle);
-	pServer->updateConnParams(desc->conn_handle, 0x10, 0x20, 0, 600);
+	pServer->updateConnParams(desc->conn_handle, 24, 48, 0, 60);
 	// ペアリング終わったら他の機器は探さない
 	// NimBLEDevice::startAdvertising();
 };
@@ -214,7 +214,7 @@ void BleConnectionStatus::onDisconnect(NimBLEServer* pServer, ble_gap_conn_desc*
 	// Serial.printf("onDisconnect 2: conn_handle = %x \n", desc->conn_handle);
 	// Serial.printf("onDisconnect 2: conn_itvl = %x \n", desc->conn_itvl);
 	// Serial.printf("onDisconnect 2: conn_latency = %x \n", desc->conn_latency);
-	Serial.printf("onDisconnect 2: %x [ %x %x %x %x %x %x ] \n", desc->conn_handle, desc->peer_ota_addr.val[0], desc->peer_ota_addr.val[1], desc->peer_ota_addr.val[2], desc->peer_ota_addr.val[3], desc->peer_ota_addr.val[4], desc->peer_ota_addr.val[5]);
+	Serial.printf("onDisconnect 2: %x %x [ %x %x %x %x %x %x ] \n", desc->conn_handle, desc->sec_state.encrypted, desc->peer_ota_addr.val[0], desc->peer_ota_addr.val[1], desc->peer_ota_addr.val[2], desc->peer_ota_addr.val[3], desc->peer_ota_addr.val[4], desc->peer_ota_addr.val[5]);
 	this->conn_list[desc->conn_handle] = false;
 	int i, c;
 	c = 0;
@@ -222,17 +222,17 @@ void BleConnectionStatus::onDisconnect(NimBLEServer* pServer, ble_gap_conn_desc*
 		if (this->conn_list[i]) c++;
 	}
 	// 接続してる機器が１つも無ければペアリングを待つ
-	if (c == 0) {
+	if (c == 0 || this->target_handle == desc->conn_handle) {
 		this->connected = false;
 		Serial.printf("onDisconnect: startAdvertising() \n");
 		NimBLEDevice::startAdvertising();
 	}
-
 };
 
 // 全ての接続を切断
 void BleConnectionStatus::allDisconnect()
 {
+	this->connected = false;
 	int i;
 	for (i=0; i<8; i++) {
 		if (this->conn_list[i]) {
@@ -242,16 +242,30 @@ void BleConnectionStatus::allDisconnect()
 	}
 };
 
-// ペアリング時のセキュリティ設定
+// 接続が確立した時に呼ばれる(一番最後に呼ばれる)
 void BleConnectionStatus::onAuthenticationComplete(ble_gap_conn_desc* desc) {
-	Serial.printf("onAuthenticationComplete : %x [ %x %x %x %x %x %x ] \n", desc->conn_handle, desc->peer_ota_addr.val[0], desc->peer_ota_addr.val[1], desc->peer_ota_addr.val[2], desc->peer_ota_addr.val[3], desc->peer_ota_addr.val[4], desc->peer_ota_addr.val[5]);
+	Serial.printf("onAuthenticationComplete 2: %x %x [ %x %x %x %x %x %x ] \n", desc->conn_handle, desc->sec_state.encrypted, desc->peer_ota_addr.val[0], desc->peer_ota_addr.val[1], desc->peer_ota_addr.val[2], desc->peer_ota_addr.val[3], desc->peer_ota_addr.val[4], desc->peer_ota_addr.val[5]);
 	// これが呼ばれて初めて接続完了
 	if (common_cls.addrcmp(this->target_addr.val, desc->peer_ota_addr.val)) {
-		Serial.printf("onAuthenticationComplete : complate\n");
-		this->target_handle = desc->conn_handle;
-		this->connected = true;
+		// ターゲットの機器の場合
+		if (desc->sec_state.encrypted) { // 接続成功
+			Serial.printf("onAuthenticationComplete : complate\n");
+			this->target_handle = desc->conn_handle;
+			this->connected = true;
+			NimBLEDevice::stopAdvertising(); // ターゲットが接続出来ているならペアリングを探さない
+		} else { // 接続失敗
+			Serial.printf("onAuthenticationComplete : encrypted NG\n");
+		}
 	} else {
-		Serial.printf("onAuthenticationComplete : none\n");
+		// ターゲットではない機器の場合
+		if (this->connected) {
+			// ターゲットが接続できてるなら切断
+			bleKeyboard.pServer->disconnect(desc->conn_handle);
+			NimBLEDevice::stopAdvertising(); // ターゲットが接続出来ているならペアリングを探さない
+		} else {
+			// ターゲットの接続待ちならば一応接続は維持（切断してもまたスグ接続されてしまうので）
+			Serial.printf("onAuthenticationComplete : none\n");
+		}
 	}
 	/*
 	Serial.printf("onAuthenticationComplete 1: sec_state = %x \n", desc->sec_state);

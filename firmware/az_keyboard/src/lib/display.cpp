@@ -846,15 +846,16 @@ void view_setting_pairing(lv_obj_t * obj, lv_event_t event) {
 
 	// 接続機器のメニュー
 	int i;
+	String s;
 	char device_list[256];
 	device_list[0] = 0x00;
 	for (i=0; i<blemac_len; i++) {
 		if (i) strcat(device_list, "\n");
-		strcat(device_list, "device");
+		sprintf(device_list, "%s%02x%02x%02x%02x%02x%02x", device_list, blemac_list[i].addr[0], blemac_list[i].addr[1], blemac_list[i].addr[2], blemac_list[i].addr[3], blemac_list[i].addr[4], blemac_list[i].addr[5]);
 	}
 	lv_drop_down_obj = lv_dropdown_create(win, NULL);
 	lv_dropdown_set_options(lv_drop_down_obj, device_list);
-	lv_obj_set_size(lv_drop_down_obj, 200, 34);
+	lv_obj_set_size(lv_drop_down_obj, 240, 34);
 	lv_dropdown_set_selected(lv_drop_down_obj, blemac_index);
 	lv_dropdown_set_symbol(lv_drop_down_obj, "▼");
 	lv_obj_align(lv_drop_down_obj, NULL, LV_ALIGN_IN_TOP_MID, 0, 150);
