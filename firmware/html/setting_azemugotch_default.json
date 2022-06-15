@@ -20,7 +20,7 @@
 		"touch": [],
 		"ioxp": []
 	},
-	"ioxp_pin": [26, 25],
+	"i2c_set": [26, 25, 400000],
 	"default_layer": 0,
 	"layers": {
 		"layer_0": {

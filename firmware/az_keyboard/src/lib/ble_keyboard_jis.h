@@ -1,7 +1,10 @@
 #ifndef BleKeyboardJIS_h
 #define BleKeyboardJIS_h
+
+
 #include "sdkconfig.h"
 #if defined(CONFIG_BT_ENABLED)
+
 
 #include "nimconfig.h"
 #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)

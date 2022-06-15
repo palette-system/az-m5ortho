@@ -156,10 +156,12 @@ aztool.view_key_layout = function() {
     // キー配列を表示
     aztool.key_layout_data = [];
     // 本体のキー配列を表示
-    aztool.key_layout_data.push({
-        "option": {"id": 0, "map_start": 0},
-        "kle": aztool.kle_view(aztool.main_kle[aztool.setting_json_data.keyboard_type], "#odiv_0", false, cnf, "sw_0_")
-    });
+    if (aztool.main_kle[aztool.setting_json_data.keyboard_type]) {
+        aztool.key_layout_data.push({
+            "option": {"id": 0, "map_start": 0},
+            "kle": aztool.kle_view(aztool.main_kle[aztool.setting_json_data.keyboard_type], "#odiv_0", false, cnf, "sw_0_")
+        });
+    }
     // オプションのキー配列を表示
     for (i in aztool.setting_json_data.i2c_option) {
         o = aztool.setting_json_data.i2c_option[i];

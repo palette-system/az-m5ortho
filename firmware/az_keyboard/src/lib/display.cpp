@@ -57,7 +57,6 @@ void view_soft_key_page(); // ソフトウェアキー画面表示
 void view_setting_mousepad(lv_obj_t * obj, lv_event_t event); // マウスパッド設定画面表示
 void view_setting_led(lv_obj_t * obj, lv_event_t event); // バックライト設定画面表示
 void view_setting_sound(lv_obj_t * obj, lv_event_t event); // サウンド設定画面表示
-void view_setting_pairing(lv_obj_t * obj, lv_event_t event); // ペアリング設定画面表示
 void view_setting_moniter(lv_obj_t * obj, lv_event_t event); // モニター設定画面表示
 void view_setting_menu_fnc(); // 設定メニュー表示
 void view_head_info(); // ヘッダインフォを表示
@@ -400,8 +399,6 @@ void view_setting_menu_fnc() {
     lv_obj_set_event_cb(btn, view_setting_led);
     btn = lv_list_add_btn(lv_list_obj, NULL, "サウンド設定");
     lv_obj_set_event_cb(btn, view_setting_sound);
-    btn = lv_list_add_btn(lv_list_obj, NULL, "ペアリング設定");
-    lv_obj_set_event_cb(btn, view_setting_pairing);
     btn = lv_list_add_btn(lv_list_obj, NULL, "設定モードで再起動");
     lv_obj_set_event_cb(btn, reboot_setting_mode_alert);
     btn = lv_list_add_btn(lv_list_obj, "×", "閉じる");
@@ -724,153 +721,6 @@ void view_setting_sound(lv_obj_t * obj, lv_event_t event) {
 	disp_enable = true;
 }
 
-// 新しい機器と接続キャンセルボタン
-void view_setting_pairing_newpea_cancel(lv_obj_t * obj, lv_event_t event) {
-	// クリック以外のイベントは無視
-	if (event != LV_EVENT_CLICKED) return;
-
-	// 元のMACアドレスに戻してBLE再起動
-	bleKeyboard.changeMac(blemac_list[blemac_index].addr);
-	// ペアリング設定画面表示
-	view_setting_pairing(NULL, LV_EVENT_CLICKED);
-}
-
-// 新しい機器と接続ページ
-void view_setting_pairing_newpea(lv_obj_t * obj, lv_event_t event) {
-	// クリック以外のイベントは無視
-	if (event != LV_EVENT_CLICKED) return;
-
-    // 新しい機器接続中ステータスに変更
-	blemac_stat = 1;
-
-    // 本体の新しいmacアドレスを生成してBLE再起動
-	/*
-	int i;
-	for (i=0; i<6; i++) {
-		macaddr_new[i] = random(0, 255);
-	}
-	*/
-	// esp_efuse_mac_get_default(macaddr_new); // 本体に設定されているMACアドレスを取得
-	// macaddr_new[5] += 4;
-	// bleKeyboard.changeMac(macaddr_new);
-	// 全ての接続を切断
-	bleKeyboard.connectionStatus->allDisconnect();
-
-	// モニタ描画停止
-	disp_enable = false;
-
-	// 画面上のオブジェクト全て削除
-	lv_obj_clean(lv_scr_act());
-
-	// window作成
-    lv_obj_t * win = lv_win_create(lv_scr_act(), NULL);
-    lv_win_set_title(win, "ペアリング設定");
-
-	// テキスト
-    lv_obj_t * txt = lv_label_create(win, NULL);
-    lv_label_set_text(txt, "ペアリングして下さい");
-    lv_obj_align(txt, NULL, LV_ALIGN_IN_TOP_MID, 0, 40);
-
-	// 閉じるボタン
-	lv_obj_t * btn5 = lv_btn_create(win, NULL);
-	lv_obj_set_size(btn5, 150, 50);
-	lv_obj_align(btn5, NULL, LV_ALIGN_IN_TOP_MID, 0, 100);
-	lv_obj_set_event_cb(btn5, view_setting_pairing_newpea_cancel);
-	lv_obj_set_style_local_value_str(btn5, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "キャンセル");
-	
-	// モニタ描画開始
-	disp_enable = true;
-}
-
-// 接続機器のリストボックス変更
-void view_setting_pairing_change(lv_obj_t * obj, lv_event_t event) {
-	// リスト変更以外のイベントは無視
-    if(event != LV_EVENT_VALUE_CHANGED) return;
-
-	// 何番が選択されたか
-	blemac_index = lv_dropdown_get_selected(obj);
-
-	// 選択したMACアドレスにしてBLE再起動
-	// bleKeyboard.changeMac(blemac_list[blemac_index].addr);
-	int i;
-	for (i=0; i<6; i++) {
-		bleKeyboard.connectionStatus->target_addr.val[i] = blemac_list[blemac_index].addr[i];
-	}
-	/*
-	if (blemac_index == 0) {
-		bleKeyboard.connectionStatus->target_addr.val[0] = 0xf5;
-		bleKeyboard.connectionStatus->target_addr.val[1] = 0xdf;
-		bleKeyboard.connectionStatus->target_addr.val[2] = 0xbf;
-		bleKeyboard.connectionStatus->target_addr.val[3] = 0x18;
-		bleKeyboard.connectionStatus->target_addr.val[4] = 0xb3;
-		bleKeyboard.connectionStatus->target_addr.val[5] = 0xe4;
-	} else {
-		bleKeyboard.connectionStatus->target_addr.val[0] = 0x1e;
-		bleKeyboard.connectionStatus->target_addr.val[1] = 0x99;
-		bleKeyboard.connectionStatus->target_addr.val[2] = 0xab;
-		bleKeyboard.connectionStatus->target_addr.val[3] = 0xea;
-		bleKeyboard.connectionStatus->target_addr.val[4] = 0xd0;
-		bleKeyboard.connectionStatus->target_addr.val[5] = 0x28;
-	}
-	*/
-	// 全ての接続を切断
-	bleKeyboard.connectionStatus->allDisconnect();
-}
-
-// ペアリング設定画面表示
-void view_setting_pairing(lv_obj_t * obj, lv_event_t event) {
-	// クリック以外のイベントは無視
-	if (event != LV_EVENT_CLICKED) return;
-
-	// モニタ描画停止
-	disp_enable = false;
-
-	// 画面上のオブジェクト全て削除
-	lv_obj_clean(lv_scr_act());
-
-	// window作成
-    lv_obj_t * win = lv_win_create(lv_scr_act(), NULL);
-    lv_win_set_title(win, "ペアリング設定");
-
-	// テキスト
-    // lv_obj_t * txt = lv_label_create(win, NULL);
-    // lv_label_set_text(txt, "ON/OFF");
-    // lv_obj_align(txt, NULL, LV_ALIGN_IN_TOP_MID, -50, 40);
-
-	// 新しい接続ボタン
-	lv_obj_t * btn1 = lv_btn_create(win, NULL);
-	lv_obj_set_size(btn1, 250, 50);
-	lv_obj_align(btn1, NULL, LV_ALIGN_IN_TOP_MID, 0, 50);
-	lv_obj_set_event_cb(btn1, view_setting_pairing_newpea);
-	lv_obj_set_style_local_value_str(btn1, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "新しい機器と接続");
-
-	// 接続機器のメニュー
-	int i;
-	String s;
-	char device_list[256];
-	device_list[0] = 0x00;
-	for (i=0; i<blemac_len; i++) {
-		if (i) strcat(device_list, "\n");
-		sprintf(device_list, "%s%02x%02x%02x%02x%02x%02x", device_list, blemac_list[i].addr[0], blemac_list[i].addr[1], blemac_list[i].addr[2], blemac_list[i].addr[3], blemac_list[i].addr[4], blemac_list[i].addr[5]);
-	}
-	lv_drop_down_obj = lv_dropdown_create(win, NULL);
-	lv_dropdown_set_options(lv_drop_down_obj, device_list);
-	lv_obj_set_size(lv_drop_down_obj, 240, 34);
-	lv_dropdown_set_selected(lv_drop_down_obj, blemac_index);
-	lv_dropdown_set_symbol(lv_drop_down_obj, "▼");
-	lv_obj_align(lv_drop_down_obj, NULL, LV_ALIGN_IN_TOP_MID, 0, 150);
-	lv_obj_set_event_cb(lv_drop_down_obj, view_setting_pairing_change);
-
-	// 閉じるボタン
-	lv_obj_t * btn5 = lv_btn_create(win, NULL);
-	lv_obj_set_size(btn5, 150, 50);
-	lv_obj_align(btn5, NULL, LV_ALIGN_IN_TOP_MID, 0, 280);
-	lv_obj_set_event_cb(btn5, view_setting_menu_ev);
-	lv_obj_set_style_local_value_str(btn5, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "閉じる");
-	
-	// モニタ描画開始
-	disp_enable = true;
-}
 
 
 
@@ -1182,11 +1032,6 @@ void Display::view_keyboard_setting() {
 	view_keyboard_select(1);
 }
 
-// 新しい機器接続完了画面表示
-void Display::view_pairing_newcomp() {
-	// ペアリング設定画面表示
-	view_setting_pairing(NULL, LV_EVENT_CLICKED);
-}
 
 // 画面いっぱい黒い画面
 void Display::view_black() {

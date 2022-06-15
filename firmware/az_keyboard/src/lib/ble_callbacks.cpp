@@ -107,177 +107,41 @@ void DescriptorCallbacks::onRead(NimBLEDescriptor* pDescriptor) {
 /** コネクションクラス */
 /* ====================================================================================================================== */
 
-BleConnectionStatus::BleConnectionStatus(void) {
-	int i;
-	for (i=0; i<8; i++) {
-		this->conn_list[i] = false;
-	}
-	// 既にペアリングしてるリストがある
-	if (blemac_len) {
-		for (i=0; i<6; i++) {
-			this->target_addr.val[i] = blemac_list[blemac_index].addr[i];
-		}
-	} else {
-		for (i=0; i<6; i++) {
-			this->target_addr.val[i] = 0x00;
-		}
-	}
-	// this->target_addr.val[0] = 0xf5;
-	// this->target_addr.val[1] = 0xdf;
-	// this->target_addr.val[2] = 0xbf;
-	// this->target_addr.val[3] = 0x18;
-	// this->target_addr.val[4] = 0xb3;
-	// this->target_addr.val[5] = 0xe4;
+BleConnectionStatus::BleConnectionStatus(void)
+{
+	this->connected = false;
 };
 
 // ペアリング完了（先に呼ばれる）
 void BleConnectionStatus::onConnect(NimBLEServer* pServer)
 {
-	// NimBLEDevice::stopAdvertising();
-	// Serial.printf("onConnect 1\n");
 };
 
 // ペアリング完了（後から呼ばれる）
 void BleConnectionStatus::onConnect(NimBLEServer* pServer, ble_gap_conn_desc* desc)
 {
-	int i, c;
-	// char *currentname = NimBLEAddress(desc->peer_ota_addr).toString().c_str();
-
-	// if (this->target_addr == 0) this->target_addr = desc->peer_ota_addr;
-	// Serial.printf("onConnect 2: sec_state = %x \n", desc->sec_state);
-	// Serial.printf("onConnect 2: sec_state = %x \n", desc->sec_state);
-	// Serial.printf("onConnect 2: our_id_addr = %x \n", desc->our_id_addr);
-	// Serial.printf("onConnect 2: peer_id_addr = %x \n", desc->peer_id_addr);
-	// Serial.printf("onConnect 2: our_ota_addr = %x \n", desc->our_ota_addr);
-	Serial.printf("onConnect 2: %x %x [ %x %x %x %x %x %x ] \n", desc->conn_handle, desc->sec_state.encrypted, desc->peer_ota_addr.val[0], desc->peer_ota_addr.val[1], desc->peer_ota_addr.val[2], desc->peer_ota_addr.val[3], desc->peer_ota_addr.val[4], desc->peer_ota_addr.val[5]);
-	// Serial.printf("onConnect 2: conn_handle = %x \n", desc->conn_handle);
-	// Serial.printf("onConnect 2: conn_itvl = %x \n", desc->conn_itvl);
-	// Serial.printf("onConnect 2: conn_latency = %x \n", desc->conn_latency);
-	this->conn_list[desc->conn_handle] = true;
-	if (!common_cls.addrcmp(this->target_addr.val, desc->peer_ota_addr.val)) {
-		// 初めて接続する機器かチェック
-		c = 0;
-		for (i=0; i<blemac_len; i++) {
-			if (common_cls.addrcmp(blemac_list[i].addr, desc->peer_ota_addr.val)) c++; // 接続した事がある機器
-		}
-		// 接続したことがある機器ならそのままターゲットの機器の接続を待つ
-		if (c) {
-	Serial.printf("onConnect 2: target addr [ %x %x %x %x %x %x ] \n", this->target_addr.val[0], this->target_addr.val[1], this->target_addr.val[2], this->target_addr.val[3], this->target_addr.val[4], this->target_addr.val[5]);
-			Serial.printf("onConnect 2: not target\n");
-			NimBLEDevice::startAdvertising(); // 他のペアリングを待つ
-			return;
-		} else {
-			Serial.printf("onConnect 2: new device\n");
-			// 初めて接続する機器ならターゲットにして、機器リストに追加
-			for (i=0; i<6; i++) this->target_addr.val[i] = desc->peer_ota_addr.val[i]; // ターゲットのアドレスを新しい機器にする
-			common_cls.blemac_add(this->target_addr.val); // 機器リストに追加
-			blemac_index = blemac_len - 1; // 選択してる機器を新しく追加したヤツにする
-		}
-	}
-	// 該当の接続が来た時他の接続を全部切る
-	for (i=0; i<8; i++) {
-		if (i == desc->conn_handle) continue; // 自分は何もしない
-		// 接続があれば接続を切る(自分以外)
-		if (this->conn_list[i]) {
-			Serial.printf("onConnect 2: disconnect(%x)\n", i);
-			pServer->disconnect(i);
-		}
-	}
-
-	// this->target_handle = desc->conn_handle;
-	// this->connected = true;
-	Serial.printf("onConnect 2: updateConnParams(%x) \n", desc->conn_handle);
-	pServer->updateConnParams(desc->conn_handle, 24, 48, 0, 60);
-	// ペアリング終わったら他の機器は探さない
-	// NimBLEDevice::startAdvertising();
 };
 
 // 切断（先に呼ばれる）
 void BleConnectionStatus::onDisconnect(NimBLEServer* pServer)
 {
-	// Serial.printf("onDisconnect 1\n");
-	// if (!this->connected) {
-		// NimBLEDevice::startAdvertising();
-		// Serial.printf("startAdvertising\n");
-	// }
-	// this->connected = false;
+	this->connected = false;
 };
 
 // 切断（後に呼ばれる）
 void BleConnectionStatus::onDisconnect(NimBLEServer* pServer, ble_gap_conn_desc* desc)
 {
-	// Serial.printf("onDisconnect 2: sec_state = %x \n", desc->sec_state);
-	// Serial.printf("onDisconnect 2: our_id_addr = %x \n", desc->our_id_addr);
-	// Serial.printf("onDisconnect 2: peer_id_addr = %x \n", desc->peer_id_addr);
-	// Serial.printf("onDisconnect 2: our_ota_addr = %x \n", desc->our_ota_addr);
-	// Serial.printf("onDisconnect 2: peer_ota_addr = %x \n", desc->peer_ota_addr);
-	// Serial.printf("onDisconnect 2: conn_handle = %x \n", desc->conn_handle);
-	// Serial.printf("onDisconnect 2: conn_itvl = %x \n", desc->conn_itvl);
-	// Serial.printf("onDisconnect 2: conn_latency = %x \n", desc->conn_latency);
-	Serial.printf("onDisconnect 2: %x %x [ %x %x %x %x %x %x ] \n", desc->conn_handle, desc->sec_state.encrypted, desc->peer_ota_addr.val[0], desc->peer_ota_addr.val[1], desc->peer_ota_addr.val[2], desc->peer_ota_addr.val[3], desc->peer_ota_addr.val[4], desc->peer_ota_addr.val[5]);
-	this->conn_list[desc->conn_handle] = false;
-	int i, c;
-	c = 0;
-	for (i=0; i<8; i++) {
-		if (this->conn_list[i]) c++;
-	}
-	// 接続してる機器が１つも無ければペアリングを待つ
-	if (c == 0 || this->target_handle == desc->conn_handle) {
-		this->connected = false;
-		Serial.printf("onDisconnect: startAdvertising() \n");
-		NimBLEDevice::startAdvertising();
-	}
 };
 
 // 全ての接続を切断
 void BleConnectionStatus::allDisconnect()
 {
-	this->connected = false;
-	int i;
-	for (i=0; i<8; i++) {
-		if (this->conn_list[i]) {
-			Serial.printf("allDisconnect: disconnect(%x) \n", i);
-			bleKeyboard.pServer->disconnect(i);
-		}
-	}
 };
 
 // 接続が確立した時に呼ばれる(一番最後に呼ばれる)
-void BleConnectionStatus::onAuthenticationComplete(ble_gap_conn_desc* desc) {
-	Serial.printf("onAuthenticationComplete 2: %x %x [ %x %x %x %x %x %x ] \n", desc->conn_handle, desc->sec_state.encrypted, desc->peer_ota_addr.val[0], desc->peer_ota_addr.val[1], desc->peer_ota_addr.val[2], desc->peer_ota_addr.val[3], desc->peer_ota_addr.val[4], desc->peer_ota_addr.val[5]);
-	// これが呼ばれて初めて接続完了
-	if (common_cls.addrcmp(this->target_addr.val, desc->peer_ota_addr.val)) {
-		// ターゲットの機器の場合
-		if (desc->sec_state.encrypted) { // 接続成功
-			Serial.printf("onAuthenticationComplete : complate\n");
-			this->target_handle = desc->conn_handle;
-			this->connected = true;
-			NimBLEDevice::stopAdvertising(); // ターゲットが接続出来ているならペアリングを探さない
-		} else { // 接続失敗
-			Serial.printf("onAuthenticationComplete : encrypted NG\n");
-		}
-	} else {
-		// ターゲットではない機器の場合
-		if (this->connected) {
-			// ターゲットが接続できてるなら切断
-			bleKeyboard.pServer->disconnect(desc->conn_handle);
-			NimBLEDevice::stopAdvertising(); // ターゲットが接続出来ているならペアリングを探さない
-		} else {
-			// ターゲットの接続待ちならば一応接続は維持（切断してもまたスグ接続されてしまうので）
-			Serial.printf("onAuthenticationComplete : none\n");
-		}
-	}
-	/*
-	Serial.printf("onAuthenticationComplete 1: sec_state = %x \n", desc->sec_state);
-	Serial.printf("onAuthenticationComplete 1: sec_state = %x \n", desc->sec_state);
-	Serial.printf("onAuthenticationComplete 1: our_id_addr = %x \n", desc->our_id_addr);
-	Serial.printf("onAuthenticationComplete 1: peer_id_addr = %x \n", desc->peer_id_addr);
-	Serial.printf("onAuthenticationComplete 1: our_ota_addr = %x \n", desc->our_ota_addr);
-	Serial.printf("onAuthenticationComplete 1: peer_ota_addr = %x \n", desc->peer_ota_addr);
-	Serial.printf("onAuthenticationComplete 1: conn_handle = %x \n", desc->conn_handle);
-	Serial.printf("onAuthenticationComplete 1: conn_itvl = %x \n", desc->conn_itvl);
-	Serial.printf("onAuthenticationComplete 1: conn_latency = %x \n", desc->conn_latency);
-	*/
+void BleConnectionStatus::onAuthenticationComplete(ble_gap_conn_desc* desc)
+{
+	this->connected = true;
 };
 
 

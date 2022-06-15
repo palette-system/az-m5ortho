@@ -113,6 +113,7 @@ void BleKeyboardJIS::taskServer(void* pvParameter)
     //BatteryService
     // NimBLEDevice::setPower(ESP_PWR_LVL_P9); /** +9db */
     NimBLEDevice::setSecurityAuth(BLE_SM_PAIR_AUTHREQ_BOND);
+    // NimBLEDevice::setSecurityAuth(false, false, false);
 
     bleKeyboardInstance->pServer = NimBLEDevice::createServer();
     bleKeyboardInstance->connectionStatus = new BleConnectionStatus();
@@ -133,7 +134,7 @@ void BleKeyboardJIS::taskServer(void* pvParameter)
     bleKeyboardInstance->pManufacturerCharacteristic->setCallbacks(&chrCallbacks);
 
     //HidService
-    bleKeyboardInstance->pHidService = bleKeyboardInstance->pServer->createService(NimBLEUUID("1812"), 40);
+    bleKeyboardInstance->pHidService = bleKeyboardInstance->pServer->createService(NimBLEUUID("1812"));
 
     //HidService-hidInfo
     bleKeyboardInstance->pHidInfoCharacteristic = bleKeyboardInstance->pHidService->createCharacteristic("2A4A", NIMBLE_PROPERTY::READ);// HID Information 会社名？とか？あと何かのフラグ
@@ -227,6 +228,8 @@ void BleKeyboardJIS::taskServer(void* pvParameter)
     bleKeyboardInstance->pAdvertising->start();
     NimBLEDevice::setMTU(127);
     Serial.printf("getMTU = %d\n", NimBLEDevice::getMTU());
+
+
 
     // vTaskDelay(portMAX_DELAY); //delay(portMAX_DELAY);
 };

@@ -19,6 +19,12 @@ aztool.main_kle["az_m5ortho"] = `
 ["4","0","11","15","20","16","24","25","26","36","32","52","48","59","63"]
 `;
 
+// えむごっちkle
+aztool.main_kle["az_core"] = `
+    ["0", "1"],
+    ["2", "3"]
+`;
+
 // レイヤー切り替えの種類
 // https://qiita.com/chesscommands/items/3e7e02d025f261bf6134
 aztool.layer_move_type_list = [
