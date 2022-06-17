@@ -16,7 +16,7 @@
 
 　　　※　ペアリング済みだった人はペアリング設定を削除してもう一度ペアリングしなおす
 
-- このディレクトリにある　index.html　を　Chrome　で開いて設定ツールを使う
+- https://palette-system.github.io/aztool/ 　を　Chrome　で開いて設定ツールを使う
 
 # オプションを追加する流れ
 
@@ -48,7 +48,6 @@ VID/PID、I2Cのピン、キーボードのピンなどキーボードで設定�
 | rgb_pin<br>rgb_len | NeoPixcell へ接続してるピン<br>何個接続してるか |
 | led_num<br>key_matrix<br>matrix_row<br>matrix_col | NeoPixcell 表示に使う用の設定 |
 | disp_rotation | 画面の向き |
-| keyboard_language | 日本語入力か英語入力か（廃止したい） |
 | keyboard_name | キーボード名 |
 | keyboard_type | キーボードの種類コード<br>この値で今どのキーボードとして動いてるか判定 |
 | keyboard_pin | 本体のキースイッチに設定しているピン<br>direct - GPIOから直にスイッチ<br>touch - 未使用<br>ioxp - エキスパンダのアドレス(全てdirect) |

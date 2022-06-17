@@ -293,6 +293,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			}
 			break;
 		}
+
 		case id_get_file_start: { // 0x30 ファイル取得開始
 			// ファイル名を取得
 			i = 1;
@@ -304,14 +305,14 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			target_file_path[i - 1] = 0x00;
 		    // ファイルが無ければ0を返す
 			if (!SPIFFS.exists(target_file_path)) {
-				send_buf[0] = 0x30;
+				send_buf[0] = id_get_file_start;
 				for (i=1; i<32; i++) send_buf[i] = 0x00;
 				this->sendRawData(send_buf, 32);
 				return;
 			}
 			open_file = SPIFFS.open(target_file_path, "r");
 			save_file_length = open_file.size();
-			// Serial.printf("ps_malloc load: %d %d\n", save_file_length, heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+			// Serial.printf("ps_malloc load: %s %d %d\n", target_file_path, save_file_length, heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
 			save_file_data = (uint8_t *)ps_malloc(save_file_length);
 			i = 0;
 			while (open_file.available()) {
@@ -319,7 +320,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 				i++;
 			}
 			open_file.close();
-			send_buf[0] = 0x30;
+			send_buf[0] = id_get_file_start;
 			send_buf[1] = 0x01; // ファイルは存在する
 			send_buf[2] = ((save_file_length >> 24) & 0xff);
 			send_buf[3] = ((save_file_length >> 16) & 0xff);
@@ -349,7 +350,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			// open_file = SPIFFS.open(target_file_path, "r");
 			// open_file.seek(p, SeekSet);
 			for (j=0; j<s; j++) {
-				send_buf[0] = 0x31;
+				send_buf[0] = id_get_file_data;
 				send_buf[1] = ((p >> 16) & 0xff);
 				send_buf[2] = ((p >> 8) & 0xff);
 				send_buf[3] = (p & 0xff);
@@ -401,7 +402,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			save_file_data = (uint8_t *)ps_malloc(save_file_length);
 			// open_file = SPIFFS.open(target_file_path, "w");
 			// データ要求コマンド送信
-			send_buf[0] = 0x33;
+			send_buf[0] = id_save_file_data;
 			send_buf[1] = save_file_step;
 			for (i=2; i<32; i++) send_buf[i] = 0x00;
 			this->sendRawData(send_buf, 32);
@@ -438,7 +439,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 				h = azcrc32(&save_file_data[j], l);
 				if (k < save_file_length) {
 					// まだデータを全部受け取って無ければ次を要求するコマンドを送信
-					send_buf[0] = 0x33;
+					send_buf[0] = id_save_file_data;
 					send_buf[1] = save_file_step;
 					send_buf[2] = (k >> 24) & 0xff; // データの開始位置 1
 					send_buf[3] = (k >> 16) & 0xff; // データの開始位置 2
@@ -455,7 +456,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 					// データを全部受け取り終わり
 					// 完了を送る
 					h = azcrc32(save_file_data, save_file_length);
-					send_buf[0] = 0x34; // 保存完了
+					send_buf[0] = id_save_file_complate; // 保存完了
 					send_buf[1] = 0x00; // データ受信完了
 					send_buf[2] = (h >> 24) & 0xff; // データ確認用ハッシュ 1
 					send_buf[3] = (h >> 16) & 0xff; // データ確認用ハッシュ 2
@@ -477,7 +478,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			open_file.close(); // ファイルクローズ
 			// Serial.printf("free save: %d %d\n", save_file_length, heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
 			free(save_file_data);
-			send_buf[0] = 0x34; // 保存完了
+			send_buf[0] = id_save_file_complate; // 保存完了
 			send_buf[1] = 0x01; // データ保存完了
 			for (i=2; i<32; i++) send_buf[i] = 0x00;
 			this->sendRawData(send_buf, 32);
@@ -492,7 +493,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 				if (i >= 32) break;
 			}
 			target_file_path[i - 1] = 0x00;
-			send_buf[0] = 0x35;
+			send_buf[0] = id_remove_file;
 		    // ファイルがあればファイルを消す
 			if (SPIFFS.exists(target_file_path)) {
 				if (!SPIFFS.remove(target_file_path)) {
@@ -508,6 +509,17 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			}
 			// 完了を返す
 			for (i=2; i<32; i++) send_buf[i] = 0x00;
+			this->sendRawData(send_buf, 32);
+			return;
+
+		}
+		case id_remove_all: { // 全てのファイルを削除する
+			keyboard_status = 2; // ステータスをAZTOOLの処理中にする
+			common_cls.delete_all();
+			keyboard_status = 1; // ステータスを元に戻す
+			// 結果を返すコマンドを送信
+			send_buf[0] = id_remove_all;
+			for (i=1; i<32; i++) send_buf[i] = 0x00;
 			this->sendRawData(send_buf, 32);
 			return;
 
@@ -533,7 +545,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 				if (i >= 32) break;
 			}
 			second_file_path[j] = 0x00;
-		    send_buf[0] = 0x36;
+		    send_buf[0] = id_move_file;
 			if (!SPIFFS.exists(target_file_path)) {
 				// 該当ファイルが無ければ1を返す
 				send_buf[1] = 0x01;
@@ -559,12 +571,12 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 				filep = dirp.openNextFile();
 			}
 			save_file_length = res.length();
-			m = save_file_length + 1;
+			m = save_file_length;
 			// ファイルリストの結果を送信用バッファに入れる
-			save_file_data = (uint8_t *)ps_malloc(m);
-			res.toCharArray((char *)save_file_data, m);
+			save_file_data = (uint8_t *)ps_malloc(m + 1);
+			res.toCharArray((char *)save_file_data, m + 1);
 			// 結果を返すコマンドを送信
-			send_buf[0] = 0x37;
+			send_buf[0] = id_get_file_list;
 			send_buf[1] = ((save_file_length >> 24) & 0xff);
 			send_buf[2] = ((save_file_length >> 16) & 0xff);
 			send_buf[3] = ((save_file_length >> 8) & 0xff);
@@ -574,6 +586,28 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			return;
 
 
+		}
+		case id_get_disk_info: {
+			// SPIFFSの容量を返す
+			send_buf[0] = id_get_disk_info; // 結果の返すコマンド
+			keyboard_status = 2; // ステータスをAZTOOLの処理中にする
+			// spiffs の容量
+			m = common_cls.spiffs_total();
+			send_buf[1] = ((m >> 24) & 0xff);
+			send_buf[2] = ((m >> 16) & 0xff);
+			send_buf[3] = ((m >> 8) & 0xff);
+			send_buf[4] = (m & 0xff);
+			// spiffs の使用容量
+			m = common_cls.spiffs_used();
+			send_buf[5] = ((m >> 24) & 0xff);
+			send_buf[6] = ((m >> 16) & 0xff);
+			send_buf[7] = ((m >> 8) & 0xff);
+			send_buf[8] = (m & 0xff);
+			keyboard_status = 1; // ステータスを元に戻す
+			// 結果を返すコマンドを送信
+			for (i=9; i<32; i++) send_buf[i] = 0x00;
+			this->sendRawData(send_buf, 32);
+			return;
 		}
 		case id_restart: {
 			// M5StackCore2 の再起動
@@ -590,7 +624,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			x = remap_buf[1]; // エキスパンダのアドレス(0～7)
 			// 既に使用しているIOエキスパンダなら読み込みステータス0で返す
 			if (ioxp_hash[x] == 1) {
-				send_buf[0] = 0x39; // IOエキスパンダキー読み込み
+				send_buf[0] = id_get_ioxp_key; // IOエキスパンダキー読み込み
 				send_buf[1] = 0x01; // 使用中
 				for (i=2; i<32; i++) send_buf[i] = 0x00;
 				this->sendRawData(send_buf, 32);
@@ -604,7 +638,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			if (ioxp_status[x] < 1) {
 				if (!ioxp_obj[x]->begin_I2C(0x20 + x, &Wire)) {
 					// 初期化失敗
-					send_buf[0] = 0x39; // IOエキスパンダキー読み込み
+					send_buf[0] = id_get_ioxp_key; // IOエキスパンダキー読み込み
 					send_buf[1] = 0x02; // 初期化失敗
 					for (i=2; i<32; i++) send_buf[i] = 0x00;
 					this->sendRawData(send_buf, 32);
@@ -639,7 +673,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			}
 			// キーの読み込み
 			p = 3;
-			send_buf[0] = 0x39; // IOエキスパンダキー読み込み
+			send_buf[0] = id_get_ioxp_key; // IOエキスパンダキー読み込み
 			send_buf[1] = 0x00; // 読み取り成功
 			send_buf[2] = s; // rowの数
 			if (s) {
@@ -684,11 +718,30 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			} else if (remap_buf[1] == 1) {
 				aztool_mode_flag = true;
 			}
-			send_buf[0] = 0x3A; // フラグの設定
+			send_buf[0] = id_set_mode_flag; // フラグの設定
 			for (i=1; i<32; i++) send_buf[i] = 0x00; // 残りのデータを0詰め
 			this->sendRawData(send_buf, 32);
 			return;
 			
+		}
+		case id_get_ap_list: {
+			// WIFI のアクセスポイントの一覧取得
+			keyboard_status = 2;
+			String apjson = common_cls.get_wifi_ap_list_json();
+			save_file_length = apjson.length();
+			save_file_data = (uint8_t *)ps_malloc(save_file_length + 1);
+			apjson.toCharArray((char *)save_file_data, save_file_length + 1);
+			// 結果を返すコマンドを送信
+			send_buf[0] = id_get_ap_list;
+			send_buf[1] = ((save_file_length >> 24) & 0xff);
+			send_buf[2] = ((save_file_length >> 16) & 0xff);
+			send_buf[3] = ((save_file_length >> 8) & 0xff);
+			send_buf[4] = (save_file_length & 0xff);
+			for (i=5; i<32; i++) send_buf[i] = 0x00;
+			this->sendRawData(send_buf, 32);
+			keyboard_status = 1;
+			return;
+
 		}
 
 		default: {

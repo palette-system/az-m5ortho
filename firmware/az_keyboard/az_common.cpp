@@ -171,6 +171,9 @@ uint32_t boot_count;
 // 打鍵数を自動保存するかどうか
 uint8_t key_count_auto_save;
 
+// キーボードのステータス
+int8_t keyboard_status;
+
 // IOエキスパンダオブジェクト
 Adafruit_MCP23X17 *ioxp_obj[8];
 
@@ -338,6 +341,8 @@ void AzCommon::common_start() {
     // ソフトキーが押された時入る変数
     soft_click_layer = -1;
     soft_click_key = -1;
+    // キーボードのステータス
+    keyboard_status = 0;
     // 再生用バック処理
     xTaskCreatePinnedToCore(background_loop, "bgloop", 2048, NULL, 20, NULL, 0);
     // ディスプレイループ
@@ -389,6 +394,28 @@ void AzCommon::wifi_connect() {
     if (wifi_conn_flag) {
         ESP_LOGD(LOG_TAG, "wifi : connect OK!\r\n");
     }
+}
+
+// wifiアクセスポイントのリストをJSONで取得
+String AzCommon::get_wifi_ap_list_json() {
+    String res = "{\"list\": [";
+    int ssid_num;
+    String auth_open;
+    ssid_num = WiFi.scanNetworks();
+    if (ssid_num == 0) {
+        ESP_LOGD(LOG_TAG, "get_wifi_ap_list: no networks");
+    } else {
+        ESP_LOGD(LOG_TAG, "get_wifi_ap_list: %d\r\n", ssid_num);
+        for (int i = 0; i < ssid_num; ++i) {
+            auth_open = ((WiFi.encryptionType(i) == WIFI_AUTH_OPEN)? "true": "false");
+            if (i > 0) res += ",";
+            res += "{\"ssid\": \"" + WiFi.SSID(i) + "\", \"rssi\": \"" + WiFi.RSSI(i) + "\", \"auth_open\": " + auth_open + "}";
+            delay(10);
+        }
+    }
+    res += "]}";
+    ESP_LOGD(LOG_TAG, "%S", res);
+    return res;
 }
 
 // URLからドメイン名だけ抜き出す

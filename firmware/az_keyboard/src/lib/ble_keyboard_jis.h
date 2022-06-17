@@ -406,7 +406,6 @@ class BleKeyboardJIS
     uint8_t mac_setting[6]; // 本体MACアドレス
     uint8_t *_hidReportDescriptor; // HID レポート設定
     unsigned short _hidReportDescriptorSize; // HID レポートのサイズ
-    uint8_t keyboard_language; // 入力タイプ 0=jis, 1=us
     uint8_t batteryLevel; // バッテリーレベル 0-100
     KeyReport _keyReport;
     MediaKeyReport _mediaKeyReport;
@@ -419,10 +418,8 @@ class BleKeyboardJIS
 
     /* メソッド */
     BleKeyboardJIS(void); // コンストラクタ
-    void set_keyboard_language(uint8_t kl);
     void set_report_map(uint8_t * report_map, unsigned short report_size);
     void begin(std::string deviceName = "BleKeyboardJIS", std::string deviceManufacturer = "PaletteSystem");
-    void changeMac(uint8_t * mac_addr);
     void end(void);
     bool isConnected(void);
     unsigned short modifiers_press(unsigned short k);
@@ -430,7 +427,6 @@ class BleKeyboardJIS
     void shift_release(); // Shiftを離す
     unsigned short modifiers_media_press(unsigned short k);
     unsigned short modifiers_media_release(unsigned short k);
-    unsigned short code_convert(unsigned short k);
     void sendReport(KeyReport* keys);
     void sendReport(MediaKeyReport* keys);
     void mouse_click(uint8_t b);

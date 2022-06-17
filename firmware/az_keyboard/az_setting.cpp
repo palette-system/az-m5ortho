@@ -47,29 +47,6 @@ String toStringIp(IPAddress ip) {
     return res;
 }
 
-// wifiアクセスポイントのリストをJSONで取得
-String get_wifi_ap_list_json(){
-    ESP_LOGD(LOG_TAG, "get_wifi_ap_list: start");
-    String res = "{\"list\": [";
-    int ssid_num;
-    String auth_open;
-    ssid_num = WiFi.scanNetworks();
-    if (ssid_num == 0) {
-        ESP_LOGD(LOG_TAG, "get_wifi_ap_list: no networks");
-    } else {
-        ESP_LOGD(LOG_TAG, "get_wifi_ap_list: %d\r\n", ssid_num);
-        for (int i = 0; i < ssid_num; ++i) {
-            auth_open = ((WiFi.encryptionType(i) == WIFI_AUTH_OPEN)? "true": "false");
-            if (i > 0) res += ",";
-            res += "{\"ssid\": \"" + WiFi.SSID(i) + "\", \"rssi\": \"" + WiFi.RSSI(i) + "\", \"auth_open\": " + auth_open + "}";
-            delay(10);
-        }
-    }
-    res += "]}";
-    ESP_LOGD(LOG_TAG, "%S", res);
-    return res;
-}
-
 
 void captivePortal() {
     //無効リクエストはすべてESP32に向ける
@@ -217,7 +194,7 @@ bool handleUrl(String path) {
 
     } else if (path.indexOf("/get_ap_list") == 0) {
         // WIFIのアクセスポイントのリスト教えて
-        server.send(200,"text/json", get_wifi_ap_list_json());
+        server.send(200,"text/json", common_cls.get_wifi_ap_list_json());
         return true;
         
     } else if (path.indexOf("/wifi_conn_check") == 0) {

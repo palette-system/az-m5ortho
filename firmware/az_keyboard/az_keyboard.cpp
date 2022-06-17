@@ -46,9 +46,6 @@ void AzKeyboard::start_keyboard() {
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
     bleKeyboard.begin(keyboard_name_str);
     ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
-    
-    // キーボードの言語を指定(日本語=0/ US=1 / 日本語(US記号) = 2)
-    bleKeyboard.set_keyboard_language(keyboard_language);
 
     // ステータスLED点灯
     status_led_mode = 1;
@@ -1008,11 +1005,6 @@ void AzKeyboard::loop_exec(void) {
   while (true) {
 
     ns = millis();
-
-    // 入力モードが変わっていたら変更
-    if (bleKeyboard.keyboard_language != keyboard_language) {
-        bleKeyboard.set_keyboard_language(keyboard_language);
-    }
 
     // 現在のキーの状態を取得
     common_cls.key_read();
