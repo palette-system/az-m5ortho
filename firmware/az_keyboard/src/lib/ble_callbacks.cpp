@@ -115,6 +115,8 @@ BleConnectionStatus::BleConnectionStatus(void)
 // ペアリング完了（先に呼ばれる）
 void BleConnectionStatus::onConnect(NimBLEServer* pServer)
 {
+	keyboard_status = 1;
+	this->connected = true;
 };
 
 // ペアリング完了（後から呼ばれる）
@@ -125,6 +127,7 @@ void BleConnectionStatus::onConnect(NimBLEServer* pServer, ble_gap_conn_desc* de
 // 切断（先に呼ばれる）
 void BleConnectionStatus::onDisconnect(NimBLEServer* pServer)
 {
+	keyboard_status = 0;
 	this->connected = false;
 };
 
