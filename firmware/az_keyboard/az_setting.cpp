@@ -265,7 +265,7 @@ void start_wifi() {
     
     //無線LAN接続AP(アクセスポイント)モード
     WiFi.mode(WIFI_AP_STA);
-    WiFi.softAP(eep_data.ap_ssid, ap_pass_char);
+    WiFi.softAP("AZ-Keyboard", ap_pass_char);
 
     // DNSサーバー起動
     IPAddress myIP = WiFi.softAPIP();

@@ -43,10 +43,10 @@
 
 
 // ファームウェアのバージョン文字
-#define FIRMWARE_VERSION   "000213"
+#define FIRMWARE_VERSION   "000214"
 
 // EEPROMに保存しているデータのバージョン文字列
-#define EEP_DATA_VERSION    "AZM023"
+#define EEP_DATA_VERSION    "AZM024"
 
 // vid pid のデフォルト値
 #define BLE_HID_VID  0xE502
@@ -120,7 +120,6 @@ struct press_mouse_data {
 struct mrom_data_set {
     char check[10];
     char keyboard_type[16];
-    char ap_ssid[32];
     int boot_mode; // 起動モード 0=キーボード / 1=設定モード
     char uid[12];
 };

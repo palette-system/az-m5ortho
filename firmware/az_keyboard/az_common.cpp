@@ -1743,10 +1743,6 @@ void AzCommon::load_data() {
     eep_data.boot_mode = 0;
     // データチェック文字列
     strcpy(eep_data.check, EEP_DATA_VERSION);
-    // WIFIアクセスポイントの名前
-    char b[16];
-    getRandomNumbers(4, b);
-    sprintf(eep_data.ap_ssid, "AZ-Keyboard-%S", b);
     // ユニークID
     getRandomNumbers(10, eep_data.uid);
     // キーボードの種類
@@ -1770,6 +1766,7 @@ void AzCommon::load_data() {
     // データのバージョンが変わっていたらファイルを消して再起動
     if (strcmp(eep_data.check, EEP_DATA_VERSION) != 0) {
         SPIFFS.remove(AZ_SYSTEM_FILE_PATH);
+        SPIFFS.remove(SETTING_JSON_PATH);
         delay(300);
         ESP.restart(); // ESP32再起動
     }
@@ -1781,10 +1778,6 @@ void AzCommon::save_data() {
     //EEPROMに設定を保存する。
     File fp;
     strcpy(eep_data.check, EEP_DATA_VERSION);
-    ESP_LOGD(LOG_TAG, "save eeprom boot mode: %D", eep_data.boot_mode);
-    ESP_LOGD(LOG_TAG, "save eeprom check sum: %S", eep_data.check);
-    ESP_LOGD(LOG_TAG, "keyboard_type: %S", eep_data.keyboard_type);
-    ESP_LOGD(LOG_TAG, "data sizeof: %D", sizeof(mrom_data_set));
     // ファイルに書き込み
     fp = SPIFFS.open(AZ_SYSTEM_FILE_PATH, "w");
     fp.write((uint8_t *)&eep_data, sizeof(mrom_data_set));

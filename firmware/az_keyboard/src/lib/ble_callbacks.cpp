@@ -567,12 +567,15 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			// ファイルリストの取得
 			File dirp = SPIFFS.open("/");
 			File filep = dirp.openNextFile();
-			String res = "";
+			String res = "{\"list\":[";
+			i = 0;
 			while(filep){
-				if (res.length()) res += "\n";
-				res += String(filep.name()) + "\n" + String(filep.size());
+				if (i) res += ",";
+				res += "{\"name\":\"" +String(filep.name()) + "\",\"size\":" + String(filep.size()) + "}";
 				filep = dirp.openNextFile();
+				i++;
 			}
+			res += "]}";
 			save_file_length = res.length();
 			m = save_file_length;
 			// ファイルリストの結果を送信用バッファに入れる
@@ -587,8 +590,6 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			for (i=5; i<32; i++) send_buf[i] = 0x00;
 			this->sendRawData(send_buf, 32);
 			return;
-
-
 		}
 		case id_get_disk_info: {
 			// SPIFFSの容量を返す
