@@ -717,11 +717,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 		}
 		case id_set_mode_flag: {
 			// WEBツール作業中フラグの設定
-		    if (remap_buf[1] == 0) {
-				aztool_mode_flag = false;
-			} else if (remap_buf[1] == 1) {
-				aztool_mode_flag = true;
-			}
+			aztool_mode_flag = remap_buf[1];
 			send_buf[0] = id_set_mode_flag; // フラグの設定
 			for (i=1; i<32; i++) send_buf[i] = 0x00; // 残りのデータを0詰め
 			this->sendRawData(send_buf, 32);
@@ -744,6 +740,32 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			for (i=5; i<32; i++) send_buf[i] = 0x00;
 			this->sendRawData(send_buf, 32);
 			keyboard_status = 1;
+			return;
+
+		}
+		case id_read_key: {
+			// キーの入力状態取得
+			// 結果コマンドの準備
+			send_buf[0] = id_read_key; // キーの入力状態
+			send_buf[1] = key_input_length & 0xff; // キーの数
+			for (i=2; i<32; i++) send_buf[i] = 0x00; // 残りのデータを0詰め
+			// 結果コマンドに入力データを入れていく
+			j = 0;
+			s = 2;
+			for (i=0; i<key_input_length; i++) {
+				if (j == 8) {
+					j = 0;
+					s++;
+				} else {
+					send_buf[s] = send_buf[s] << 1;
+				}
+				if (s > 31) break;
+				if (common_cls.input_key[i]) send_buf[s]++;
+				j++;
+			}
+			if (j > 0 && j < 8) send_buf[s] = send_buf[s] << (8 - j);
+			// 結果を送信
+			this->sendRawData(send_buf, 32);
 			return;
 
 		}

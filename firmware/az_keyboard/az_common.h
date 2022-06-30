@@ -469,7 +469,7 @@ extern int8_t restart_index;
 extern bool menu_mode_flag;
 
 // aztoolで設定中かどうか
-extern bool aztool_mode_flag;
+extern uint8_t aztool_mode_flag;
 
 // wifi設定
 extern uint8_t wifi_data_length;

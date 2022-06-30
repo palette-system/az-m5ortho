@@ -157,7 +157,7 @@ int8_t restart_index;
 bool menu_mode_flag;
 
 // aztoolで設定中かどうか
-bool aztool_mode_flag;
+uint8_t aztool_mode_flag;
 
 // オールクリア送信フラグ
 int press_key_all_clear;
@@ -268,7 +268,7 @@ static void background_loop(void* arg) {
 static void background_disp_loop(void* arg) {
   while (true) {
     unsigned long start_time = millis();
-    if (!menu_mode_flag && !aztool_mode_flag && disp_enable) lv_task_handler();
+    if (!menu_mode_flag && aztool_mode_flag == 0 && disp_enable) lv_task_handler();
     unsigned long work_time = millis() - start_time;
     if (work_time < 30) { vTaskDelay(30 - work_time); }
   }
@@ -331,7 +331,7 @@ void AzCommon::common_start() {
     // メニューを表示しているかどうか
     menu_mode_flag = false;
     // aztoolで作業中かどうか
-    aztool_mode_flag = false;
+    aztool_mode_flag = 0;
     // LVGL表示インデックス
     lvgl_loop_index = 0;
     // ディスプレイの向き

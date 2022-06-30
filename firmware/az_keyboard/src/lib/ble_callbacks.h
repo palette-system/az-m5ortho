@@ -50,6 +50,7 @@ enum via_command_id {
     id_get_ioxp_key                         = 0x3B,
     id_set_mode_flag                        = 0x3C,
     id_get_ap_list                          = 0x3D,
+    id_read_key                             = 0x3E,
 
     // システム用
     id_unhandled                            = 0xFF,
