@@ -1854,14 +1854,15 @@ void AzCommon::change_mode(int set_mode) {
 
 // I2C機器のキー状態を取得
 int AzCommon::i2c_read(int p, i2c_option *opt, char *read_data) {
-    int i, j, k, m, n, r, x;
+    int e, i, j, k, m, n, r, x;
     unsigned long start_time;
     unsigned long end_time;
     uint16_t rowput_mask;
     int rowput_len;
-    int mxread[8];
+    uint16_t read_raw[32];
     Adafruit_MCP23X17 *ioxp;
     r = 0;
+    e = 0;
     if (opt->opt_type == 1) {
         // IOエキスパンダ
         for (i=0; i<opt->ioxp_len; i++) {
@@ -1882,32 +1883,27 @@ int AzCommon::i2c_read(int p, i2c_option *opt, char *read_data) {
                     if (rowput_mask & 0xff) { // ポートA
                         ioxp->writeGPIO(opt->ioxp[i].row_output[j] & 0xff, 0); // ポートAに出力
                     }
-                    mxread[j] = ioxp->readGPIOAB(); // ポートA,B両方のデータを取得
-                }
-                // マップデータ分入力を取得
-                for (j=0; j<opt->map_len; j++) {
-                    n = opt->map[j];
-                    k = n / 16;
-                    m = n % 16;
-                    if (k >= rowput_len) k = rowput_len - 1; // マトリックスで取得した数より多い場合はdirectの指定なので一番最後に取得した情報で判定
-                    read_data[p] = ((mxread[k] | rowput_mask) & (0x01 << m))? 0: 1;
-                    p++;
-                    r++;
+                    read_raw[e] = ioxp->readGPIOAB() | rowput_mask; // ポートA,B両方のデータを取得
+                    e++;
                 }
             } else {
                 // col と row が無い場合はダイレクトのみ
-                mxread[0] = ioxp_obj[x]->readGPIOAB(); // ポートA,B両方のデータを取得
-                // マップデータ分入力を取得
-                for (j=0; j<opt->map_len; j++) {
-                    m = opt->map[j] % 16;
-                    read_data[p] = (mxread[0] & (0x01 << m))? 0: 1;
-                    p++;
-                    r++;
-                }
+                read_raw[e] = ioxp_obj[x]->readGPIOAB(); // ポートA,B両方のデータを取得
+                e++;
             }
         }
+        // マップデータ分入力を取得
+        for (j=0; j<opt->map_len; j++) {
+            n = opt->map[j];
+            k = n / 16;
+            m = n % 16;
+            if (k >= e) k = e - 1; // マトリックスで取得した数より多い場合はdirectの指定なので一番最後に取得した情報で判定
+            read_data[p] = (read_raw[k] & (0x01 << m))? 0: 1;
+            p++;
+            r++;
+        }
     }
-   return r;
+    return r;
 }
 
 // 現在のキーの入力状態を取得
