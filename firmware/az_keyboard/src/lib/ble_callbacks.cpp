@@ -769,6 +769,17 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			return;
 
 		}
+		case id_get_rotary_key: {
+			// ロータリーエンコーダの入力状態取得
+		    m = remap_buf[1]; // 読み込みに行くアドレス取得
+			send_buf[0] = id_get_rotary_key; // キーの入力状態
+			send_buf[1] = m; // 読み込みに行くアドレス
+            Wire.requestFrom(m, 1); // 指定したアドレスのTinyにデータ取得要求
+            send_buf[2] = Wire.read(); // データ受け取る
+			for (i=3; i<32; i++) send_buf[i] = 0x00;
+			this->sendRawData(send_buf, 32);
+
+		}
 
 		default: {
 			remap_buf[0] = 0xFF;

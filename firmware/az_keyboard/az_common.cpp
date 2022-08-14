@@ -719,7 +719,10 @@ void AzCommon::load_setting_json() {
     }
 
     // I2cオプションの設定
-    int i2c_key_len = 0;
+    i2c_map i2cmap_obj;
+    i2c_ioxp i2cioxp_obj;
+    i2c_rotary i2crotary_obj;
+    int opt_type;
     if (setting_obj.containsKey("i2c_option") && setting_obj["i2c_option"].size()) {
         // 有効になっているオプションの数を数える
         k = setting_obj["i2c_option"].size();
@@ -739,84 +742,110 @@ void AzCommon::load_setting_json() {
                     setting_obj["i2c_option"][i]["enable"].as<signed int>() != 1) continue;
             // オプションのタイプ
             if (setting_obj["i2c_option"][i].containsKey("type")) {
-                i2copt[i].opt_type = setting_obj["i2c_option"][i]["type"].as<signed int>();
+                opt_type = setting_obj["i2c_option"][i]["type"].as<signed int>();
             } else {
-                i2copt[i].opt_type = 0;
+                opt_type = 0;
             }
-            // キーマッピング設定
-            if (setting_obj["i2c_option"][i].containsKey("map") &&
-                    setting_obj["i2c_option"][i]["map"].size() ) {
-                i2copt[i].map_len = setting_obj["i2c_option"][i]["map"].size();
-                i2copt[i].map = new short[i2copt[i].map_len];
-                for (p=0; p<i2copt[i].map_len; p++) {
-                    i2copt[i].map[p] = setting_obj["i2c_option"][i]["map"][p].as<signed int>();
+            i2copt[i].opt_type = opt_type & 0xff;
+            // マッピング情報の読み込み
+            if (opt_type == 1 || opt_type == 2) { // 1 = IOエキスパンダ（MCP23017）/ 2 = Tiny202 ロータリーエンコーダ
+                // キーマッピング設定
+                if (setting_obj["i2c_option"][i].containsKey("map") &&
+                        setting_obj["i2c_option"][i]["map"].size() ) {
+                    i2cmap_obj.map_len = setting_obj["i2c_option"][i]["map"].size();
+                    i2cmap_obj.map = new short[i2cmap_obj.map_len];
+                    for (p=0; p<i2cmap_obj.map_len; p++) {
+                        i2cmap_obj.map[p] = setting_obj["i2c_option"][i]["map"][p].as<signed int>();
+                    }
+                } else {
+                    i2cmap_obj.map_len = 0;
                 }
-            } else {
-                i2copt[i].map_len = 0;
-            }
-            i2c_key_len += i2copt[i].map_len;
-            // キー設定の開始番号
-            if (setting_obj["i2c_option"][i].containsKey("map_start")) {
-                i2copt[i].map_start = setting_obj["i2c_option"][i]["map_start"].as<signed int>();
-            } else {
-                i2copt[i].map_start = 0;
-            }
-            // 使用するIOエキスパンダの情報
-            if (setting_obj["i2c_option"][i].containsKey("ioxp") && setting_obj["i2c_option"][i]["ioxp"].size()) {
-                i2copt[i].ioxp_len = setting_obj["i2c_option"][i]["ioxp"].size();
-                i2copt[i].ioxp = new ioxp_option[i2copt[i].ioxp_len];
-                for (n=0; n<i2copt[i].ioxp_len; n++) {
-                    // IOエキスパンダのアドレス
-                    i2copt[i].ioxp[n].addr = setting_obj["i2c_option"][i]["ioxp"][n]["addr"];
-                    // row に設定しているピン
-                    if (setting_obj["i2c_option"][i]["ioxp"][n].containsKey("row") &&
-                            setting_obj["i2c_option"][i]["ioxp"][n]["row"].size() ) {
-                        // row に設定されている配列を取得(0～7 以外を無視する)
-                        i2copt[i].ioxp[n].row_len = setting_obj["i2c_option"][i]["ioxp"][n]["row"].size();
-                        i2copt[i].ioxp[n].row = new uint8_t[i2copt[i].ioxp[n].row_len]; // row のピン番号
-                        i2copt[i].ioxp[n].row_output = new uint16_t[i2copt[i].ioxp[n].row_len]; // マトリックスでrow write するデータ
-                        i2copt[i].ioxp[n].row_mask = 0x00; // row write する時用のマスク
-                        o = 0;
-                        for (p=0; p<i2copt[i].ioxp[n].row_len; p++) {
-                            r = setting_obj["i2c_option"][i]["ioxp"][n]["row"][p].as<signed int>();
-                            // if (r < 0 || r >= 8) continue; // ポートA以外の場合は取得しない
-                            i2copt[i].ioxp[n].row[o] = r;
-                            o++;
-                            i2copt[i].ioxp[n].row_mask |= 0x01 << r;
-                        }
-                        i2copt[i].ioxp[n].row_len = o;
-                        // マトリックス出力する時用のデータ作成
-                        for (p=0; p<o; p++) {
-                            i2copt[i].ioxp[n].row_output[p] = i2copt[i].ioxp[n].row_mask & ~(0x01 << i2copt[i].ioxp[n].row[p]);
-                        }
-                    } else {
-                        i2copt[i].ioxp[n].row_len = 0;
-                    }
-                    // col に設定しているピン
-                    if (setting_obj["i2c_option"][i]["ioxp"][n].containsKey("col") &&
-                            setting_obj["i2c_option"][i]["ioxp"][n]["col"].size() ) {
-                        i2copt[i].ioxp[n].col_len = setting_obj["i2c_option"][i]["ioxp"][n]["col"].size();
-                        i2copt[i].ioxp[n].col = new uint8_t[i2copt[i].ioxp[n].col_len];
-                        for (p=0; p<i2copt[i].ioxp[n].col_len; p++) {
-                            i2copt[i].ioxp[n].col[p] = setting_obj["i2c_option"][i]["ioxp"][n]["col"][p].as<signed int>();
-                        }
-                    } else {
-                        i2copt[i].ioxp[n].col_len = 0;
-                    }
-                    // direct に設定しているピン
-                    if (setting_obj["i2c_option"][i]["ioxp"][n].containsKey("direct") &&
-                            setting_obj["i2c_option"][i]["ioxp"][n]["direct"].size() ) {
-                        i2copt[i].ioxp[n].direct_len = setting_obj["i2c_option"][i]["ioxp"][n]["direct"].size();
-                        i2copt[i].ioxp[n].direct = new uint8_t[i2copt[i].ioxp[n].direct_len];
-                        for (p=0; p<i2copt[i].ioxp[n].direct_len; p++) {
-                            i2copt[i].ioxp[n].direct[p] = setting_obj["i2c_option"][i]["ioxp"][n]["direct"][p].as<signed int>();
-                        }
-                    } else {
-                        i2copt[i].ioxp[n].direct_len = 0;
-                    }
+                // キー設定の開始番号
+                if (setting_obj["i2c_option"][i].containsKey("map_start")) {
+                    i2cmap_obj.map_start = setting_obj["i2c_option"][i]["map_start"].as<signed int>();
+                } else {
+                    i2cmap_obj.map_start = 0;
                 }
-            } else {
-                i2copt[i].ioxp_len = 0;
+                i2copt[i].i2cmap = new i2c_map;
+                memcpy(i2copt[i].i2cmap, &i2cmap_obj, sizeof(i2c_map));
+            }
+            // オプション別のデータ読み込み
+            if (opt_type == 1) { // 1 = IOエキスパンダ（MCP23017）
+                // 使用するIOエキスパンダの情報
+                if (setting_obj["i2c_option"][i].containsKey("ioxp") && setting_obj["i2c_option"][i]["ioxp"].size()) {
+                    i2cioxp_obj.ioxp_len = setting_obj["i2c_option"][i]["ioxp"].size();
+                    i2cioxp_obj.ioxp = new ioxp_option[i2cioxp_obj.ioxp_len];
+                    for (n=0; n<i2cioxp_obj.ioxp_len; n++) {
+                        // IOエキスパンダのアドレス
+                        i2cioxp_obj.ioxp[n].addr = setting_obj["i2c_option"][i]["ioxp"][n]["addr"];
+                        // row に設定しているピン
+                        if (setting_obj["i2c_option"][i]["ioxp"][n].containsKey("row") &&
+                                setting_obj["i2c_option"][i]["ioxp"][n]["row"].size() ) {
+                            // row に設定されている配列を取得(0～7 以外を無視する)
+                            i2cioxp_obj.ioxp[n].row_len = setting_obj["i2c_option"][i]["ioxp"][n]["row"].size();
+                            i2cioxp_obj.ioxp[n].row = new uint8_t[i2cioxp_obj.ioxp[n].row_len]; // row のピン番号
+                            i2cioxp_obj.ioxp[n].row_output = new uint16_t[i2cioxp_obj.ioxp[n].row_len]; // マトリックスでrow write するデータ
+                            i2cioxp_obj.ioxp[n].row_mask = 0x00; // row write する時用のマスク
+                            o = 0;
+                            for (p=0; p<i2cioxp_obj.ioxp[n].row_len; p++) {
+                                r = setting_obj["i2c_option"][i]["ioxp"][n]["row"][p].as<signed int>();
+                                // if (r < 0 || r >= 8) continue; // ポートA以外の場合は取得しない
+                                i2cioxp_obj.ioxp[n].row[o] = r;
+                                o++;
+                                i2cioxp_obj.ioxp[n].row_mask |= 0x01 << r;
+                            }
+                            i2cioxp_obj.ioxp[n].row_len = o;
+                            // マトリックス出力する時用のデータ作成
+                            for (p=0; p<o; p++) {
+                                i2cioxp_obj.ioxp[n].row_output[p] = i2cioxp_obj.ioxp[n].row_mask & ~(0x01 << i2cioxp_obj.ioxp[n].row[p]);
+                            }
+                        } else {
+                            i2cioxp_obj.ioxp[n].row_len = 0;
+                        }
+                        // col に設定しているピン
+                        if (setting_obj["i2c_option"][i]["ioxp"][n].containsKey("col") &&
+                                setting_obj["i2c_option"][i]["ioxp"][n]["col"].size() ) {
+                            i2cioxp_obj.ioxp[n].col_len = setting_obj["i2c_option"][i]["ioxp"][n]["col"].size();
+                            i2cioxp_obj.ioxp[n].col = new uint8_t[i2cioxp_obj.ioxp[n].col_len];
+                            for (p=0; p<i2cioxp_obj.ioxp[n].col_len; p++) {
+                                i2cioxp_obj.ioxp[n].col[p] = setting_obj["i2c_option"][i]["ioxp"][n]["col"][p].as<signed int>();
+                            }
+                        } else {
+                            i2cioxp_obj.ioxp[n].col_len = 0;
+                        }
+                        // direct に設定しているピン
+                        if (setting_obj["i2c_option"][i]["ioxp"][n].containsKey("direct") &&
+                                setting_obj["i2c_option"][i]["ioxp"][n]["direct"].size() ) {
+                            i2cioxp_obj.ioxp[n].direct_len = setting_obj["i2c_option"][i]["ioxp"][n]["direct"].size();
+                            i2cioxp_obj.ioxp[n].direct = new uint8_t[i2cioxp_obj.ioxp[n].direct_len];
+                            for (p=0; p<i2cioxp_obj.ioxp[n].direct_len; p++) {
+                                i2cioxp_obj.ioxp[n].direct[p] = setting_obj["i2c_option"][i]["ioxp"][n]["direct"][p].as<signed int>();
+                            }
+                        } else {
+                            i2cioxp_obj.ioxp[n].direct_len = 0;
+                        }
+                    }
+                } else {
+                    i2cioxp_obj.ioxp_len = 0;
+                }
+                i2copt[i].data = (uint8_t *)new i2c_ioxp;
+                memcpy(i2copt[i].data, &i2cioxp_obj, sizeof(i2c_ioxp));
+
+            } else if (opt_type == 2) { // 2 = Tiny202 ロータリーエンコーダ
+                
+                // 使用するIOエキスパンダの情報
+                if (setting_obj["i2c_option"][i].containsKey("rotary") && setting_obj["i2c_option"][i]["rotary"].size()) {
+                    i2crotary_obj.rotary_len = setting_obj["i2c_option"][i]["rotary"].size();
+                    i2crotary_obj.rotary = new uint8_t[i2crotary_obj.rotary_len];
+                    for (n=0; n<i2crotary_obj.rotary_len; n++) {
+                        i2crotary_obj.rotary[n] = setting_obj["i2c_option"][i]["rotary"][n].as<signed int>();
+                    }
+                } else {
+                    i2crotary_obj.rotary_len = 0;
+                }
+                i2copt[i].data = (uint8_t *)new i2c_rotary;
+                memcpy(i2copt[i].data, &i2crotary_obj, sizeof(i2c_rotary));
+
             }
 
         }
@@ -1582,11 +1611,13 @@ int AzCommon::i2c_setup(int p, i2c_option *opt) {
     int i, j, k, m, x;
     int r = 0;
     int set_type[16];
-    M5.Lcd.printf("i2c_setup: %d\n", p);
+    i2c_map i2cmap_obj;
+    i2c_ioxp i2cioxp_obj;
     if (opt->opt_type == 1) {
         // IOエキスパンダ
-        for (i=0; i<opt->ioxp_len; i++) {
-            x = opt->ioxp[i].addr - 32; // アドレス
+        memcpy(&i2cioxp_obj, opt->data, sizeof(i2c_ioxp));
+        for (i=0; i<i2cioxp_obj.ioxp_len; i++) {
+            x = i2cioxp_obj.ioxp[i].addr - 32; // アドレス
             // Serial.printf("i2c_setup: %D %D %D\n", i, x, ioxp_status[x]);
             // まだ初期化されていないIOエキスパンダなら初期化
             if (ioxp_status[x] < 0) {
@@ -1594,13 +1625,11 @@ int AzCommon::i2c_setup(int p, i2c_option *opt) {
                 ioxp_status[x] = 0;
             }
             if (ioxp_status[x] < 1) {
-                if (ioxp_obj[x]->begin_I2C(opt->ioxp[i].addr, &Wire)) {
-                    M5.Lcd.printf("begin_I2C option  %D  %D OK\n", i, opt->ioxp[i].addr);
+                if (ioxp_obj[x]->begin_I2C(i2cioxp_obj.ioxp[i].addr, &Wire)) {
                     ioxp_hash[x] = 1;
                     ioxp_status[x] = 1;
                 } else {
-                    M5.Lcd.printf("begin_I2C option  %D  %D NG\n", i, opt->ioxp[i].addr);
-                    delay(1000);
+                    // 初期化失敗
                     continue;
                 }
             }
@@ -1609,18 +1638,26 @@ int AzCommon::i2c_setup(int p, i2c_option *opt) {
                 set_type[j] = INPUT_PULLUP;
             }
             // rowピンだけOUTPUTにする
-            for (j=0; j<opt->ioxp[i].row_len; j++) {
-                set_type[ opt->ioxp[i].row[j] ] = OUTPUT;
+            for (j=0; j<i2cioxp_obj.ioxp[i].row_len; j++) {
+                set_type[ i2cioxp_obj.ioxp[i].row[j] ] = OUTPUT;
             }
             // ピン初期化
             for (j=0; j<16; j++) {
                 ioxp_obj[x]->pinMode(j, set_type[j]);
             }
         }
+    } else if (opt->opt_type == 2) {
+        // ATTiny202 ロータリーエンコーダー
+        // 初期化特になし
+
+    }
+    // マッピングに合わせてキー番号を付けなおす
+    if (opt->opt_type == 1 || opt->opt_type == 2) {
         // キーの番号をmapデータに入れる
         // あとでキー設定の番号入れ替えをここでやる
-        k = opt->map_start;
-        for (i=0; i<opt->map_len; i++) {
+        memcpy(&i2cmap_obj, opt->i2cmap, sizeof(i2c_map));
+        k = i2cmap_obj.map_start;
+        for (i=0; i<i2cmap_obj.map_len; i++) {
             // 設定内容中の番号を付け替える
             for (j=0; j<setting_length; j++) {
                 if (setting_press[j].key_num == p) {
@@ -1635,6 +1672,7 @@ int AzCommon::i2c_setup(int p, i2c_option *opt) {
             k++;
         }
     }
+
     return p;
 }
 
@@ -1859,46 +1897,66 @@ int AzCommon::i2c_read(int p, i2c_option *opt, char *read_data) {
     unsigned long end_time;
     uint16_t rowput_mask;
     int rowput_len;
+    int read_data_bit;
     uint16_t read_raw[32];
     Adafruit_MCP23X17 *ioxp;
+    i2c_map i2cmap_obj;
+    i2c_ioxp i2cioxp_obj;
+    i2c_rotary i2crotary_obj;
     r = 0;
     e = 0;
     if (opt->opt_type == 1) {
         // IOエキスパンダ
-        for (i=0; i<opt->ioxp_len; i++) {
-            x = opt->ioxp[i].addr - 32; // アドレス
+        read_data_bit = 16;
+        memcpy(&i2cioxp_obj, opt->data, sizeof(i2c_ioxp));
+        memcpy(&i2cmap_obj, opt->i2cmap, sizeof(i2c_map));
+        for (i=0; i<i2cioxp_obj.ioxp_len; i++) {
+            x = i2cioxp_obj.ioxp[i].addr - 32; // アドレス
             // まだ初期化されていないIOエキスパンダなら無視
             if (ioxp_status[x] < 1) continue;
             // row と col があればマトリックス入力
-            if (opt->ioxp[i].row_len > 0 && opt->ioxp[i].col_len > 0) {
+            if (i2cioxp_obj.ioxp[i].row_len > 0 && i2cioxp_obj.ioxp[i].col_len > 0) {
                 // まずrowでoutputするデータとマスクを用意
-                rowput_len = opt->ioxp[i].row_len;
-                rowput_mask = opt->ioxp[i].row_mask;
+                rowput_len = i2cioxp_obj.ioxp[i].row_len;
+                rowput_mask = i2cioxp_obj.ioxp[i].row_mask;
                 ioxp = ioxp_obj[x];
                 // rowのoutput分ループ
                 for (j=0; j<rowput_len; j++) {
                     if (rowput_mask & 0xff00) { // ポートB
-                        ioxp->writeGPIO((opt->ioxp[i].row_output[j] >> 8) & 0xff, 1); // ポートBに出力
+                        ioxp->writeGPIO((i2cioxp_obj.ioxp[i].row_output[j] >> 8) & 0xff, 1); // ポートBに出力
                     }
                     if (rowput_mask & 0xff) { // ポートA
-                        ioxp->writeGPIO(opt->ioxp[i].row_output[j] & 0xff, 0); // ポートAに出力
+                        ioxp->writeGPIO(i2cioxp_obj.ioxp[i].row_output[j] & 0xff, 0); // ポートAに出力
                     }
-                    read_raw[e] = ioxp->readGPIOAB() | rowput_mask; // ポートA,B両方のデータを取得
+                    read_raw[e] = ~ioxp->readGPIOAB() | rowput_mask; // ポートA,B両方のデータを取得
                     e++;
                 }
             } else {
                 // col と row が無い場合はダイレクトのみ
-                read_raw[e] = ioxp_obj[x]->readGPIOAB(); // ポートA,B両方のデータを取得
+                read_raw[e] = ~ioxp_obj[x]->readGPIOAB(); // ポートA,B両方のデータを取得
                 e++;
             }
         }
+    } else if (opt->opt_type == 2) {
+        // ATTiny202 ロータリーエンコーダー
+        read_data_bit = 8;
+        memcpy(&i2crotary_obj, opt->data, sizeof(i2c_ioxp));
+        memcpy(&i2cmap_obj, opt->i2cmap, sizeof(i2c_map));
+        for (i=0; i<i2crotary_obj.rotary_len; i++) {
+            Wire.requestFrom(i2crotary_obj.rotary[i], 1); // 指定したアドレスのTinyにデータ取得要求
+            read_raw[e] = Wire.read(); // データ受け取る
+            e++;
+        }
+    }
+    // 読み込んだデータからキー入力を取得
+    if (opt->opt_type == 1 || opt->opt_type == 2) {
         // マップデータ分入力を取得
-        for (j=0; j<opt->map_len; j++) {
-            n = opt->map[j];
-            k = n / 16;
-            m = n % 16;
+        for (j=0; j<i2cmap_obj.map_len; j++) {
+            n = i2cmap_obj.map[j];
+            k = n / read_data_bit;
+            m = n % read_data_bit;
             if (k >= e) k = e - 1; // マトリックスで取得した数より多い場合はdirectの指定なので一番最後に取得した情報で判定
-            read_data[p] = (read_raw[k] & (0x01 << m))? 0: 1;
+            read_data[p] = (read_raw[k] & (0x01 << m))? 1: 0;
             p++;
             r++;
         }

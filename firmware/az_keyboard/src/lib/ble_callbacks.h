@@ -51,6 +51,7 @@ enum via_command_id {
     id_set_mode_flag                        = 0x3C,
     id_get_ap_list                          = 0x3D,
     id_read_key                             = 0x3E,
+    id_get_rotary_key                       = 0x3F,
 
     // システム用
     id_unhandled                            = 0xFF,
