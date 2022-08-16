@@ -746,7 +746,7 @@ void AzCommon::load_setting_json() {
             } else {
                 opt_type = 0;
             }
-            i2copt[i].opt_type = opt_type & 0xff;
+            i2copt[j].opt_type = opt_type & 0xff;
             // マッピング情報の読み込み
             if (opt_type == 1 || opt_type == 2) { // 1 = IOエキスパンダ（MCP23017）/ 2 = Tiny202 ロータリーエンコーダ
                 // キーマッピング設定
@@ -766,8 +766,8 @@ void AzCommon::load_setting_json() {
                 } else {
                     i2cmap_obj.map_start = 0;
                 }
-                i2copt[i].i2cmap = new i2c_map;
-                memcpy(i2copt[i].i2cmap, &i2cmap_obj, sizeof(i2c_map));
+                i2copt[j].i2cmap = new i2c_map;
+                memcpy(i2copt[j].i2cmap, &i2cmap_obj, sizeof(i2c_map));
             }
             // オプション別のデータ読み込み
             if (opt_type == 1) { // 1 = IOエキスパンダ（MCP23017）
@@ -828,8 +828,9 @@ void AzCommon::load_setting_json() {
                 } else {
                     i2cioxp_obj.ioxp_len = 0;
                 }
-                i2copt[i].data = (uint8_t *)new i2c_ioxp;
-                memcpy(i2copt[i].data, &i2cioxp_obj, sizeof(i2c_ioxp));
+                i2copt[j].data = (uint8_t *)new i2c_ioxp;
+                memcpy(i2copt[j].data, &i2cioxp_obj, sizeof(i2c_ioxp));
+                j++;
 
             } else if (opt_type == 2) { // 2 = Tiny202 ロータリーエンコーダ
                 
@@ -843,8 +844,9 @@ void AzCommon::load_setting_json() {
                 } else {
                     i2crotary_obj.rotary_len = 0;
                 }
-                i2copt[i].data = (uint8_t *)new i2c_rotary;
-                memcpy(i2copt[i].data, &i2crotary_obj, sizeof(i2c_rotary));
+                i2copt[j].data = (uint8_t *)new i2c_rotary;
+                memcpy(i2copt[j].data, &i2crotary_obj, sizeof(i2c_rotary));
+                j++;
 
             }
 
