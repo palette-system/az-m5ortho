@@ -774,9 +774,24 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 		    m = remap_buf[1]; // 読み込みに行くアドレス取得
 			send_buf[0] = id_get_rotary_key; // キーの入力状態
 			send_buf[1] = m; // 読み込みに行くアドレス
-            Wire.requestFrom(m, 1); // 指定したアドレスのTinyにデータ取得要求
-            send_buf[2] = Wire.read(); // データ受け取る
+            send_buf[2] = wirelib_cls.read_rotary(m); // データ受け取る
 			for (i=3; i<32; i++) send_buf[i] = 0x00;
+			this->sendRawData(send_buf, 32);
+
+		}
+		case id_get_pim447: {
+			// 1U トラックボールデータ取得 PIM447
+			tracktall_pim447_data r;
+		    m = remap_buf[1]; // 読み込みに行くアドレス取得
+			send_buf[0] = id_get_pim447; // キーの入力状態
+			send_buf[1] = m; // 読み込みに行くアドレス
+            r = wirelib_cls.read_trackball_pim447(m); // データ受け取る
+			send_buf[2] = r.left;
+			send_buf[3] = r.right;
+			send_buf[4] = r.up;
+			send_buf[5] = r.down;
+			send_buf[6] = r.click;
+			for (i=7; i<32; i++) send_buf[i] = 0x00;
 			this->sendRawData(send_buf, 32);
 
 		}
