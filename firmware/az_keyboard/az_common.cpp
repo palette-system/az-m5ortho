@@ -2001,8 +2001,14 @@ int AzCommon::i2c_read(int p, i2c_option *opt, char *read_data) {
             y = (pim447_data_obj.down - pim447_data_obj.up);
         }
         if (x != 0 || y != 0) {
+            if (x > 127) x = 127;
+            if (x < -127) x = -127;
+            if (y > 127) y = 127;
+            if (y < -127) y = -127;
             if (mouse_scroll_flag) {
-                press_mouse_list_push(0x2000, 0, 0, x, y, i2cpim447_obj.speed);
+                m = (y == 0)? 0: (y > 0)? 1: -1;
+                n = (x == 0)? 0: (x > 0)? 1: -1;
+                press_mouse_list_push(0x2000, 0, 0, m, n, 100);
             } else {
                 press_mouse_list_push(0x2000, x, y, 0, 0, i2cpim447_obj.speed);
             }
@@ -2183,7 +2189,7 @@ void AzCommon::press_mouse_list_push(int key_num, short move_x, short move_y, sh
         press_mouse_list[i].key_num = key_num;
         press_mouse_list[i].move_x = move_x;
         press_mouse_list[i].move_y = move_y;
-        press_mouse_list[i].move_wheel = move_wheel;
+        press_mouse_list[i].move_wheel = move_wheel * -1;
         press_mouse_list[i].move_hWheel = move_hWheel;
         press_mouse_list[i].move_speed = move_speed;
         press_mouse_list[i].move_index = 0;
