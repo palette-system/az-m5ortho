@@ -1642,6 +1642,7 @@ int AzCommon::i2c_setup(int p, i2c_option *opt) {
     int set_type[16];
     i2c_map i2cmap_obj;
     i2c_ioxp i2cioxp_obj;
+    i2c_pim447 i2cpim447_obj;
     if (opt->opt_type == 1) {
         // IOエキスパンダ
         memcpy(&i2cioxp_obj, opt->data, sizeof(i2c_ioxp));
@@ -1681,7 +1682,8 @@ int AzCommon::i2c_setup(int p, i2c_option *opt) {
 
     } else if (opt->opt_type == 3) {
         // 1U トラックボール PIM447
-        // 初期化特になし
+        memcpy(&i2cpim447_obj, opt->data, sizeof(i2c_pim447));
+        wirelib_cls.set_az1uball_read_type(i2cpim447_obj.addr, 1);
 
     }
     // マッピングに合わせてキー番号を付けなおす
