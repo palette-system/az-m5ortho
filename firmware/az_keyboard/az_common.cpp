@@ -142,6 +142,9 @@ int default_layer_no;
 int select_layer_no;
 int last_select_layer_key;
 
+// holdの設定
+uint8_t hold_type;
+uint8_t hold_time;
 
 // 押している最中のキーデータ
 press_key_data press_key_list[PRESS_KEY_MAX];
@@ -670,6 +673,17 @@ void AzCommon::load_setting_json() {
     default_layer_no = setting_obj["default_layer"].as<signed int>();
     // 今選択してるレイヤーをデフォルトに
     select_layer_no = default_layer_no;
+    // hold 設定読み込み
+    hold_type = 0;
+    hold_time = 30;
+    if (setting_obj.containsKey("hold")) {
+        if (setting_obj["hold"].containsKey("type")) {
+            hold_type = setting_obj["hold"]["type"].as<signed int>();
+        }
+        if (setting_obj["hold"].containsKey("time")) {
+            hold_time = setting_obj["hold"]["time"].as<signed int>();
+        }
+    }
     // オプションタイプの番号を取得
     option_type_int = 0;
     if (setting_obj.containsKey("option_set") && setting_obj["option_set"].containsKey("type")) {

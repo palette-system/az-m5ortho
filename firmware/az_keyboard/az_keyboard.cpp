@@ -338,6 +338,27 @@ void AzKeyboard::soft_key_click_action(int layer, int key_num) {
     
 }
 
+// holdを押す
+void AzKeyboard::hold_press(int hold, int key_num) {
+    int k = hold >> 4;
+    if (k == 0x06) { // 左モデファイア
+        if (hold & 0x01) bleKeyboard.press_raw(0xE0); // 左Ctrl
+        if (hold & 0x02) bleKeyboard.press_raw(0xE1); // 左Ctrl
+        if (hold & 0x04) bleKeyboard.press_raw(0xE2); // 左Ctrl
+        if (hold & 0x08) bleKeyboard.press_raw(0xE3); // 左Ctrl
+        delay(20);
+    } else if (k == 0x07) { // 右モデファイア
+        if (hold & 0x01) bleKeyboard.press_raw(0xE4); // 右Ctrl
+        if (hold & 0x02) bleKeyboard.press_raw(0xE5); // 右Ctrl
+        if (hold & 0x04) bleKeyboard.press_raw(0xE6); // 右Ctrl
+        if (hold & 0x08) bleKeyboard.press_raw(0xE7); // 右Ctrl
+        delay(20);
+    } else if (k == 0x04) { // レイヤー
+        select_layer_no = hold & 0x0F;
+        last_select_layer_key = key_num; // 最後に押されたレイヤーボタン設定
+    }
+}
+
 // キーが押された時の動作
 void AzKeyboard::key_down_action(int key_num) {
     int i, m, k, r;
@@ -377,23 +398,9 @@ void AzKeyboard::key_down_action(int key_num) {
         memcpy(&normal_input, key_set.data, sizeof(setting_normal_input));
         if (normal_input.hold) {
             // hold の場合押した時にhold押したよを送信
-            k = normal_input.hold >> 4;
             m = select_layer_no;
-            if (k == 0x06) { // 左モデファイア
-                if (normal_input.hold & 0x01) bleKeyboard.press_raw(0xE0); // 左Ctrl
-                if (normal_input.hold & 0x02) bleKeyboard.press_raw(0xE1); // 左Ctrl
-                if (normal_input.hold & 0x04) bleKeyboard.press_raw(0xE2); // 左Ctrl
-                if (normal_input.hold & 0x08) bleKeyboard.press_raw(0xE3); // 左Ctrl
-            } else if (k == 0x07) { // 右モデファイア
-                if (normal_input.hold & 0x01) bleKeyboard.press_raw(0xE4); // 右Ctrl
-                if (normal_input.hold & 0x02) bleKeyboard.press_raw(0xE5); // 右Ctrl
-                if (normal_input.hold & 0x04) bleKeyboard.press_raw(0xE6); // 右Ctrl
-                if (normal_input.hold & 0x08) bleKeyboard.press_raw(0xE7); // 右Ctrl
-            } else if (k == 0x04) { // レイヤー
-                select_layer_no = normal_input.hold & 0x0F;
-                last_select_layer_key = key_num; // 最後に押されたレイヤーボタン設定
-                // infoにレイヤー名を表示
-                disp->view_info_layer_name();
+            if (hold_type == 1) { // すぐにholdを送信
+                hold_press(normal_input.hold, key_num);
             }
             press_key_list_push(9, key_num, normal_input.hold, m, -1); // アクションタイプは9:holdにする
         } else {
@@ -583,29 +590,30 @@ void AzKeyboard::key_up_action(int key_num) {
         } else if (action_type == 9) {
             // hold ボタン
             // まずは長押し用に押されたボタンを離す
-            k = press_key_list[i].key_id >> 4;
-            m = press_key_list[i].key_id;
-            if (k == 0x06) { // 左モデファイア
-                if (m & 0x01) bleKeyboard.release_raw(0xE0); // 左Ctrl
-                if (m & 0x02) bleKeyboard.release_raw(0xE1); // 左Ctrl
-                if (m & 0x04) bleKeyboard.release_raw(0xE2); // 左Ctrl
-                if (m & 0x08) bleKeyboard.release_raw(0xE3); // 左Ctrl
-            } else if (k == 0x07) { // 右モデファイア
-                if (m & 0x01) bleKeyboard.release_raw(0xE4); // 右Ctrl
-                if (m & 0x02) bleKeyboard.release_raw(0xE5); // 右Ctrl
-                if (m & 0x04) bleKeyboard.release_raw(0xE6); // 右Ctrl
-                if (m & 0x08) bleKeyboard.release_raw(0xE7); // 右Ctrl
-            } else if (k == 0x04) { // レイヤー
-                // 最後に押されたレイヤーボタンだったらデフォルトに戻す
-                if (last_select_layer_key == key_num) {
-                    select_layer_no = default_layer_no;
-                    last_select_layer_key = -1;
-                    // infoにレイヤー名を表示
-                    disp->view_info_layer_name();
+            if (hold_type == 1 || // 押された時点でhold押されるモード
+                    (hold_type == 0 && press_key_list[i].press_time >= hold_time)) { // 時間が経ってからhold押されるモードで、hold押された後
+                k = press_key_list[i].key_id >> 4;
+                m = press_key_list[i].key_id;
+                if (k == 0x06) { // 左モデファイア
+                    if (m & 0x01) bleKeyboard.release_raw(0xE0); // 左Ctrl
+                    if (m & 0x02) bleKeyboard.release_raw(0xE1); // 左Ctrl
+                    if (m & 0x04) bleKeyboard.release_raw(0xE2); // 左Ctrl
+                    if (m & 0x08) bleKeyboard.release_raw(0xE3); // 左Ctrl
+                } else if (k == 0x07) { // 右モデファイア
+                    if (m & 0x01) bleKeyboard.release_raw(0xE4); // 右Ctrl
+                    if (m & 0x02) bleKeyboard.release_raw(0xE5); // 右Ctrl
+                    if (m & 0x04) bleKeyboard.release_raw(0xE6); // 右Ctrl
+                    if (m & 0x08) bleKeyboard.release_raw(0xE7); // 右Ctrl
+                } else if (k == 0x04) { // レイヤー
+                    // 最後に押されたレイヤーボタンだったらデフォルトに戻す
+                    if (last_select_layer_key == key_num) {
+                        select_layer_no = default_layer_no;
+                        last_select_layer_key = -1;
+                    }
                 }
             }
             // 押していた時間が短ければ単押しのキーを送信
-            if (press_key_list[i].press_time < 30) {
+            if (press_key_list[i].press_time < hold_time) {
                 // キーの設定取得
                 key_set = common_cls.get_key_setting(press_key_list[i].layer_id, key_num);
                 memcpy(&normal_input, key_set.data, sizeof(setting_normal_input));
@@ -636,13 +644,20 @@ void AzKeyboard::key_up_action(int key_num) {
     }
 }
 
-// tap / hold の単押しを無効化する
+// ボタンが押された時 tap / hold 押してる最中だった時の処理
 void AzKeyboard::tap_key_disable_all() {
     int i;
     for (i=0; i<PRESS_KEY_MAX; i++) {
         if (press_key_list[i].key_num < 0) continue; // データが無い分は無視
         if (press_key_list[i].action_type != 9) continue; // hold 以外は無視
-        press_key_list[i].press_time = 30; // 押してる時間をtap時間より長くしてtapが発動しないようにする
+        if (hold_type == 1) { // すぐに hold を送信する設定
+            press_key_list[i].press_time = hold_time + 1; // 押してる時間をtap時間より長くして、離した時にtapが送られないようにする
+        } else if (hold_type == 0) { // hold_time 後に hold を送信の設定
+            if (press_key_list[i].press_time < hold_time) { // まだ hold を送信してない場合は先にholdを送る
+                press_key_list[i].press_time = hold_time + 1; // 押してる時間をtap時間より長くして、離した時にtapが送られないようにする
+                hold_press(press_key_list[i].key_id , press_key_list[i].key_num); // hold 押す
+            }
+        }
     }
 }
 
@@ -702,6 +717,15 @@ void AzKeyboard::press_data_clear() {
             press_key_list[i].unpress_time = -1;
             press_key_list[i].repeat_interval = -1;
             press_key_list[i].repeat_index = -1;
+        }
+    }
+    // tap / hold の hold 時間に達成したキーがあれば hold を送信
+    if (hold_type == 0) { // hold_time になったら holdを送信する設定
+        for (i=0; i<PRESS_KEY_MAX; i++) {
+            if (press_key_list[i].action_type != 9) continue; // tap / hold 以外は無視
+            if (press_key_list[i].press_time == hold_time) { // hold_time になったら hold を押す
+                hold_press(press_key_list[i].key_id , press_key_list[i].key_num); // hold を押す
+            }
         }
     }
     // 処理後の押されたままキー数取得
