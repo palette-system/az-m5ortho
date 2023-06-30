@@ -650,6 +650,7 @@ void AzKeyboard::tap_key_disable_all() {
     for (i=0; i<PRESS_KEY_MAX; i++) {
         if (press_key_list[i].key_num < 0) continue; // データが無い分は無視
         if (press_key_list[i].action_type != 9) continue; // hold 以外は無視
+        if (press_key_list[i].unpress_time > 0) continue; // 既に離されていれば無視
         if (hold_type == 1) { // すぐに hold を送信する設定
             press_key_list[i].press_time = hold_time + 1; // 押してる時間をtap時間より長くして、離した時にtapが送られないようにする
         } else if (hold_type == 0) { // hold_time 後に hold を送信の設定
@@ -723,6 +724,7 @@ void AzKeyboard::press_data_clear() {
     if (hold_type == 0) { // hold_time になったら holdを送信する設定
         for (i=0; i<PRESS_KEY_MAX; i++) {
             if (press_key_list[i].action_type != 9) continue; // tap / hold 以外は無視
+            if (press_key_list[i].unpress_time > 0) continue; // 既に離されていれば無視
             if (press_key_list[i].press_time == hold_time) { // hold_time になったら hold を押す
                 hold_press(press_key_list[i].key_id , press_key_list[i].key_num); // hold を押す
             }
