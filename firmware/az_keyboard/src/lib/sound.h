@@ -10,7 +10,7 @@
 #include "AudioFileSourceSPIFFS.h"
 #include "AudioFileSourcePROGMEM.h"
 #include "AudioGeneratorWAV.h"
-#include "AudioOutputI2S.h"
+#include "AudioOutputI2S_my.h"
 #include "AudioOutputMixer.h"
 
 
@@ -50,7 +50,7 @@ class Sound
         AudioGeneratorWAV *_wav[SOUND_CH_MAX];
         AudioFileSourcePROGMEM *_file[SOUND_CH_MAX];
         AudioFileSourceSPIFFS *_spifile;
-        AudioOutputI2S *_out;
+        AudioOutputI2S_my *_out;
         AudioOutputMixer *_mixer;
         AudioOutputMixerStub *_stub[SOUND_CH_MAX];
 		sound_setting _setting; // 設定

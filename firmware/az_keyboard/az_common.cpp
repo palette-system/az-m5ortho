@@ -266,7 +266,7 @@ static void background_loop(void* arg) {
     // LED用定期処理
     // rgb_led_cls.rgb_led_loop_exec();
     unsigned long work_time = millis() - start_time;
-    if (work_time < 20) { vTaskDelay(20 - work_time); }
+    if (work_time < 3) { vTaskDelay(3 - work_time); }
   }
 }
 

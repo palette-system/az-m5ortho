@@ -44,7 +44,7 @@ void Sound::begin() {
     // M5.Axp.SetSpkEnable(false); 
 
     // サウンド初期化
-    this->_out = new AudioOutputI2S(0, 0);
+    this->_out = new AudioOutputI2S_my(0, 0);
     this->_out->SetPinout(SOUND_BCLK_PIN, SOUND_LRCK_PIN, SOUND_SADTA_PIN);
     this->_out->SetOutputModeMono(true);
     this->_out->stop();
@@ -139,7 +139,8 @@ void Sound::stop(int ch) {
     if (this->_play_flag[ch]) {
         this->_wav[ch]->stop();
         this->_stub[ch]->stop();
-        this->_out->stop();
+        // this->_out->stop();
+        this->_file[ch]->close();
         this->_play_flag[ch] = 0;
     }
 }
@@ -182,10 +183,8 @@ void Sound::daken_down(int key_num) {
     c = this->_get_chnum(); // 再生するチャンネルを取得
     // 全部埋まってたら停止後に鳴らす
     if (c < 0) {
-        this->_stack_keynum = key_num;
-        this->_feed_out_index = 1; // フェードアウトインデックス(これを1にするとフェードアウトして止まる)
-        this->_feed_out_ch = this->_last_ch + 1;
-        if (this->_feed_out_ch >= SOUND_CH_MAX) this->_feed_out_ch = 0;
+        this->stop(0);
+        this->daken_down(key_num);
         return;
     }
     if (this->_setting.type_default == 1) {
@@ -212,22 +211,7 @@ int Sound::loop_exec() {
     if (!this->_setting.sound_enable) return 0;
     int i;
     int r = 0;
-    // フェードアウト
-    if (this->_feed_out_index == 1) {
-        this->_stub[this->_feed_out_ch]->SetGain(this->_volgain * 0.8);
-        this->_feed_out_index++;
-    } else if (this->_feed_out_index == 2) {
-        this->_stub[this->_feed_out_ch]->SetGain(this->_volgain * 0.6);
-        this->_feed_out_index++;
-    } else if (this->_feed_out_index == 3) {
-        this->_stub[this->_feed_out_ch]->SetGain(this->_volgain * 0.3);
-        this->_feed_out_index++;
-    } else if (this->_feed_out_index == 4) {
-        this->stop(this->_feed_out_ch);
-        this->daken_down(this->_stack_keynum);
-        this->_stack_keynum = -1;
-        this->_feed_out_index = 0;
-    }
+
     // 各チャンネル再生
     for (i=0; i<SOUND_CH_MAX; i++) {
         if (this->_play_flag[i] && this->_wav[i]->isRunning()) {
