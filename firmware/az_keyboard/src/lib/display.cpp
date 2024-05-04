@@ -111,17 +111,17 @@ bool my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data){
     data->state = LV_INDEV_STATE_PR; 
     /*Set the coordinates*/
 	if (_disp_rotate == 0) {
-      data->point.x = 240 - pos.y; // 左が上
-      data->point.y = pos.x;
+	  data->point.x = pos.x;
+	  data->point.y = pos.y;
 	} else if (_disp_rotate == 1) { // 上が上
-      data->point.x = pos.x;
-      data->point.y = pos.y;
-	} else if (_disp_rotate == 2) { // 右が上
       data->point.x = pos.y;
-      data->point.y = 320 - pos.x;
+      data->point.y = 240 - pos.x;
+	} else if (_disp_rotate == 2) { // 右が上
+	  data->point.x = 240 - pos.x;
+	  data->point.y = 320 - pos.y;
 	} else if (_disp_rotate == 3) { // 下が上
-      data->point.x = 320 - pos.x;
-      data->point.y = 240 - pos.y;
+	  data->point.x = 320 - pos.y;
+	  data->point.y = pos.x;
 	}
   }
   return false; 

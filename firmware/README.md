@@ -1,57 +1,63 @@
-# AZ-M5ortho ƒtƒ@[ƒ€ƒEƒFƒA
-AZ-M5ortho ‚Åg—p‚µ‚Ä‚¢‚éƒtƒ@[ƒ€ƒEƒFƒAƒ\[ƒX‚Å‚·B<br>
-‚±‚¿‚ç‚Ìƒ\[ƒX‚ÍŒÂl‚Å—˜—p‚·‚éê‡‚É‚Í©—R‚É‚²—˜—p‚¢‚½‚¾‚¢‚Ä‘åä•v‚Å‚·B<br>
-“ñŸ”z•z‚É‚Â‚¢‚Ä‚Í”ñ‰c—˜‚Å‚ ‚ê‚Î’˜ìŒ •\¦‚ğ‚µ‚Ä’¸‚¯‚ê‚Î‚²—˜—p‚µ‚Ä’¸‚¢‚Ä‘åä•v‚Å‚·B<br>
+# AZ-M5ortho ãƒ•ã‚¡ãƒ¼ãƒ ã‚¦ã‚§ã‚¢
+AZ-M5ortho ã§ä½¿ç”¨ã—ã¦ã„ã‚‹ãƒ•ã‚¡ãƒ¼ãƒ ã‚¦ã‚§ã‚¢ã‚½ãƒ¼ã‚¹ã§ã™ã€‚<br>
+ã“ã¡ã‚‰ã®ã‚½ãƒ¼ã‚¹ã¯å€‹äººã§åˆ©ç”¨ã™ã‚‹å ´åˆã«ã¯è‡ªç”±ã«ã”åˆ©ç”¨ã„ãŸã ã„ã¦å¤§ä¸ˆå¤«ã§ã™ã€‚<br>
+äºŒæ¬¡é…å¸ƒã«ã¤ã„ã¦ã¯éå–¶åˆ©ã§ã‚ã‚Œã°è‘—ä½œæ¨©è¡¨ç¤ºã‚’ã—ã¦é ‚ã‘ã‚Œã°ã”åˆ©ç”¨ã—ã¦é ‚ã„ã¦å¤§ä¸ˆå¤«ã§ã™ã€‚<br>
 
 
 <br><br>
 
-ƒ‰ƒCƒZƒ“ƒXF@CC BY-NC-SA 4.0
+ãƒ©ã‚¤ã‚»ãƒ³ã‚¹ï¼šã€€CC BY-NC-SA 4.0
 
 <br><br>
 
-## ‘Î‰¤•i
+## å¯¾å¿œå•†å“
 
-- ‚¦‚Ş‚²‚Á‚¿
+- ãˆã‚€ã”ã£ã¡
 - AZ-M5ortho
 
 
-## ŠJ”­ŠÂ‹«
+## é–‹ç™ºç’°å¢ƒ
 
-- Arduino 1.8.13
+- Arduino 2.3.2
 
-@ƒCƒ“ƒXƒg[ƒ‹è‡<br>
-@https://raspberrypi.mongonta.com/howto-start-m5stack-core2arduinoide/
+ã€€ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«æ‰‹é †<br>
+ã€€https://raspberrypi.mongonta.com/howto-start-m5stack-core2arduinoide/
 
 
-¡ƒ{[ƒhƒ}ƒl[ƒWƒƒ[
-- M5Stack 1.0.9
+â– ãƒœãƒ¼ãƒ‰ãƒãƒãƒ¼ã‚¸ãƒ£ãƒ¼
+- M5Stack 2.1.1
 
-¡ƒ‰ƒCƒuƒ‰ƒŠ
-- M5Core2 0.0.2
-- ESP OTA 0.0.3
-- NimBLE-Arduino 1.3.7
-- ArduinoJson 6.18.4
+â– ãƒ©ã‚¤ãƒ–ãƒ©ãƒª
+- M5Core2 0.1.9
+- ESP_OTA 0.2.0
+- NimBLE-Arduino 1.4.1
+- ArduinoJson 7.0.4
 - lv_arduino 3.0.1
-- Adafruit NeoPixel 1.10.4
-- Adafruit MCP23017 Arduino Library 2.1.0
-- ESP8266Audio 1.8.1
-- M5Stack 0.3.1
+- Adafruit NeoPixel 1.12.1
+- Adafruit MCP23017 Arduino Library 2.3.2
+- ESP8266Audio 1.9.7
+- M5Stack 0.4.1
 <br>
-¦ lv_arduino ‚Ìƒ‰ƒCƒuƒ‰ƒŠƒCƒ“ƒXƒg[ƒ‹Œã https://github.com/palette-system/az-m5ortho/tree/main/firmware/lv_arduino ‚Ìƒtƒ@ƒCƒ‹‚ğ ƒCƒ“ƒXƒg[ƒ‹‚µ‚½lv_arduino‚ÌƒfƒBƒŒƒNƒgƒŠ‚ÉƒRƒs[‚µ‚Ä‰º‚³‚¢B<br>
+â€» lv_arduino ã®ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«å¾Œ https://github.com/palette-system/az-m5ortho/tree/main/firmware/lv_arduino ã®ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ã—ãŸlv_arduinoã®ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã«ã‚³ãƒ”ãƒ¼ã—ã¦ä¸‹ã•ã„ã€‚<br>
 <br>
+â€» ä½¿ç”¨ãƒ•ã‚©ãƒ³ãƒˆã€€http://www.fontna.com/blog/1226/
+<br>ã€€ã€€ã€€LogoTypeGothic ãƒ­ã‚´ãŸã„ã·ã‚´ã‚·ãƒƒã‚¯ 07LogoTypeGothic7.ttf
+â€» ãƒ•ã‚©ãƒ³ãƒˆã‚³ãƒ³ãƒãƒ¼ã‚¿ãƒ¼ï¼š https://lvgl.io/tools/fontconverter
+<br>
+â€» ã‚³ãƒ³ãƒãƒ¼ãƒˆã—ãŸæ–‡å­—ï¼š https://github.com/palette-system/az-m5ortho/blob/main/firmware/lv_arduino/enable_text.txt
+<br><br>
 
-## ‘‚İ‚Ìƒ{[ƒhİ’è
+## æ›¸è¾¼ã¿æ™‚ã®ãƒœãƒ¼ãƒ‰è¨­å®š
 
-![ƒ{[ƒhİ’è](/images/azm5ortho/bord_setting.png)
+![ãƒœãƒ¼ãƒ‰è¨­å®š](/images/azm5ortho/bord_setting.png)
 
-## ‚±‚¿‚ç‚Ìƒc[ƒ‹‚ğg—p‚³‚¹‚Ä’¸‚¢‚Ä‚¢‚Ü‚·
+## ã“ã¡ã‚‰ã®ãƒ„ãƒ¼ãƒ«ã‚’ä½¿ç”¨ã•ã›ã¦é ‚ã„ã¦ã„ã¾ã™
 
-- [PROGMEMì‘ ‚³‚ñ](https://hello-world.blog.ss-blog.jp/2016-10-16)
+- [PROGMEMä½œè”µã•ã‚“](https://hello-world.blog.ss-blog.jp/2016-10-16)
 
 
-## ‚±‚¿‚ç‚Ì‘fŞ‚ğg—p‚³‚¹‚Ä’¸‚¢‚Ä‚¢‚Ü‚·
+## ã“ã¡ã‚‰ã®ç´ æã‚’ä½¿ç”¨ã•ã›ã¦é ‚ã„ã¦ã„ã¾ã™
 
-- [Œø‰Ê‰¹ƒ‰ƒ{](https://soundeffect-lab.info/)
+- [åŠ¹æœéŸ³ãƒ©ãƒœ](https://soundeffect-lab.info/)
 
 

@@ -798,17 +798,17 @@ void AzKeyboard::mouse_loop_joy() {
         }
         tp = M5.Touch.getPressPoint();
         if (disp_rotation == 0) { // 左が上
-          x = 240 - tp.y;
-          y = tp.x;
-        } else if (disp_rotation == 1) { // 上が上
           x = tp.x;
           y = tp.y;
-        } else if (disp_rotation == 2) { // 右が上
+        } else if (disp_rotation == 1) { // 上が上
           x = tp.y;
-          y = 320 - tp.x;
+          y = 240 - tp.x;
+        } else if (disp_rotation == 2) { // 右が上
+          x = 240 - tp.x;
+          y = 320 - tp.y;
         } else if (disp_rotation == 3) { // 下が上
-          x = 320 - tp.x;
-          y = 240 - tp.y;
+          x = 320 - tp.y;
+          y = tp.x;
         }
         if (x > 20 && x < 220 && y > 20 && y < 300) {
             send_x = (( x - start_touch_x) * mouse_pad_setting.mouse_speed) / 400;
@@ -863,17 +863,17 @@ void AzKeyboard::mouse_loop_pad() {
         }
         tp = M5.Touch.getPressPoint();
         if (disp_rotation == 0) { // 左が上
-          x = 240 - tp.y;
-          y = tp.x;
-        } else if (disp_rotation == 1) { // 上が上
           x = tp.x;
           y = tp.y;
-        } else if (disp_rotation == 2) { // 右が上
+        } else if (disp_rotation == 1) { // 上が上
           x = tp.y;
-          y = 320 - tp.x;
+          y = 240 - tp.x;
+        } else if (disp_rotation == 2) { // 右が上
+          x = 240 - tp.x;
+          y = 320 - tp.y;
         } else if (disp_rotation == 3) { // 下が上
-          x = 320 - tp.x;
-          y = 240 - tp.y;
+          x = 320 - tp.y;
+          y = tp.x;
         }
         if (x > 20 && x < 220 && y > 20 && y < 300) {
             send_x = ((x - start_touch_x) * mouse_pad_setting.mouse_speed) / 50;
