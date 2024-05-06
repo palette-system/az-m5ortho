@@ -68,9 +68,9 @@ void Ankey::input_start() {
 		this->_andata[i].key_num = 0;
 	}
 	// ヒートマップ表示中であればヒートマップ上の推してるボタンも全て消す
-    if (common_cls.on_tft_unit()) {
-    	disp->view_daken_key_reset();
-    }
+    // if (common_cls.on_tft_unit()) {
+    //	disp->view_daken_key_reset();
+    // }
 	// 開始時入力状態をリセット
 	this->_azkb->press_data_reset();
 	common_cls.input_key[this->ankey_key_num] = 1;
@@ -78,9 +78,9 @@ void Ankey::input_start() {
 	rgb_led_cls.select_key_cler();
 	rgb_led_cls.select_key_add(this->ankey_layer_id, this->ankey_key_num);
 	// 暗記中画面表示
-    if (common_cls.on_tft_unit()) {
-        disp->view_type = DISP_TYPE_ANKYNOW;
-    }
+    // if (common_cls.on_tft_unit()) {
+    //     disp->view_type = DISP_TYPE_ANKYNOW;
+    // }
 }
 
 // 暗記終了
@@ -91,13 +91,13 @@ void Ankey::input_end() {
 	this->ankey_flag = 0; // 処理なし
 	this->_data_index = 0;
 	// ヒートマップ表示中であればヒートマップ上の推してるボタンも全て消す
-    if (common_cls.on_tft_unit()) {
-    	disp->view_daken_key_reset();
-    }
+    // if (common_cls.on_tft_unit()) {
+    //	disp->view_daken_key_reset();
+    // }
 	// 入力状態をリセット
 	this->_azkb->press_data_reset();
 	// 記憶データをファイルに出力
-	setting_key_press key_set = common_cls.get_key_setting(this->ankey_layer_id, this->ankey_key_num); // 暗記キーの設定情報取得
+	setting_key_press key_set = common_cls.get_key_setting(this->ankey_layer_id, this->ankey_key_num, 0); // 暗記キーの設定情報取得
 	String fpath = "/" + String(key_set.data);
 	File fp = SPIFFS.open(fpath, "w");
 	if (!fp) {
@@ -111,16 +111,16 @@ void Ankey::input_end() {
 	// 全ての光を消す
 	rgb_led_cls.hide_all();
 	// 待ち受け画像表示
-    if (common_cls.on_tft_unit()) {
-        disp->view_type = disp->_back_view_type;
-    }
+    // if (common_cls.on_tft_unit()) {
+    //     disp->view_type = disp->_back_view_type;
+    // }
 }
 
 
 // 暗記したデータのキー入力開始
 void Ankey::output_start() {
 	// 記憶データをファイルから読み込む
-	setting_key_press key_set = common_cls.get_key_setting(this->ankey_layer_id, this->ankey_key_num); // 暗記キーの設定情報取得
+	setting_key_press key_set = common_cls.get_key_setting(this->ankey_layer_id, this->ankey_key_num, 0); // 暗記キーの設定情報取得
 	String fpath = "/" + String(key_set.data);
 	File fp = SPIFFS.open(fpath, "r");
 	if (!fp) {
@@ -141,9 +141,9 @@ void Ankey::output_start() {
 	this->ankey_flag = 2; // キー入力中
 	this->_data_index = 0;
 	// ヒートマップ表示中であればヒートマップ上の推してるボタンも全て消す
-    if (common_cls.on_tft_unit()) {
-    	disp->view_daken_key_reset();
-    }
+    // if (common_cls.on_tft_unit()) {
+    // 	disp->view_daken_key_reset();
+    // }
 	// 入力状態をリセット
 	this->_azkb->press_data_reset();
 }
@@ -155,9 +155,9 @@ void Ankey::output_end() {
 	this->_data_index = 0;
 	this->_loop_index = 0;
 	// ヒートマップ表示中であればヒートマップ上の推してるボタンも全て消す
-    if (common_cls.on_tft_unit()) {
-    	disp->view_daken_key_reset();
-    }
+    // if (common_cls.on_tft_unit()) {
+    //	disp->view_daken_key_reset();
+    // }
 	// 入力状態をリセット
 	this->_azkb->press_data_reset();
 	// 全ての光を消す
@@ -204,15 +204,6 @@ void Ankey::ankey_up(short layer_id, int key_num) {
 // 定期処理
 void Ankey::loop_exec() {
 	int i;
-    if (common_cls.on_tft_unit()) {
-/*        disp->view_int(0, 0, this->ankey_count);
-        disp->view_int(0, 26, this->_loop_index);
-        disp->view_int(0, 52, this->_data_index);
-        disp->view_int(30, 0, this->ankey_flag);
-    	if (this->ankey_flag == 2) {
-    		disp->view_int(60, 0, this->_andata[this->_data_index].wait);
-    	}
-*/    }
 	// 暗記ボタンが長押しされたら暗記開始
 	if (this->ankey_flag == 0 && this->ankey_count > 0 && this->_loop_index >= 100) {
 		this->ankey_count = 0;
@@ -231,10 +222,10 @@ void Ankey::loop_exec() {
 			// 入力処理
 			if (this->_andata[i].type == 1) {
 				// キーダウン
-				this->_azkb->key_down_action(this->_andata[i].key_num);
+				this->_azkb->key_down_action(this->_andata[i].key_num, 0);
 			} else if (this->_andata[i].type == 2) {
 				// キーアップ
-				this->_azkb->key_up_action(this->_andata[i].key_num);
+				this->_azkb->key_up_action(this->_andata[i].key_num, 0);
 			}
 			this->_data_index++;
 			this->_loop_index = 0;

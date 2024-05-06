@@ -13,11 +13,6 @@ setting_key_press *soft_setting_press;
 int16_t soft_click_layer;
 int16_t soft_click_key;
 
-// remapに送る用のデータ
-uint8_t  *setting_remap;
-uint16_t  layer_max;
-uint16_t  key_max;
-
 // レイヤー名のデータ
 layer_name_data *layer_name_list;
 uint16_t layer_name_length;
@@ -78,6 +73,14 @@ bool disp_enable;
 // rgb_led制御用クラス
 Neopixel rgb_led_cls = Neopixel();
 
+// i2c OLEDクラス
+Oled *oled_cls;
+
+// メインOLEDの設定
+short oled_main_width = -1;
+short oled_main_height = -1;
+short oled_main_addr = -1;
+
 // I2Cライブラリ用クラス
 Wirelib wirelib_cls = Wirelib();
 
@@ -99,6 +102,9 @@ char webhook_buf[WEBFOOK_BUF_SIZE];
 // 入力キーの数
 int key_input_length;
 
+// キースキャンループの待ち時間
+short loop_delay;
+
 // ディスプレイの向き
 uint8_t disp_rotation;
 
@@ -111,17 +117,11 @@ char keyboard_name_str[32];
 // キーボードの言語(日本語=0/ US=1 / 日本語(US記号) = 2)
 uint8_t keyboard_language;
 
-// オプションタイプの番号
-int option_type_int;
-
 // トラックボールの方向
 uint8_t trackball_direction;
 
 // トラックボールのカーソル移動速度
 uint8_t trackball_speed;
-
-// 踏みキーの反転フラグ
-bool foot_inversion;
 
 // オープニングムービー再生フラグ
 bool op_movie_flag;
@@ -141,6 +141,10 @@ short last_touch_index;
 int default_layer_no;
 int select_layer_no;
 int last_select_layer_key;
+
+// ホールセンサーの範囲
+short hall_range_min;
+short hall_range_max;
 
 // holdの設定
 uint8_t hold_type;
@@ -184,17 +188,26 @@ int8_t keyboard_status;
 Adafruit_MCP23X17 *ioxp_obj[8];
 
 // 入力用ピン情報
+short col_len;
+short row_len;
 short direct_len;
 short touch_len;
+short hall_len;
+short *col_list;
+short *row_list;
 short *direct_list;
 short *touch_list;
-short ioxp_len;
+short *hall_list;
+short *hall_offset;
+
 short *ioxp_list;
 short ioxp_sda;
 short ioxp_scl;
 int ioxp_hz;
 short ioxp_status[8];
 int ioxp_hash[8];
+
+short ioxp_len;
 
 // I2Cオプションの設定
 i2c_option *i2copt;
@@ -307,6 +320,7 @@ void AzCommon::common_start() {
         press_key_list[i].action_type = -1;
         press_key_list[i].key_num = -1;
         press_key_list[i].key_id = -1;
+        press_key_list[i].press_type = -1;
         press_key_list[i].layer_id = -1;
         press_key_list[i].press_time = -1;
         press_key_list[i].unpress_time = -1;
@@ -376,8 +390,6 @@ void AzCommon::wifi_connect() {
         wifi_conn_flag = 0;
         return;
     }
-    // 液晶にWiFi接続中画面を表示する
-    if (common_cls.on_tft_unit()) disp->view_wifi_conn();
     // WiFiに接続(一番電波が強いAPへ接続)
     for (i=0; i<wifi_data_length; i++) {
         wifiMulti.addAP(wifi_data[i].ssid, wifi_data[i].pass);
@@ -643,8 +655,20 @@ void AzCommon::load_setting_json() {
 
     // キーボードの名前を取得する
     String keynamestr;
-    keynamestr = setting_obj["keyboard_name"].as<String>();
-    keynamestr.toCharArray(keyboard_name_str, 31);
+    if (setting_obj.containsKey("keyboard_name")) {
+        keynamestr = setting_obj["keyboard_name"].as<String>();
+        keynamestr.toCharArray(keyboard_name_str, 31);
+    } else {
+        // 設定が無い場合はデフォルト
+        sprintf(keyboard_name_str, "az_keyboard");
+    }
+
+    // キースキャンループの待ち時間
+    if (setting_obj.containsKey("loop_delay")) {
+        loop_delay = setting_obj["loop_delay"].as<signed int>();
+    } else {
+        loop_delay = LOOP_DELAY_DEFAULT;
+    }
 
     // キーボードのタイプがeep_dataと一致しなければ現在選択しているキーボードと、設定ファイルのキーボードが一致していないので
     // 現在選択しているキーボードのデフォルト設定ファイルを作成して再起動
@@ -684,19 +708,35 @@ void AzCommon::load_setting_json() {
             hold_time = setting_obj["hold"]["time"].as<signed int>();
         }
     }
-    // オプションタイプの番号を取得
-    option_type_int = 0;
-    if (setting_obj.containsKey("option_set") && setting_obj["option_set"].containsKey("type")) {
-        get_option_type_int(setting_obj);
+    // ホールセンサーのアナログ値読み取り範囲
+    if (setting_obj.containsKey("hall_range_min")) {
+        hall_range_min = setting_obj["hall_range_min"].as<signed int>();
+    } else {
+        hall_range_min = HALL_RANGE_MIN_DEFAULT;
+    }
+    if (setting_obj.containsKey("hall_range_max")) {
+        hall_range_max = setting_obj["hall_range_max"].as<signed int>();
+    } else {
+        hall_range_max = HALL_RANGE_MAX_DEFAULT;
     }
     // オープニングムービー再生取得
     op_movie_flag = false;
     if (setting_obj["option_set"]["op_movie"].as<signed int>() > 0) op_movie_flag = true;
     // 入力ピン情報取得
     int i, j, k, m, n, o, p, r;
+    col_len = setting_obj["keyboard_pin"]["col"].size();
+    row_len = setting_obj["keyboard_pin"]["row"].size();
     direct_len = setting_obj["keyboard_pin"]["direct"].size();
     touch_len = setting_obj["keyboard_pin"]["touch"].size();
     ioxp_len = setting_obj["keyboard_pin"]["ioxp"].size();
+    col_list = new short[col_len];
+    for (i=0; i<col_len; i++) {
+        col_list[i] = setting_obj["keyboard_pin"]["col"][i].as<signed int>();
+    }
+    row_list = new short[row_len];
+    for (i=0; i<row_len; i++) {
+        row_list[i] = setting_obj["keyboard_pin"]["row"][i].as<signed int>();
+    }
     direct_list = new short[direct_len];
     for (i=0; i<direct_len; i++) {
         direct_list[i] = setting_obj["keyboard_pin"]["direct"][i].as<signed int>();
@@ -709,8 +749,24 @@ void AzCommon::load_setting_json() {
     for (i=0; i<ioxp_len; i++) {
         ioxp_list[i] = setting_obj["keyboard_pin"]["ioxp"][i].as<signed int>();
     }
+
+    // 磁気スイッチ入力ピン情報取得
+    if (setting_obj["keyboard_pin"].containsKey("hall")) {
+        hall_len = setting_obj["keyboard_pin"]["hall"].size();
+        hall_list = new short[hall_len]; // ホールセンサーにつながっているピン
+        input_key_analog = new uint8_t[hall_len]; // 現在のアナログ値
+        analog_stroke_most = new char[hall_len]; // キーを最も押し込んだ時のアナログ値
+        for (i=0; i<hall_len; i++) {
+            hall_list[i] = setting_obj["keyboard_pin"]["hall"][i].as<signed int>();
+            input_key_analog[i] = 0;
+            analog_stroke_most[i] = 0;
+        }
+    } else {
+        hall_len = 0;
+    }
+
     // IOエキスパンダピン
-    if (setting_obj.containsKey("i2c_set") && setting_obj["i2c_set"].size() == 2) {
+    if (setting_obj.containsKey("i2c_set") && setting_obj["i2c_set"].size() == 3) {
         ioxp_sda = setting_obj["i2c_set"][0].as<signed int>();
         ioxp_scl = setting_obj["i2c_set"][1].as<signed int>();
         ioxp_hz = setting_obj["i2c_set"][2].as<signed int>();
@@ -740,6 +796,7 @@ void AzCommon::load_setting_json() {
     i2c_ioxp i2cioxp_obj;
     i2c_rotary i2crotary_obj;
     i2c_pim447 i2cpim447_obj;
+    i2c_azxp i2cazxp_obj;
     int opt_type;
     if (setting_obj.containsKey("i2c_option") && setting_obj["i2c_option"].size()) {
         // 有効になっているオプションの数を数える
@@ -766,7 +823,7 @@ void AzCommon::load_setting_json() {
             }
             i2copt[j].opt_type = opt_type & 0xff;
             // マッピング情報の読み込み
-            if (opt_type == 1 || opt_type == 2 || opt_type == 3) { // 1 = IOエキスパンダ（MCP23017）/ 2 = Tiny202 ロータリーエンコーダ / 3 = PIM447
+            if (opt_type == 1 || opt_type == 2 || opt_type == 3 || opt_type == 4 || opt_type == 5) { // 1 = IOエキスパンダ（MCP23017）/ 2 = Tiny202 ロータリーエンコーダ
                 // キーマッピング設定
                 if (setting_obj["i2c_option"][i].containsKey("map") &&
                         setting_obj["i2c_option"][i]["map"].size() ) {
@@ -866,7 +923,7 @@ void AzCommon::load_setting_json() {
                 memcpy(i2copt[j].data, &i2crotary_obj, sizeof(i2c_rotary));
                 j++;
 
-            } else if (opt_type == 3) { // 3 = 1U トラックボール PIM447
+            } else if (opt_type == 3 || opt_type == 4) { // 3 = 1U トラックボール PIM447  // 4 = フリック入力
                 // アドレス
                 if (setting_obj["i2c_option"][i].containsKey("addr")) {
                     i2cpim447_obj.addr = setting_obj["i2c_option"][i]["addr"].as<signed int>();
@@ -889,6 +946,32 @@ void AzCommon::load_setting_json() {
                 memcpy(i2copt[j].data, &i2cpim447_obj, sizeof(i2c_pim447));
                 j++;
 
+            } else if (opt_type == 5) { // 5 = AZ-Expander
+                m = setting_obj["i2c_option"][i]["setting"].size();
+                if (m > 18) m = 18;
+                for (n=0; n<m; n++) {
+                    i2cazxp_obj.setting[n] = setting_obj["i2c_option"][i]["setting"][n].as<signed int>();
+                }
+                i2copt[j].data = (uint8_t *)new i2c_azxp;
+                memcpy(i2copt[j].data, &i2cazxp_obj, sizeof(i2c_azxp));
+                j++;
+
+            } else if (opt_type == 6) { // 6 = OLED(メイン)
+                oled_main_width = -1;
+                oled_main_height = -1;
+                oled_main_addr = -1;
+                // 設定内容を取得
+                if (setting_obj["i2c_option"][i].containsKey("width")) {
+                    oled_main_width = setting_obj["i2c_option"][i]["width"].as<signed int>();
+                }
+                if (setting_obj["i2c_option"][i].containsKey("height")) {
+                    oled_main_height = setting_obj["i2c_option"][i]["height"].as<signed int>();
+                }
+                if (setting_obj["i2c_option"][i].containsKey("addr")) {
+                    oled_main_addr = setting_obj["i2c_option"][i]["addr"].as<signed int>();
+                }
+                j++;
+
             }
 
         }
@@ -901,14 +984,10 @@ void AzCommon::load_setting_json() {
     // key_input_length = 16 * ioxp_len;
     // キーの設定を取得
     // まずは設定の数を取得
-    layer_max = 0;
     setting_length = 0;
     soft_setting_length = 0;
-    // key_max = (16 * ioxp_len) + direct_len + touch_len + i2c_key_len;
-    key_max = (16 * ioxp_len) + direct_len + touch_len; // remap用
     this->get_keymap(setting_obj, "layers"); // 通常キー
     this->get_keymap(setting_obj, "soft_layers"); // ソフトウェアキー
-    this->set_setting_remap(); // REMAPに送る用のデータ作成
 
 
     // wifiの設定読み出し
@@ -939,13 +1018,15 @@ void AzCommon::load_setting_json() {
     default_layer_no = setting_obj["default_layer"].as<signed int>();
 
     // キーボードの言語取得
-    keyboard_language = setting_obj["keyboard_language"].as<signed int>();
+    if (setting_obj.containsKey("keyboard_language")) {
+        keyboard_language = setting_obj["keyboard_language"].as<signed int>();
+    } else {
+        keyboard_language = 0;
+    }
 
     // RGBLED設定の取得
     rgb_pin = -1;
     if (setting_obj.containsKey("rgb_pin")) rgb_pin = setting_obj["rgb_pin"].as<signed int>();
-    rgb_len = -1;
-    if (setting_obj.containsKey("rgb_len")) rgb_len = setting_obj["rgb_len"].as<signed int>();
     matrix_row = -1;
     if (setting_obj.containsKey("matrix_row")) matrix_row = setting_obj["matrix_row"].as<signed int>();
     matrix_col = -1;
@@ -967,6 +1048,7 @@ void AzCommon::load_setting_json() {
     }
 
 }
+
 
 // キーマップ用に確保しているメモリを解放
 void AzCommon::clear_keymap() {
@@ -992,6 +1074,10 @@ void AzCommon::clear_keymap() {
             delete setting_press[i].data;
         } else if (setting_press[i].action_type == 8) { // 打鍵設定ボタン
             delete setting_press[i].data;
+        } else if (setting_press[i].action_type == 9) { // holdボタン
+        } else if (setting_press[i].action_type == 10) { // アナログマウス移動
+            delete setting_press[i].data;
+        } else if (setting_press[i].action_type == 11) { // Nubkey位置調節
         }
     }
     delete[] setting_press;
@@ -1004,18 +1090,14 @@ void AzCommon::clear_keymap() {
 
 // JSONデータからキーマップの情報を読み込む
 void AzCommon::get_keymap(JsonObject setting_obj, char *key_name) {
-    int i, j, k, l, m, at, s;
+    int i, l, m;
     char lkey[16];
     char kkey[16];
     uint16_t lnum, knum, slen, lmax;
+    String text_str;
     JsonObject::iterator it_l;
     JsonObject::iterator it_k;
-    JsonObject layers, keys;
-    JsonObject press_obj;
-    String text_str;
-    setting_normal_input normal_input;
-    setting_layer_move layer_move_input;
-    setting_mouse_move mouse_move_input;
+    JsonObject layers, keys, press_json;
     setting_key_press *setpt;
     layer_name_data *lndt;
     // 設定項目が存在しなければ何もしない
@@ -1029,13 +1111,11 @@ void AzCommon::get_keymap(JsonObject setting_obj, char *key_name) {
         slen += setting_obj[key_name][it_l->key().c_str()]["keys"].size();
         lmax++;
     }
-    ESP_LOGD(LOG_TAG, "setting total %D\n", slen);
-    // キー設定が存在しなければ何もしない
-    if (slen == 0) return;
+    // Serial.printf("setting total %D\n", slen);
     // 設定数分メモリ確保
-    ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
+    // Serial.printf("setting_key_press:start: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
     setpt = new setting_key_press[slen];
-    ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
+    // Serial.printf("setting_key_press:end: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
     // キー設定読み込み
     i = 0;
     l = 0;
@@ -1059,10 +1139,8 @@ void AzCommon::get_keymap(JsonObject setting_obj, char *key_name) {
         for (it_k=keys.begin(); it_k!=keys.end(); ++it_k) {
             sprintf(kkey, "%S", it_k->key().c_str());
             knum = split_num(kkey);
-            // ESP_LOGD(LOG_TAG, "layers %S %S [ %D %D ]\n", lkey, kkey, lnum, knum);
-            press_obj = setting_obj[key_name][lkey]["keys"][kkey]["press"].as<JsonObject>();
-            setpt[i].layer = lnum;
-            setpt[i].key_num = knum;
+            // Serial.printf("get_keymap: %S %S [ %D %D ]\n", lkey, kkey, lnum, knum);
+            // Serial.printf("mem: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
             if (setting_obj[key_name][lkey]["keys"][kkey].containsKey("name")) {
                 // 表示名があれば表示名取得
                 text_str = setting_obj[key_name][lkey]["keys"][kkey]["name"].as<String>();
@@ -1074,74 +1152,14 @@ void AzCommon::get_keymap(JsonObject setting_obj, char *key_name) {
                 setpt[i].key_name = new char[1];
                 strcpy(setpt[i].key_name, "");
             }
-            setpt[i].action_type = press_obj["action_type"].as<signed int>();
-            if (setpt[i].action_type == 1) {
-                // 通常入力
-                normal_input.key_length = press_obj["key"].size();
-                normal_input.key = new uint16_t[normal_input.key_length];
-                for (j=0; j<normal_input.key_length; j++) {
-                      normal_input.key[j] = press_obj["key"][j].as<signed int>();
-                }
-                if (press_obj.containsKey("repeat_interval")) {
-                    normal_input.repeat_interval = press_obj["repeat_interval"].as<signed int>();
-                } else {
-                    normal_input.repeat_interval = 51;
-                }
-                if (press_obj.containsKey("hold")) {
-                    normal_input.hold = press_obj["hold"].as<signed int>();
-                } else {
-                    normal_input.hold = 0;
-                }
-                setpt[i].data = (char *)new setting_normal_input;
-                memcpy(setpt[i].data, &normal_input, sizeof(setting_normal_input));
-            } else if (setpt[i].action_type == 2) {
-                // テキスト入力
-                text_str = press_obj["text"].as<String>();
-                m = text_str.length() + 1;
-                setpt[i].data = new char[m];
-                text_str.toCharArray(setpt[i].data, m);
-            } else if (setpt[i].action_type == 3) {
-                // レイヤー切り替え
-                layer_move_input.layer_id = press_obj["layer"].as<signed int>();
-                layer_move_input.layer_type = press_obj["layer_type"].as<signed int>();
-                if (layer_move_input.layer_type == 0) layer_move_input.layer_type = 0x51; // 切り替え方法の指定が無かった場合はMO(押している間切り替わる)
-                setpt[i].data = (char *)new setting_layer_move;
-                memcpy(setpt[i].data, &layer_move_input, sizeof(setting_layer_move));
-            } else if (setpt[i].action_type == 4) {
-                // WEBフック
-                text_str = "";
-                serializeJson(press_obj["webhook"], text_str);
-                m = text_str.length() + 1;
-                setpt[i].data = new char[m];
-                text_str.toCharArray(setpt[i].data, m);
-                
-            } else if (setpt[i].action_type == 5) {
-                // マウス移動
-                mouse_move_input.x = press_obj["move"]["x"].as<signed int>();
-                mouse_move_input.y = press_obj["move"]["y"].as<signed int>();
-                mouse_move_input.wheel = press_obj["move"]["wheel"].as<signed int>();
-                mouse_move_input.hWheel = press_obj["move"]["hWheel"].as<signed int>();
-                mouse_move_input.speed = press_obj["move"]["speed"].as<signed int>();
-                setpt[i].data = (char *)new setting_mouse_move;
-                memcpy(setpt[i].data, &mouse_move_input, sizeof(setting_mouse_move));
-
-            } else if (setpt[i].action_type == 6) {
-                // 暗記ボタン
-                text_str = press_obj["ankey_file"].as<String>();
-                m = text_str.length() + 1;
-                setpt[i].data = new char[m];
-                text_str.toCharArray(setpt[i].data, m);
-
-            } else if (setpt[i].action_type == 7) {
-                // LED設定ボタン
-                setpt[i].data = new char;
-                *setpt[i].data = press_obj["led_setting_type"].as<signed int>();
-                
-            } else if (setpt[i].action_type == 8) {
-                // 打鍵設定ボタン
-                setpt[i].data = new char;
-                *setpt[i].data = press_obj["dakagi_settype"].as<signed int>();
-
+            press_json = setting_obj[key_name][lkey]["keys"][kkey]["press"].as<JsonObject>();
+            this->get_keymap_one(press_json, &setpt[i], lnum, knum);
+            setpt[i].sub_press_flag = false;
+            if (setting_obj[key_name][lkey]["keys"][kkey].containsKey("sub")) {
+                setpt[i].sub_press_flag = true;
+                setpt[i].sub_press = new setting_key_press;
+                press_json = setting_obj[key_name][lkey]["keys"][kkey]["sub"].as<JsonObject>();
+                this->get_keymap_one(press_json, (setting_key_press *)setpt[i].sub_press, lnum, knum);
             }
             i++;
         }
@@ -1149,7 +1167,6 @@ void AzCommon::get_keymap(JsonObject setting_obj, char *key_name) {
     if (strcmp(key_name, "layers") == 0) { // 通常のキー設定
         setting_press = setpt;
         setting_length = slen;
-        layer_max = lmax;
         // レイヤー名取得
         layer_name_list = lndt;
         layer_name_length = lmax;
@@ -1161,232 +1178,105 @@ void AzCommon::get_keymap(JsonObject setting_obj, char *key_name) {
         soft_layer_name_list = lndt;
         soft_layer_name_length = lmax;
     }
-    // setting_press = setpt;
-  
-    // ログに出力して確認
-    /*
-    for (i=0; i<setting_length; i++) {
-        if (setting_press[i].action_type == 1) {
-            memcpy(&normal_input, setting_press[i].data, sizeof(setting_normal_input));
-            ESP_LOGD(LOG_TAG, "setting_press %D %D %D %D [%D, %D]", i, setting_press[i].layer, setting_press[i].key_num, setting_press[i].action_type, normal_input.key_length, normal_input.repeat_interval);
-            for (j=0; j<normal_input.key_length; j++) {
-                ESP_LOGD(LOG_TAG, "setting_press %D ", normal_input.key[j]);
-            }
-        } else if (setting_press[i].action_type == 2) {
-            ESP_LOGD(LOG_TAG, "setting_press %D %D %D %D [ %S ]\n", i, setting_press[i].layer, setting_press[i].key_num, setting_press[i].action_type, setting_press[i].data);
-        } else if (setting_press[i].action_type == 3) {
-            ESP_LOGD(LOG_TAG, "setting_press %D %D %D %D [ %D ]\n", i, setting_press[i].layer, setting_press[i].key_num, setting_press[i].action_type, *setting_press[i].data);
-        } else if (setting_press[i].action_type == 4) {
-            ESP_LOGD(LOG_TAG, "setting_press %D %D %D %D [ %S ]\n", i, setting_press[i].layer, setting_press[i].key_num, setting_press[i].action_type, setting_press[i].data);
-        } else if (setting_press[i].action_type == 5) {
-            memcpy(&mouse_move_input, setting_press[i].data, sizeof(setting_mouse_move));
-            ESP_LOGD(LOG_TAG, "setting_press %D %D %D %D [ %D, %D, %D ]\n", i, setting_press[i].layer, setting_press[i].key_num, setting_press[i].action_type, mouse_move_input.x, mouse_move_input.y, mouse_move_input.speed);
-        } else {
-            ESP_LOGD(LOG_TAG, "setting_press %D %D %D %D\n", i, setting_press[i].layer, setting_press[i].key_num, setting_press[i].action_type);
-        }
-    }
-    ESP_LOGD(LOG_TAG, "mmm: %D %D\n", heap_caps_get_free_size(MALLOC_CAP_32BIT), heap_caps_get_free_size(MALLOC_CAP_8BIT) );
-    */
+
 }
 
-// REMAP に送る用のデータ作成
-void AzCommon::set_setting_remap() {
-
-    int i, j, k, m, at, s;
+// JSONデータからキーマップの情報を読み込む(1キー分)
+void AzCommon::get_keymap_one(JsonObject json_obj, setting_key_press *press_obj, uint16_t lnum, uint16_t knum) {
+    int j, k, m, at, s;
+    String text_str;
     setting_normal_input normal_input;
     setting_layer_move layer_move_input;
     setting_mouse_move mouse_move_input;
-    // Remapに送る用のデータ作成
-    // Serial.printf("layer_max: %d    key_max: %d\n", layer_max, key_max);
-    int buf_length = layer_max * key_max * 2;
-    setting_remap = new uint8_t[buf_length];
-    // バッファ初期化
-    for (i=0; i<buf_length; i++) {
-        setting_remap[i] = 0x00;
+
+    press_obj->layer = lnum; // 対象レイヤー
+    press_obj->key_num = knum; // 対象キーID
+    // アクチュエーションポイント
+    if (json_obj.containsKey("act")) {
+        press_obj->actuation_type = json_obj["act"].as<signed int>();
+    } else {
+        press_obj->actuation_type = ACTUATION_TYPE_DEFAULT;
     }
-    // キーデータを格納
-    for (i=0; i<setting_length; i++) {
-        at = setting_press[i].action_type;
-        m = (setting_press[i].layer * key_max * 2) + (setting_press[i].key_num * 2);
-        if (m >= buf_length) continue; // 領域を超えているキー設定はオプション用なので無視
-        if (at == 1) {
-            // 通常キー
-            memcpy(&normal_input, setting_press[i].data, sizeof(setting_normal_input));
-            if (normal_input.key_length < 1) continue;
-            s = normal_input.key[0];
-            if (normal_input.hold) {
-                // holdが定義されていたら tap/hold
-                s = normal_input.hold << 8; // 上位8ビットはholdのキー
-                if (normal_input.key_length) s |= normal_input.key[0] & 0xFF; // 下位8ビットはタップのキー
-            } else if (s >= 0xE0 && s <= 0xE7 && normal_input.key_length > 1) {
-                // 1キー目がモデファイアで複数キーが登録してある場合 同時押しと判定
-                s = 0;
-                for (j=0; j<normal_input.key_length; j++) {
-                    k = normal_input.key[j];
-                    if (k == 0xE0) { s |= 0x0100; } // 左Ctrl 
-                    else if (k == 0xE1) { s |= 0x0200; } // 左Shift
-                    else if (k == 0xE2) { s |= 0x0400; } // 左Alt
-                    else if (k == 0xE3) { s |= 0x0800; } // 左GUI
-                    else if (k == 0xE4) { s |= 0x1100; } // 右Ctrl
-                    else if (k == 0xE5) { s |= 0x1200; } // 右Shift
-                    else if (k == 0xE6) { s |= 0x1400; } // 右Alt
-                    else if (k == 0xE7) { s |= 0x1800; } // 右GUI
-                    else { s |= k & 0xFF; } // それ以外は通常キーとして下位8ビットに入れる
-                }
-            } else {
-                // それ以外は通常キー
-                if (s == 0x4001) s = 0xF4; // 左クリック
-                if (s == 0x4002) s = 0xF5; // 右クリック
-                if (s == 0x4004) s = 0xF6; // 中クリック
-                if (s == 0x4005) s = 0xFD; // スクロールボタン
-            }
-            setting_remap[m] = (s >> 8) & 0xff;
-            setting_remap[m + 1] = s & 0xff;
-        } else if (at == 3) {
-            // レイヤー切り替え
-            memcpy(&layer_move_input, setting_press[i].data, sizeof(setting_layer_move));
-            s = layer_move_input.layer_type; // 切り替えのタイプ
-            if (s != 0x50 && s != 0x51 && s != 0x52 && s != 0x53 && s != 0x54 && s != 0x58) s = 0x51; // 不明な指定はMOと判定
-            setting_remap[m] = s;
-            setting_remap[m + 1] = layer_move_input.layer_id;
-        } else if (at == 5) {
-            // マウス移動
-            memcpy(&mouse_move_input, setting_press[i].data, sizeof(setting_mouse_move));
-            s = 0xF0;
-            if (mouse_move_input.y < 0) s = 0xF0;
-            if (mouse_move_input.y > 0) s = 0xF1;
-            if (mouse_move_input.x < 0) s = 0xF2;
-            if (mouse_move_input.x > 0) s = 0xF3;
-            setting_remap[m] = (s >> 8) & 0xff;
-            setting_remap[m + 1] = s & 0xff;
+    // アクチュエーションポイント
+    if (json_obj.containsKey("acp")) {
+        press_obj->actuation_point = json_obj["acp"].as<signed int>();
+    } else {
+        press_obj->actuation_point = ACTUATION_POINT_DEFAULT;
+    }
+    // ラピットトリガー
+    if (json_obj.containsKey("rap")) {
+        press_obj->rapid_trigger = json_obj["rap"].as<signed int>();
+    } else {
+        press_obj->rapid_trigger = RAPID_TRIGGER_DEFAULT;
+    }
+    // ボタンの動作
+    press_obj->action_type = json_obj["action_type"].as<signed int>();
+    if (press_obj->action_type == 1) {
+        // 通常入力
+        normal_input.key_length = json_obj["key"].size();
+        normal_input.key = new uint16_t[normal_input.key_length];
+        for (j=0; j<normal_input.key_length; j++) {
+                normal_input.key[j] = json_obj["key"][j].as<signed int>();
         }
-    }
-    /* REMAP用バッファデバッグ表示
-    Serial.printf("remap_buf (%d):", buf_length);
-    for (i=0; i<buf_length; i++) {
-        Serial.printf(" %02x", setting_remap[i]);
-    }
-    Serial.printf("\n");
-    */
-}
-
-// REMAPで受け取ったデータをJSONデータに書き込む
-void AzCommon::remap_save_setting_json() {
-    // セッティングJSONを保持する領域
-    SpiRamJsonDocument setting_doc(SETTING_JSON_BUF_SIZE);
-    JsonObject setting_obj;
-    int i, j, k, m, h, l, s;
-    int buf_length = layer_max * key_max * 2;
-    JsonObject layer_obj;
-    JsonObject keys_obj;
-    JsonObject key_obj;
-    JsonObject press_obj;
-    JsonObject move_obj;
-    JsonArray keyarray_obj;
-    char lname[32];
-    char kname[32];
-
-    // ファイルオープン
-    File open_file = SPIFFS.open(SETTING_JSON_PATH);
-    if(!open_file) return;
-    // 読み込み＆パース
-    DeserializationError err = deserializeJson(setting_doc, open_file);
-    if (err) return;
-    open_file.close();
-
-    // JSONオブジェクトを保持
-    setting_obj = setting_doc.as<JsonObject>();
-
-    // 入力モードは無変換の日本語キーボード固定
-    setting_obj["keyboard_language"] = 0;
-    keyboard_language = 0;
-
-    // キーマップ情報の配列を作成
-    setting_obj["layers"].clear();
-    for (i=0; i<layer_max; i++) {
-        sprintf(lname, "layer_%d", i);
-        layer_obj = setting_obj["layers"].createNestedObject(lname);
-        layer_obj["name"].set(lname);
-        keys_obj = setting_obj["layers"][lname].createNestedObject("keys");
-        for (j=0; j<key_max; j++) {
-            m = (i * key_max * 2) + (j * 2);
-            h = setting_remap[m];
-            l = setting_remap[m + 1];
-            k = (h << 8) | l;
-            if (k == 0) continue;
-            // Serial.printf("key: layer=%d key=%d mem=%d id=%d\n", i, j, m, k);
-            sprintf(kname, "key_%d", j);
-            key_obj = setting_obj["layers"][lname]["keys"].createNestedObject(kname);
-            press_obj = setting_obj["layers"][lname]["keys"][kname].createNestedObject("press");
-            press_obj["action_type"] = 0;
-            if (k <= 0x00E7) {
-                // 通常キー
-                press_obj["action_type"] = 1; // 通常キー
-                press_obj["repeat_interval"] = 51; // 連打無し
-                keyarray_obj = setting_obj["layers"][lname]["keys"][kname]["press"].createNestedArray("key");
-                keyarray_obj.add(k);
-            } else if ((h >= 0x01 && h <= 0x0F) || (h >= 0x11 && h <= 0x1F)) { // 左モデファイア || 右モデファイア
-                // モデファイア 同時押し
-                press_obj["action_type"] = 1; // 通常キー
-                press_obj["repeat_interval"] = 51; // 連打無し
-                keyarray_obj = setting_obj["layers"][lname]["keys"][kname]["press"].createNestedArray("key");
-                if ((h >> 4) == 0x00) { // 左モデファイア
-                    if (h & 0x01) keyarray_obj.add(0xE0); // 左Ctrl
-                    if (h & 0x02) keyarray_obj.add(0xE1); // 左Shift
-                    if (h & 0x04) keyarray_obj.add(0xE2); // 左Alt
-                    if (h & 0x08) keyarray_obj.add(0xE3); // 左GUI
-                } else if ((h >> 4) == 0x01) { // 右モデファイア
-                    if (h & 0x01) keyarray_obj.add(0xE4); // 右Ctrl
-                    if (h & 0x02) keyarray_obj.add(0xE5); // 右Shift
-                    if (h & 0x04) keyarray_obj.add(0xE6); // 右Alt
-                    if (h & 0x08) keyarray_obj.add(0xE7); // 右GUI
-                }
-                keyarray_obj.add(l); // 下位8ビットを通常キー
-            } else if ((h >= 0x61 && h <= 0x6F) || (h >= 0x71 && h <= 0x7F) || (h >= 0x41 && h <= 0x4F) || h == 0x56) { // 左モデファイア || 右モデファイア || レイヤー || swap?
-                // Tap / Hold
-                press_obj["action_type"] = 1; // 通常キー
-                press_obj["repeat_interval"] = 51; // 連打無し
-                press_obj["hold"] = h; // モデファイア | レイヤー定義
-                keyarray_obj = setting_obj["layers"][lname]["keys"][kname]["press"].createNestedArray("key");
-                keyarray_obj.add(l); // 下位8ビットを通常キー
-            } else if ((h == 0x50 || h == 0x51 || h == 0x52 || h == 0x53 || h == 0x54 || h == 0x58) && l < layer_max) {
-                // レイヤー切り替え
-                press_obj["action_type"] = 3; // レイヤー切り替え
-                press_obj["layer"] = l; // 切り替え先レイヤー
-                press_obj["layer_type"] = h; // 切り替えの種類
-            } else if (k == 0xF0 || k == 0xF1 || k == 0xF2 || k == 0xF3) { // マウス移動↑↓←→
-                press_obj["action_type"] = 5; // マウス移動
-                move_obj = setting_obj["layers"][lname]["keys"][kname]["press"].createNestedObject("move");
-                if (k == 0xF0) { move_obj["x"] = 0; move_obj["y"] = -3; } // 上
-                if (k == 0xF1) { move_obj["x"] = 0; move_obj["y"] = 3; } // 下
-                if (k == 0xF2) { move_obj["x"] = -3; move_obj["y"] = 0; } // 左
-                if (k == 0xF3) { move_obj["x"] = 3; move_obj["y"] = 0; } // 右
-                move_obj["speed"] = 100; // 移動速度
-            } else if (k == 0xF4 || k == 0xF5 || k == 0xF6 || k == 0xFD) { // マウス ボタン1(左クリック)
-                press_obj["action_type"] = 1; // 通常キー
-                press_obj["repeat_interval"] = 51; // 連打無し
-                keyarray_obj = setting_obj["layers"][lname]["keys"][kname]["press"].createNestedArray("key");
-                if (k == 0xF4) s = 0x4001; // 左クリック
-                if (k == 0xF5) s = 0x4002; // 右クリック
-                if (k == 0xF6) s = 0x4004; // 中クリック
-                if (k == 0xFD) s = 0x4005; // スクロールボタン
-                keyarray_obj.add(s);
-            }
+        // 連打設定
+        if (json_obj.containsKey("repeat_interval")) {
+            normal_input.repeat_interval = json_obj["repeat_interval"].as<signed int>();
+        } else {
+            normal_input.repeat_interval = 51;
         }
+        // ホールド設定
+        if (json_obj.containsKey("hold")) {
+            normal_input.hold = json_obj["hold"].as<signed int>();
+        } else {
+            normal_input.hold = 0;
+        }
+        press_obj->data = (char *)new setting_normal_input;
+        memcpy(press_obj->data, &normal_input, sizeof(setting_normal_input));
+    } else if (press_obj->action_type == 2) {
+        // テキスト入力
+        text_str = json_obj["text"].as<String>();
+        m = text_str.length() + 1;
+        press_obj->data = new char[m];
+        text_str.toCharArray(press_obj->data, m);
+    } else if (press_obj->action_type == 3) {
+        // レイヤー切り替え
+        layer_move_input.layer_id = json_obj["layer"].as<signed int>();
+        layer_move_input.layer_type = json_obj["layer_type"].as<signed int>();
+        if (layer_move_input.layer_type == 0) layer_move_input.layer_type = 0x51; // 切り替え方法の指定が無かった場合はMO(押している間切り替わる)
+        press_obj->data = (char *)new setting_layer_move;
+        memcpy(press_obj->data, &layer_move_input, sizeof(setting_layer_move));
+    } else if (press_obj->action_type == 4) {
+        // WEBフック
+        text_str = "";
+        serializeJson(json_obj["webhook"], text_str);
+        m = text_str.length() + 1;
+        press_obj->data = new char[m];
+        text_str.toCharArray(press_obj->data, m);
+        
+    } else if (press_obj->action_type == 5 || press_obj->action_type == 10) {
+        // 5.マウス移動 10.アナログマウス移動
+        mouse_move_input.x = json_obj["move"]["x"].as<signed int>();
+        mouse_move_input.y = json_obj["move"]["y"].as<signed int>();
+        mouse_move_input.wheel = json_obj["move"]["wheel"].as<signed int>();
+        mouse_move_input.hWheel = json_obj["move"]["hWheel"].as<signed int>();
+        mouse_move_input.speed = json_obj["move"]["speed"].as<signed int>();
+        press_obj->data = (char *)new setting_mouse_move;
+        memcpy(press_obj->data, &mouse_move_input, sizeof(setting_mouse_move));
+
+    } else if (press_obj->action_type == 6) {
+        // 暗記ボタン
+
+    } else if (press_obj->action_type == 7) {
+        // LED設定ボタン
+        press_obj->data = new char;
+        *press_obj->data = json_obj["led_setting_type"].as<signed int>();
+        
+    } else if (press_obj->action_type == 8) {
+        // 打鍵設定ボタン
+        press_obj->data = new char;
+        *press_obj->data = json_obj["dakagi_settype"].as<signed int>();
+
     }
-
-    // 変更した内容をファイルに保存
-    File save_file = SPIFFS.open(SETTING_JSON_PATH, "w");
-    if(!save_file) return;
-    serializeJson(setting_doc, save_file);
-    save_file.close();
-
-    // メモリ上にあるキーマップを解放
-    this->clear_keymap();
-
-    // 新しいキーマップをメモリ上に入れる
-    this->get_keymap(setting_obj, "layers");
-    this->set_setting_remap(); // REMAPに送る用のデータ作成
 }
 
 // キーボードタイプの番号を取得する
@@ -1396,44 +1286,6 @@ void AzCommon::get_keyboard_type_int(String t) {
 	else if (t.equals("az_emugotch")) { keyboard_type_int = 3; } // えむごっち
     else { keyboard_type_int = 0; } // 不明なキーボード
 }
-
-// ユニットのタイプ番号を取得する
-void AzCommon::get_option_type_int(JsonObject setting_obj) {
-    String t = setting_obj["option_set"]["type"].as<String>();
-    option_type_int = 0;
-    if (t.equals("foot_m")) {
-        // 踏みキー
-        option_type_int = 1;
-        if (setting_obj["option_set"]["inversion"].as<signed int>()) {
-            foot_inversion = true;
-        } else {
-            foot_inversion = false;
-        }
-        
-    } else if (t.equals("trackball_m")) {
-        // トラックボール
-        option_type_int = 2;
-        // トラックボールの向きもここで取得
-        if (setting_obj["option_set"].containsKey("trackball_direction")) {
-            trackball_direction = setting_obj["option_set"]["trackball_direction"].as<signed int>();
-        } else {
-            trackball_direction = 0;
-        }
-        // トラックボールの速度も取得
-        if (setting_obj["option_set"].containsKey("trackball_speed")) {
-            trackball_speed = setting_obj["option_set"]["trackball_speed"].as<signed int>();
-        } else {
-            trackball_speed = 10;
-        }
-    } else if (t.equals("display_m")) {
-        // AZ-Macro用 液晶モジュール
-        option_type_int = 3;
-    } else if (t.equals("display_66jp")) {
-        // AZ-66JP用 液晶モジュール
-        option_type_int = 4;
-    }
-}
-
 
 // ファイルを開いてテキストをロードする
 int AzCommon::read_file(char *file_path, String &read_data) {
@@ -1657,6 +1509,8 @@ int AzCommon::i2c_setup(int p, i2c_option *opt) {
     i2c_map i2cmap_obj;
     i2c_ioxp i2cioxp_obj;
     i2c_pim447 i2cpim447_obj;
+    i2c_azxp i2cazxp_obj;
+    // Serial.printf("i2c_setup: opt_type %D\n", opt->opt_type);
     if (opt->opt_type == 1) {
         // IOエキスパンダ
         memcpy(&i2cioxp_obj, opt->data, sizeof(i2c_ioxp));
@@ -1669,6 +1523,7 @@ int AzCommon::i2c_setup(int p, i2c_option *opt) {
                 ioxp_status[x] = 0;
             }
             if (ioxp_status[x] < 1) {
+            // Serial.printf("i2c_setup: begin %D\n", i2cioxp_obj.ioxp[i].addr);
                 if (ioxp_obj[x]->begin_I2C(i2cioxp_obj.ioxp[i].addr, &Wire)) {
                     ioxp_hash[x] = 1;
                     ioxp_status[x] = 1;
@@ -1687,6 +1542,7 @@ int AzCommon::i2c_setup(int p, i2c_option *opt) {
             }
             // ピン初期化
             for (j=0; j<16; j++) {
+            // Serial.printf("i2c_setup: pinMode %D %D\n", j, set_type[j]);
                 ioxp_obj[x]->pinMode(j, set_type[j]);
             }
         }
@@ -1697,11 +1553,28 @@ int AzCommon::i2c_setup(int p, i2c_option *opt) {
     } else if (opt->opt_type == 3) {
         // 1U トラックボール PIM447
         memcpy(&i2cpim447_obj, opt->data, sizeof(i2c_pim447));
-        wirelib_cls.set_az1uball_read_type(i2cpim447_obj.addr, 1);
+        wirelib_cls.set_az1uball_read_type(i2cpim447_obj.addr, 1); // 早く動かすとマウスの移動速度も速くする
+
+    } else if (opt->opt_type == 4) {
+        // 1U トラックボール PIM447 スクロール
+        memcpy(&i2cpim447_obj, opt->data, sizeof(i2c_pim447));
+        wirelib_cls.set_az1uball_read_type(i2cpim447_obj.addr, 0); // 早く動かしてもマウスの移動速度は変えない
+
+    } else if (opt->opt_type == 5) {
+        // AZ-Expander
+        memcpy(&i2cazxp_obj, opt->data, sizeof(i2c_azxp));
+        // 設定を送信
+        wirelib_cls.send_azxp_setting(i2cazxp_obj.setting[0], (uint8_t *)&i2cazxp_obj.setting);
+        delay(100); // 変更が入った場合AZエクスパンダが再起動するのでちょっと待つ
+        // キー数とかを取得
+        i2cazxp_obj.key_info = wirelib_cls.read_key_info(i2cazxp_obj.setting[0]);
+        // 設定データのメモリに反映
+        memcpy(opt->data, &i2cazxp_obj, sizeof(i2c_azxp));
+
 
     }
     // マッピングに合わせてキー番号を付けなおす
-    if (opt->opt_type == 1 || opt->opt_type == 2 || opt->opt_type == 3) {
+    if (opt->opt_type == 1 || opt->opt_type == 2 || opt->opt_type == 3 || opt->opt_type == 4 || opt->opt_type == 5) {
         // キーの番号をmapデータに入れる
         // あとでキー設定の番号入れ替えをここでやる
         memcpy(&i2cmap_obj, opt->i2cmap, sizeof(i2c_map));
@@ -1727,86 +1600,172 @@ int AzCommon::i2c_setup(int p, i2c_option *opt) {
 
 // キーの入力ピンの初期化
 void AzCommon::pin_setup() {
-    
-  int i, j, m, x;
+    // output ピン設定 (colで定義されているピンを全てoutputにする)
+    int c, i, j, m, x;
+    int mx, my;
+    int offset_buf[10][hall_len];
+    File fp;
 
-  key_input_length = 0;
-
-  // direct(スイッチ直接続)で定義されているピンを全てinputにする
-  for (i=0; i<direct_len; i++) {
-      pinMode(direct_list[i], INPUT_PULLUP);
-  }
-  key_input_length += direct_len;
-
-
-  // I2C初期化
-  if (ioxp_sda >= 0 && ioxp_scl >= 0) {
-
-    if (Wire.begin(ioxp_sda, ioxp_scl)) {
-        Wire.setClock(ioxp_hz);
-        M5.Lcd.printf("Wire1 begin ok\n");
-    } else {
-        M5.Lcd.printf("Wire1 begin ng\n");
-        delay(1000);
+    for (i=0; i<col_len; i++) {
+        if ((col_list[i] != 1 && col_list[i] != 3)) pinMode(col_list[i], OUTPUT_OPEN_DRAIN);
     }
-
-    // IOエキスパンダ初期化
-    M5.Lcd.printf("Adafruit_MCP23X17 %D\n", ioxp_len);
-    for (i=0; i<ioxp_len; i++) {
-        x = ioxp_list[i] - 32;
-        if (ioxp_status[x] < 0) {
-            ioxp_obj[x] = new Adafruit_MCP23X17();
-            ioxp_status[x] = 0;
-        }
-        if (ioxp_status[x] < 1) {
-            if (ioxp_obj[x]->begin_I2C(ioxp_list[i], &Wire)) {
-                M5.Lcd.printf("begin_I2C %D  %D OK\n", i, ioxp_list[i]);
-                ioxp_status[x] = 1;
-                ioxp_hash[x] = 1;
-            } else {
-                M5.Lcd.printf("begin_I2C %D  %D NG\n", i, ioxp_list[i]);
-                delay(1000);
-                continue;
+    // row で定義されているピンを全てinputにする
+    for (i=0; i<row_len; i++) {
+        if ((row_list[i] != 1 && row_list[i] != 3)) pinMode(row_list[i], INPUT_PULLUP);
+    }
+    // direct(スイッチ直接続)で定義されているピンを全てinputにする
+    for (i=0; i<direct_len; i++) {
+        pinMode(direct_list[i], INPUT_PULLUP);
+    }
+    // 磁気スイッチピンは全てinputにする
+    for (i=0; i<hall_len; i++) {
+        pinMode(hall_list[i], INPUT);
+    }
+    // 磁気スイッチの現在の高さを初期位置にする
+    if (hall_len) {
+        hall_offset = new short[hall_len];
+        // 全ピン時間を空けながら10回アナログ値を取得
+        for (c=0; c<10; c++) {
+            for (i=0; i<hall_len; i++) {
+                offset_buf[c][i] = analogRead(hall_list[i]);
             }
+            delay(10);
         }
-        delay(10);
-        for (j = 0; j < 16; j++) {
-            ioxp_obj[x]->pinMode(j, INPUT_PULLUP);
+        // 10回の平均をオフセットに設定
+        for (i=0; i<hall_len; i++) {
+            x = 0;
+            for (c=0; c<10; c++) {
+                x += offset_buf[c][i];
+            }
+            hall_offset[i] = x / 10;
         }
-        delay(50);
     }
-    key_input_length += (ioxp_len * 16);
-    
 
-    // I2C接続のオプション初期化
-    for (i=0; i<i2copt_len; i++) {
-        key_input_length = i2c_setup(key_input_length, &i2copt[i]);
+    // キー数の計算
+    key_input_length = (col_len * row_len) + direct_len + touch_len + hall_len;
+
+    // I2C初期化
+    if (ioxp_sda >= 0 && ioxp_scl >= 0) {
+
+        // I2Cクラス初期化
+        if (Wire.begin(ioxp_sda, ioxp_scl)) {
+            Wire.setClock(ioxp_hz);
+            M5.Lcd.printf("Wire1 begin ok\n");
+        } else {
+            M5.Lcd.printf("Wire1 begin ng\n");
+            delay(1000);
+        }
+
+       // メインOLED初期化
+        if (oled_main_addr > 0 && oled_main_width > 0 && oled_main_height > 0) {
+            oled_cls = new Oled();
+            oled_cls->begin(oled_main_width, oled_main_height, oled_main_addr, ioxp_hz);
+        }
+
+        // IOエキスパンダ初期化
+        M5.Lcd.printf("Adafruit_MCP23X17 %D\n", ioxp_len);
+        for (i=0; i<ioxp_len; i++) {
+            x = ioxp_list[i] - 32;
+            if (ioxp_status[x] < 0) {
+                ioxp_obj[x] = new Adafruit_MCP23X17();
+                ioxp_status[x] = 0;
+            }
+            if (ioxp_status[x] < 1) {
+                if (ioxp_obj[x]->begin_I2C(ioxp_list[i], &Wire)) {
+                    M5.Lcd.printf("begin_I2C %D  %D OK\n", i, ioxp_list[i]);
+                    ioxp_status[x] = 1;
+                    ioxp_hash[x] = 1;
+                } else {
+                    M5.Lcd.printf("begin_I2C %D  %D NG\n", i, ioxp_list[i]);
+                    delay(1000);
+                    continue;
+                }
+            }
+            delay(10);
+            for (j = 0; j < 16; j++) {
+                ioxp_obj[x]->pinMode(j, INPUT_PULLUP);
+            }
+            delay(50);
+        }
+        key_input_length += (ioxp_len * 16);
+
+        // I2C接続のオプション初期化
+        for (i=0; i<i2copt_len; i++) {
+            key_input_length = i2c_setup(key_input_length, &i2copt[i]);
+        }
+        
     }
-    
-  }
 
-  this->key_count_total = 0; // キーボードを起動してから押されたキーの数総数
+    // 動作電圧チェック用ピン
+    // power_read_pin = 36;
+
+    input_key = new char[key_input_length];
+    input_key_last = new char[key_input_length];
+    key_count = new uint16_t[key_input_length];
+    key_point = new short[key_input_length];
+    ESP_LOGD(LOG_TAG, "key length : %D\r\n", key_input_length);
+    // リセット
+    for (i=0; i<key_input_length; i++) {
+        this->input_key[i] = 0; // 今回のキースキャンデータ
+        this->input_key_last[i] = 0; // 前回のキースキャンデータ
+        this->key_count[i] = 0; // 打鍵数
+        this->key_point[i] = -1; // キーごとの設定ID
+    }
+    this->key_count_total = 0;
 }
 
-
-// キー入力ピン初期化のキーボード別の処理
-void AzCommon::pin_setup_sub_process() {
-    if (option_type_int == 1) {
-        // 踏みキー
-        pinMode(27, INPUT_PULLUP);
+// レイヤーが存在するか確認
+bool AzCommon::layers_exists(int layer_no) {
+    int i;
+    for (i=0; i<setting_length; i++) {
+        if (setting_press[i].layer == layer_no) return true;
     }
+    return false;
+}
+
+// 指定したレイヤーを選択する
+void AzCommon::layer_set(int layer_no) {
+    int i;
+    select_layer_no = layer_no;
+    // 設定リストをリセット
+    for (i=0; i<key_input_length; i++) {
+        key_point[i] = -1;
+    }
+    // 現在のレイヤーの各キーの設定IDを取得
+    for (i=0; i<setting_length; i++) {
+        if (setting_press[i].layer == select_layer_no) {
+            key_point[setting_press[i].key_num] = i;
+        }
+    }
+
 }
 
 // 指定したキーの入力設定オブジェクトを取得する
-setting_key_press AzCommon::get_key_setting(int layer_id, int key_num) {
+setting_key_press AzCommon::get_key_setting(int layer_id, int key_num, short press_type) {
     int i;
-    for (i=0; i<setting_length; i++) {
-        if (setting_press[i].layer == layer_id && setting_press[i].key_num == key_num) return setting_press[i];
-    }
     setting_key_press r;
     r.layer = -1;
     r.key_num = -1;
     r.action_type = -1;
+    r.actuation_type = ACTUATION_TYPE_DEFAULT;
+    r.actuation_point = ACTUATION_POINT_DEFAULT;
+    r.rapid_trigger = RAPID_TRIGGER_DEFAULT;
+    // 現在のレイヤーであれば key_point に入れてあった設定を返す
+    if (select_layer_no == layer_id) {
+        if (key_point[key_num] < 0) return r;
+        if (press_type == 0) {
+            // 通常キー入力 (or 2段入力 2段目)
+            return setting_press[key_point[key_num]];
+        } else if (press_type == 1) {
+            // 2段入力 1段目
+            if (!setting_press[key_point[key_num]].sub_press_flag) return r; // 1段目設定が無かった
+            return *(setting_key_press *)setting_press[key_point[key_num]].sub_press;
+        }
+    }
+    // 現在のレイヤーでなければキー設定から指定されたキーを探す
+    for (i=0; i<setting_length; i++) {
+        if (setting_press[i].layer == layer_id && setting_press[i].key_num == key_num) return setting_press[i];
+    }
     return r;
 }
 
@@ -1954,6 +1913,8 @@ int AzCommon::i2c_read(int p, i2c_option *opt, char *read_data) {
     i2c_rotary i2crotary_obj;
     i2c_pim447 i2cpim447_obj;
     tracktall_pim447_data pim447_data_obj;
+    i2c_azxp i2cazxp_obj;
+    azxp_key_data azxp_key_data_obj;
     r = 0;
     e = 0;
     if (opt->opt_type == 1) {
@@ -1997,7 +1958,7 @@ int AzCommon::i2c_read(int p, i2c_option *opt, char *read_data) {
             e++;
         }
 
-    } else if (opt->opt_type == 3) {
+    } else if (opt->opt_type == 3 || opt->opt_type == 4) {
         // 1U トラックボール PIM447
         memcpy(&i2cpim447_obj, opt->data, sizeof(i2c_pim447));
         memcpy(&i2cmap_obj, opt->i2cmap, sizeof(i2c_map));
@@ -2021,21 +1982,49 @@ int AzCommon::i2c_read(int p, i2c_option *opt, char *read_data) {
             if (x < -127) x = -127;
             if (y > 127) y = 127;
             if (y < -127) y = -127;
-            if (mouse_scroll_flag) {
-                m = (y == 0)? 0: (y > 0)? 1: -1;
-                n = (x == 0)? 0: (x > 0)? 1: -1;
-                press_mouse_list_push(0x2000, 0, 0, m, n, 100);
-            } else {
-                press_mouse_list_push(0x2000, x, y, 0, 0, i2cpim447_obj.speed);
+            if (opt->opt_type == 3) {
+                // トラックボール
+                if (mouse_scroll_flag) {
+                    m = (y == 0)? 0: (y > 0)? 1: -1;
+                    n = (x == 0)? 0: (x > 0)? 1: -1;
+                    press_mouse_list_push(0x2000, 5, 0, 0, m, n, 100); // action_type : 5 = マウス移動
+                } else {
+                    press_mouse_list_push(0x2000, 5, x, y, 0, 0, i2cpim447_obj.speed); // action_type : 5 = マウス移動
+                }
+            } else if (opt->opt_type == 4) {
+                // フリック入力
+                read_raw[e] = 0;
+                if (x < -2 && abs(x) > abs(y)) {
+                    read_raw[e] = 1; // 左
+                } else if (x > 2 && abs(x) > abs(y)) {
+                    read_raw[e] = 2; // 右
+                } else if (y < -2 && abs(y) > abs(x)) {
+                    read_raw[e] = 4; // 上
+                } else if (y > 2 && abs(y) > abs(x)) {
+                    read_raw[e] = 8; // 下
+                }
+                e++;
             }
         }
         // キー入力(クリック)取得
         read_raw[e] = pim447_data_obj.click;
         e++;
 
+    } else if (opt->opt_type == 5) {
+        // AZエクスパンダ
+        read_data_bit = 8;
+        memcpy(&i2cazxp_obj, opt->data, sizeof(i2c_azxp));
+        memcpy(&i2cmap_obj, opt->i2cmap, sizeof(i2c_map));
+        // キー入力を取得
+        azxp_key_data_obj = wirelib_cls.read_azxp_key(i2cazxp_obj.setting[0], i2cazxp_obj.key_info);
+        for (i=0; i<i2cazxp_obj.key_info.key_byte; i++) {
+            read_raw[e] = azxp_key_data_obj.key_input[i]; // 読み込んだデータをチェック用の変数へ入れる
+            e++;
+        }
+
     }
     // 読み込んだデータからキー入力を取得
-    if (opt->opt_type == 1 || opt->opt_type == 2 || opt->opt_type == 3) {
+    if (opt->opt_type == 1 || opt->opt_type == 2 || opt->opt_type == 3 || opt->opt_type == 4 || opt->opt_type == 5) {
         // マップデータ分入力を取得
         for (j=0; j<i2cmap_obj.map_len; j++) {
             n = i2cmap_obj.map[j];
@@ -2052,25 +2041,172 @@ int AzCommon::i2c_read(int p, i2c_option *opt, char *read_data) {
 
 // 現在のキーの入力状態を取得
 void AzCommon::key_read(void) {
-    unsigned long start_time;
-    unsigned long end_time;
-    int m[ioxp_len];
-    int i, j, n, c, p, x;
-    p = 0;
+    int a, c, i, j, m, n, x, s;
+    int act, acp, acpt, rap;
+    int o[ioxp_len];
+    setting_key_press *k;
+    n = 0;
     // ダイレクト入力の取得
     for (i=0; i<direct_len; i++) {
-        input_key[p] = !digitalRead(direct_list[i]);
-        p++;
+        input_key[n] = !digitalRead(direct_list[i]);
+        n++;
+    }
+    // タッチ入力の取得
+    for (i=0; i<touch_len; i++) {
+        if (touchRead(touch_list[i]) < 25) {
+            input_key[n] = 1;
+        } else {
+            input_key[n] = 0;
+        }
+        n++;
+    }
+    // 磁気スイッチの取得
+    for (i=0; i<hall_len; i++) {
+        // 設定からアクチュエーションポイント、ラピットトリガー取得
+        if (key_point[n] >= 0) {
+            k = &setting_press[key_point[n]]; // キーの設定取得
+            act = k->action_type;
+            acpt = k->actuation_type;
+            acp = k->actuation_point;
+            rap = k->rapid_trigger;
+        } else {
+            // 設定がなければデフォルト値
+            act = 0;
+            acpt = ACTUATION_TYPE_DEFAULT;
+            acp = ACTUATION_POINT_DEFAULT;
+            rap = RAPID_TRIGGER_DEFAULT;
+        }
+        // 現在のアナログ値取得
+        a = analogRead(hall_list[i]);
+        m = map(a, hall_offset[i] + hall_range_min, hall_offset[i] + hall_range_max, 0, 255);
+        if (m > 255) m = 255;
+        if (m < 0) m = 0;
+        input_key_analog[i] = m;
+        if (acpt == 0) {
+            // 静的なアクチュエーションポイントとラピットトリガー
+            // 固定位置で判定
+            if (input_key_analog[i] > acp) { // アクチュエーションポイントを超えたらON
+                input_key[n] = 1;
+            } else if (input_key_analog[i] < rap) { // ラピットトリガーを下回ったらOFF
+                input_key[n] = 0;
+            } else { // 中間地点にいる場合は前のステータスを引き継ぐ
+                input_key[n] = input_key_last[n];
+            }
+
+        } else if (acpt == 1) {
+            // 動的なアクチュエーションポイントとラピットトリガー
+            // (移動距離で判定)
+            if (input_key_last[n] == 0) { // 前回が未入力
+                if (input_key_analog[i] > (analog_stroke_most[i] + acp) || input_key_analog[i] > 240) {
+                    // アクチュエーションポイントを超えたらON
+                    input_key[n] = 1;
+                    analog_stroke_most[i] = input_key_analog[i]; // ONになった位置を保持
+                } else {
+                    input_key[n] = 0; // アクチュエーションポイント超えるまではOFFのまま
+                    // 離されたらOFFになった位置を更新する
+                    if (analog_stroke_most[i] > input_key_analog[i]) {
+                        analog_stroke_most[i] = input_key_analog[i];
+                    }
+
+                }
+            } else if (input_key_last[n] == 1) { // 前回がON
+                if (input_key_analog[i] < (analog_stroke_most[i] - rap) || input_key_analog[i] < 12) { // 最も押し込んだ位置からラピットトリガー分戻ったらリセット
+                    input_key[n] = 0;
+                    analog_stroke_most[i] = input_key_analog[i]; // OFFになった位置を保持
+                } else {
+                    input_key[n] = 1; // ラピットトリガーを下回るまではONのまま
+                    // 深く押し込まれたらONになった位置を更新する
+                    if (analog_stroke_most[i] < input_key_analog[i]) {
+                        analog_stroke_most[i] = input_key_analog[i];
+                    }
+                }
+            } else {
+                input_key[n] = 0;
+            }
+
+        } else if (acpt == 2) {
+            // 2段階入力
+            if (input_key_last[n] == 0) { // 前回が未入力
+                if (input_key_analog[i] > 210) {
+                    // 2段目まで押し込まれたら2段目にする
+                    input_key[n] = 3; // 2段目ON
+                    analog_stroke_most[i] = 0; // カウンタリセット
+
+                } else if (input_key_analog[i] > 40) {
+                    // 1段目の深さの場合
+                    analog_stroke_most[i]++; // 超えたよ数をカウントしていき、5回を超えたらONにする(素早い入力の時は1段目を飛ばすため)
+                    if (analog_stroke_most[i] > 5) {
+                        input_key[n] = 2; // 1段目ON
+                    } else {
+                        input_key[n] = 0;
+                    }
+                } else {
+                    // 浅い位置にいればカウントもリセット
+                    input_key[n] = 0;
+                    analog_stroke_most[i] = 0;
+                }
+            } else if (input_key_last[n] == 2) { // 前回が1段目ON
+                if (input_key_analog[i] > 210) {
+                    // 2段目の深さまで押し込まれた
+                    input_key[n] = 3; // 2段目ON
+                    analog_stroke_most[i] = 0; // カウンタリセット
+                } else if (input_key_analog[n] < 30) {
+                    // 浅い位置に戻った
+                    input_key[n] = 0; // OFF
+                    analog_stroke_most[i] = 0; // カウンタリセット
+                } else {
+                    input_key[n] = 2;
+                    
+                }
+                
+            } else if (input_key_last[n] == 3) { // 前回が2段目ON
+                if (input_key_analog[i] < 30) {
+                    // 浅い位置に戻った
+                    input_key[n] = 0; // OFF
+                    analog_stroke_most[i] = 0; // カウンタリセット
+
+                } else if (input_key_analog[i] < 200) {
+                    // 2段目まで戻った
+                    analog_stroke_most[i]++; // 戻ったよ数をカウントしていき、5回を超えたらONにする(素早い入力の時は1段目を飛ばすため)
+                    if (analog_stroke_most[i] > 5) {
+                        input_key[n] = 2; // 2段目ON　＋　1段目OFF
+                        analog_stroke_most[i] = 0; // カウンタリセット
+                    } else {
+                        input_key[n] = 3;
+                    }
+                } else {
+                    // 深い位置
+                    input_key[n] = 3;
+                    analog_stroke_most[i] = 0; // カウンタリセット
+                }
+            }
+
+        }
+        n++;
+    }
+    // マトリックス入力の取得
+    for (i=0; i<col_len; i++) {
+        // 対象のcolピンのみ lowにする
+        for (j=0; j<col_len; j++) {
+            if (i == j) { s = 0; } else { s = 1; }
+            if ((col_list[j] != 1 && col_list[j] != 3)) digitalWrite(col_list[j], s);
+        }
+        delayMicroseconds(50);
+        // row の分キー入力チェック
+        for (j=0; j<row_len; j++) {
+            input_key[n] = !digitalRead(row_list[j]);
+            n++;
+        }
     }
     // IOエキスパンダ
     for (i=0; i<ioxp_len; i++) {
         x = ioxp_list[i] - 32;
         if (ioxp_status[x] == 1) {
-            m[i] = ioxp_obj[x]->readGPIOAB();
-            if (m[i] == 0) {
+            o[i] = ioxp_obj[x]->readGPIOAB();
+            if (o[i] == 0) {
                 // 全ピン読み込み無しだとIOエキスパンダの接続が切れたかリセットした可能性あり
                 ioxp_status[x] = 2; // 一旦接続切れたステータスにする
-                m[i] = 0xffff; // 全ボタン離した状態
+                o[i] = 0xffff; // 全ボタン離した状態
             }
         } else if (ioxp_status[x] > 256) {
             // 接続が切れた状態の場合100周期に1回ピンの初期化を送信してステータスリセット
@@ -2078,59 +2214,30 @@ void AzCommon::key_read(void) {
                 ioxp_obj[x]->pinMode(j, INPUT_PULLUP);
             }
             ioxp_status[x] = 0; // ステータスを接続状態に戻す
-            m[i] = 0xffff; // 全ボタン離した状態
+            o[i] = 0xffff; // 全ボタン離した状態
         } else if (ioxp_status[x] > 1) {
             // IOエキスパンダ接続していない間カウントアップ
             ioxp_status[x]++;
-            m[i] = 0xffff; // 全ボタン離した状態
+            o[i] = 0xffff; // 全ボタン離した状態
         } else {
-            m[i] = 0xFFFF; // 全てのボタン離した状態
+            o[i] = 0xFFFF; // 全てのボタン離した状態
         }
     }
     for (i=0; i<16; i++) {
         c = 1 << i;
-        n = 0;
+        s = 0;
         for (j=0; j<ioxp_len; j++) {
-            input_key[i + n + p] = (!(m[j] & c));
-            n += 16;
+            input_key[i + s + n] = (!(o[j] & c));
+            s += 16;
         }
     }
-    p += ioxp_len * 16;
+    n += ioxp_len * 16;
     // I2Cオプション
-    start_time = micros();
     for (i=0; i<i2copt_len; i++) {
-        p += i2c_read(p, &i2copt[i], input_key);
+        n += i2c_read(n, &i2copt[i], input_key);
     }
-    end_time = micros();
-    /*
-    Serial.printf("%D [", key_input_length);
-    for (i=0; i<key_input_length; i++) {
-        Serial.printf(" %D", input_key[i]);
-    }
-    Serial.printf("] %D\n", (end_time - start_time));
-    // delay(1000);
-    /*
-    M5.Lcd.fillScreen(BLACK);
-    M5.Lcd.setCursor(0, 0, 2);
-    for (i=0; i<key_input_length; i++) {
-        // if ((i % 6) == 5) M5.Lcd.printf("\n");
-        M5.Lcd.printf(" %D", i, input_key[i]);
-    }
-    */
-    
 }
 
-// キーボード別の後処理
-void AzCommon::key_read_sub_process(void) {
-    if (option_type_int == 1) {
-        // 踏みキー
-        if (foot_inversion && digitalRead(27) == 0) {
-            // ジャックが刺されている間はON/OFF を反転
-            input_key[8] = ! input_key[8];
-            input_key[9] = ! input_key[9];
-        }
-    }
-}
 
 // 今回の入力状態を保持
 void AzCommon::key_old_copy(void) {
@@ -2140,22 +2247,9 @@ void AzCommon::key_old_copy(void) {
     }
 }
 
-// 液晶ユニットが付いているか
-bool AzCommon::on_tft_unit(void) {
-    if (option_type_int == 3 || option_type_int == 4) {
-        return true;
-    }
-    return false;
-}
-
 // 全てのファイルを削除
 void AzCommon::delete_all(void) {
-    File dirp = SPIFFS.open("/");
-    File filep = dirp.openNextFile();
-    while(filep){
-        SPIFFS.remove(filep.name());
-        filep = dirp.openNextFile();
-    }
+    SPIFFS.format();
 }
 
 // 指定した文字から始まるファイルすべて削除
@@ -2187,6 +2281,7 @@ void AzCommon::press_mouse_list_clean() {
     int i;
     for (i=0; i<PRESS_MOUSE_MAX; i++) {
         press_mouse_list[i].key_num = -1;
+        press_mouse_list[i].action_type = 0;
         press_mouse_list[i].move_x = 0;
         press_mouse_list[i].move_y = 0;
         press_mouse_list[i].move_speed = 0;
@@ -2196,13 +2291,14 @@ void AzCommon::press_mouse_list_clean() {
 
 
 // マウス移動リストに追加
-void AzCommon::press_mouse_list_push(int key_num, short move_x, short move_y, short move_wheel, short move_hWheel, short move_speed) {
+void AzCommon::press_mouse_list_push(int key_num, short action_type, short move_x, short move_y, short move_wheel, short move_hWheel, short move_speed) {
     int i;
     for (i=0; i<PRESS_MOUSE_MAX; i++) {
         // データが入っていれば次
         if (press_mouse_list[i].key_num >= 0) continue;
         // 空いていればデータを入れる
         press_mouse_list[i].key_num = key_num;
+        press_mouse_list[i].action_type = action_type;
         press_mouse_list[i].move_x = move_x;
         press_mouse_list[i].move_y = move_y;
         press_mouse_list[i].move_wheel = move_wheel * -1;

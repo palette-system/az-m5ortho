@@ -19,6 +19,7 @@
 #include <Adafruit_NeoPixel.h>
 #include  <AXP192.h>
 
+#include "src/lib/oled.h"
 #include "src/lib/neopixel.h"
 #include "src/lib/wirelib.h"
 #include "src/lib/display.h"
@@ -53,6 +54,9 @@
 #define BLE_HID_VID  0xE502
 #define BLE_HID_PID  0xA111
 
+// キースキャンループの待ち時間デフォルト(ms)
+#define LOOP_DELAY_DEFAULT  5
+
 // JSON のファイルパス
 #define SETTING_JSON_PATH "/setting.json"
 
@@ -74,9 +78,6 @@
 // BLE用のMACアドレスを保存するファイルのパス
 #define  BLEMAC_ADDR_PATH  "/blemac"
 
-// メモリに保持するキーの数(メモリを確保するサイズ)
-#define KEY_INPUT_MAX  128
-
 // レイヤー切り替え同時押し許容数
 #define PRESS_KEY_MAX 8
 
@@ -92,12 +93,26 @@
 // 暗記ボタンで暗記できる数
 #define ANKEY_DATA_MAX_LENGTH  32
 
+// アクチュエーションタイプデフォルト
+#define  ACTUATION_TYPE_DEFAULT  0
+
+// アクチュエーションポイントデフォルト
+#define  ACTUATION_POINT_DEFAULT  160
+
+// ラピットトリガーデフォルト
+#define  RAPID_TRIGGER_DEFAULT  120
+
+// ホールセンサーのアナログ値読み取り範囲デフォルト
+#define  HALL_RANGE_MIN_DEFAULT -50;
+#define  HALL_RANGE_MAX_DEFAULT 1200;
+
 
 // 今押されているボタンの情報
 struct press_key_data {
     short action_type; // キーの動作タイプ 0=設定なし / 1=通常入力 / 2=テキスト入力 / 3=レイヤー変更 / 4=WEBフック
     short layer_id; // キーを押した時のレイヤーID
     short key_num; // キー番号
+    short press_type; // 入力タイプ(0=press / 1=sub_press)
     short key_id; // 送信した文字
     short press_time; // キーを押してからどれくらい経ったか
     short unpress_time; // キーを離してからどれくらい経ったか
@@ -105,10 +120,10 @@ struct press_key_data {
     short repeat_index; // 現在の連打カウント
 };
 
-
 // 今押されているマウスボタン情報
 struct press_mouse_data {
     short key_num; // キー番号
+    short action_type; // 動作のタイプ(5=マウス移動 / 10=アナログマウス移動)
     short move_x; // X座標
     short move_y; // Y座標
     short move_wheel; // 縦ホイール
@@ -191,10 +206,16 @@ struct setting_key_press {
     short layer; // どのレイヤーか
     short key_num; // どのキーか
     char *key_name; // キーの名前
+    uint8_t actuation_type; // アクチュエーションタイプ
+    uint8_t actuation_point; // アクチュエーションポイント
+    uint8_t rapid_trigger; // ラピットトリガー
     short action_type; // 入力するタイプ
     short data_size; // データのサイズ
     char *data; // 入力データ
+    bool sub_press_flag; // サブ入力データの有無
+    void *sub_press; // サブ入力用データ
 };
+
 
 // IOエキスパンダオプションの設定
 struct ioxp_option {
@@ -233,6 +254,12 @@ struct i2c_pim447 {
     uint8_t addr; // PIM447のアドレス
     short speed; // マウス移動速度
     uint8_t rotate; // マウスの向き
+};
+
+// I2Cオプション AZ-Expander 
+struct i2c_azxp {
+    uint8_t setting[18]; // AZ-Expanderに送る設定データ
+    azxp_key_info key_info; // キー読み込みのバイト数とか
 };
 
 // i2cオプションの設定
@@ -274,10 +301,8 @@ class AzCommon
         void load_setting_json(); // jsonデータロード
         void clear_keymap(); // キーマップ用に確保しているメモリを解放
         void get_keymap(JsonObject setting_obj, char *key_name); // JSONデータからキーマップの情報を読み込む
-        void set_setting_remap(); // REMAP に送る用のデータ作成
-        void remap_save_setting_json(); // REMAPで受け取ったデータをJSONデータに書き込む
+        void get_keymap_one(JsonObject json_obj, setting_key_press *press_obj, uint16_t lnum, uint16_t knum); // JSONデータからキーマップの情報を読み込む(1キー分)
         void get_keyboard_type_int(String t); // キーボードのタイプ番号を取得
-        void get_option_type_int(JsonObject setting_obj); // オプションタイプの番号を取得
         int read_file(char *file_path, String &read_data); // ファイルからデータを読み出す
         int write_file(char *file_path, String &write_data); // ファイルにデータを保存する
         int remove_file(char *file_path); // ファイルを削除する
@@ -291,8 +316,9 @@ class AzCommon
         void moniter_brightness(int set_type); // 画面の明るさ設定
         int i2c_setup(int p, i2c_option *opt); // IOエキスパンダの初期化(戻り値：増えるキーの数)
         void pin_setup(); // キーの入力ピンの初期化
-        void pin_setup_sub_process(); // 入力ピン初期化のキーボード別の処理
-        setting_key_press get_key_setting(int layer_id, int key_num); // 指定したキーの入力設定を取得する
+        bool layers_exists(int layer_no); // レイヤーが存在するか確認
+        void layer_set(int layer_no); // 現在のレイヤーを指定したレイヤーにする
+        setting_key_press get_key_setting(int layer_id, int key_num, short press_type); // 指定したキーの入力設定を取得する
         setting_key_press get_soft_key_setting(int layer_id, int key_num); // 指定したキーの入力設定を取得する
         void load_data(); // EEPROMからデータをロードする
         void save_data(); // EEPROMに保存する
@@ -303,19 +329,20 @@ class AzCommon
         void change_mode(int set_mode); // モードを切り替えて再起動
         int i2c_read(int p, i2c_option *opt, char *read_data); // I2C機器のキー状態を取得
         void key_read(); // 現在のキーの状態を取得
-        void key_read_sub_process(void); // キー状態取得後のキーボード別の処理
         void key_old_copy(); // 現在のキーの状態を過去用配列にコピー
-        char input_key[KEY_INPUT_MAX]; // 今入力中のキー
-        char input_key_last[KEY_INPUT_MAX]; // 最後にチェックした入力中のキー
-        uint16_t key_count[KEY_INPUT_MAX]; // キー別の打鍵した数
+        uint8_t *input_key_analog; // 今入力中のアナログ値
+        char *analog_stroke_most; // 最も押し込んだ時のアナログ値
+        char *input_key; // 今入力中のキー(ステータス)
+        char *input_key_last; // 最後にチェックした入力中のキー(ステータス)
+        short *key_point; // 入力キーに該当する設定が何番目に入っているか
+        uint16_t *key_count; // キー別の打鍵した数
         uint16_t key_count_total;
-        bool on_tft_unit(void); // 液晶ディスプレイが付いているか
         void delete_all(void); // 全てのファイルを削除
         void delete_indexof_all(String check_str); // 指定した文字から始まるファイルすべて削除
         int spiffs_total(void); // ファイル領域合計サイズを取得
         int spiffs_used(void); // 使用しているファイル領域サイズを取得
         void press_mouse_list_clean(); // マウス移動中リストを空にする
-        void press_mouse_list_push(int key_num, short move_x, short move_y, short move_wheel, short move_hWheel, short move_speed); // マウス移動中リストに追加
+        void press_mouse_list_push(int key_num, short action_type, short move_x, short move_y, short move_wheel, short move_hWheel, short move_speed); // マウス移動中リストに追加
         void press_mouse_list_remove(int key_num); // マウス移動中リストから削除
     
     private:
@@ -339,17 +366,26 @@ extern int8_t keyboard_status;
 extern Adafruit_MCP23X17 *ioxp_obj[8];
 
 // 入力用ピン情報
+extern short col_len;
+extern short row_len;
 extern short direct_len;
-extern short *direct_list;
 extern short touch_len;
+extern short hall_len;
+extern short *col_list;
+extern short *row_list;
+extern short *direct_list;
 extern short *touch_list;
-extern short ioxp_len;
-extern short *ioxp_list;
+extern short *hall_list;
+extern short *hall_offset;
+
 extern short ioxp_sda;
 extern short ioxp_scl;
 extern int ioxp_hz;
 extern short ioxp_status[8];
 extern int ioxp_hash[8];
+
+extern short ioxp_len;
+extern short *ioxp_list;
 
 // I2Cオプションの設定
 extern i2c_option *i2copt;
@@ -382,6 +418,9 @@ extern char webhook_buf[WEBFOOK_BUF_SIZE];
 // 入力キーの数
 extern int key_input_length;
 
+// キースキャンループの待ち時間
+extern short loop_delay;
+
 // ディスプレイの向き
 extern uint8_t disp_rotation;
 
@@ -394,17 +433,11 @@ extern char keyboard_name_str[32];
 // キーボードの言語(日本語=0/ US=1 / 日本語(US記号) = 2)
 extern uint8_t keyboard_language;
 
-// オプションタイプの番号
-extern int option_type_int;
-
 // トラックボールの方向
 extern uint8_t trackball_direction;
 
 // トラックボールのカーソル移動速度
 extern uint8_t trackball_speed;
-
-// 踏みキーの反転フラグ
-extern bool foot_inversion;
 
 // オープニングムービー再生フラグ
 extern bool op_movie_flag;
@@ -425,6 +458,10 @@ extern short last_touch_index;
 extern int default_layer_no;
 extern int select_layer_no;
 extern int last_select_layer_key; // レイヤーボタン最後に押されたボタン(これが離されたらレイヤーリセット)
+
+// ホールセンサーの範囲
+extern short hall_range_min;
+extern short hall_range_max;
 
 // holdの設定
 extern uint8_t hold_type;
@@ -483,11 +520,6 @@ extern setting_key_press *soft_setting_press;
 // ソフトキーが押された時入る変数(押されてない間は-1)
 extern int16_t soft_click_layer;
 extern int16_t soft_click_key;
-
-// remapに送る用のデータ
-extern uint8_t  *setting_remap;
-extern uint16_t  layer_max;
-extern uint16_t  key_max;
 
 // レイヤー名のデータ
 extern layer_name_data *layer_name_list;

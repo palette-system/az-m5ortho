@@ -218,7 +218,6 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 
 	// 設定変更がされていて設定変更以外のコマンドが飛んできたら設定を保存
 	if (remap_change_flag && *command_id != 0x05) {
-		common_cls.remap_save_setting_json(); // JSONに保存
 		remap_change_flag = 0;
 	}
 	
@@ -242,7 +241,7 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 					remap_buf[5] = 0x00;
 					m = 3;
 					for (i=0; i<key_input_length; i++) {
-						remap_buf[m] |= common_cls.input_key[i] << (i % 8);
+						remap_buf[m] |= (common_cls.input_key[i])? 1: 0 << (i % 8);
 						if ((i %8) == 7) m++;
 					}
 					break;
@@ -251,9 +250,9 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			break;
 		}
 		case id_dynamic_keymap_set_keycode: { // 0x05 設定した内容を保存
-			m = (remap_buf[1] * key_max * 2) + (remap_buf[3] * 2);
-			setting_remap[m] = remap_buf[4];
-			setting_remap[m + 1] = remap_buf[5];
+			// m = (remap_buf[1] * key_max * 2) + (remap_buf[3] * 2);
+			// setting_remap[m] = remap_buf[4];
+			// setting_remap[m + 1] = remap_buf[5];
 			remap_change_flag = 1;
 			break;
 		}
@@ -285,14 +284,14 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
             break;
         }
 		case id_dynamic_keymap_get_layer_count: { // 0x11 レイヤー数を送る
-			remap_buf[1] = layer_max;
+			// remap_buf[1] = layer_max;
 			break;
 		}
 		case id_dynamic_keymap_get_buffer: { // 0x12 設定データを送る(レイヤー×ROW×COL×2)
 			uint16_t r_offset = (command_data[0] << 8) | command_data[1];
 			uint16_t r_size   = command_data[2];  // size <= 28
 			for (i=0; i<r_size; i++) {
-				remap_buf[4 + i] = setting_remap[r_offset + i];
+				// remap_buf[4 + i] = setting_remap[r_offset + i];
 			}
 			break;
 		}
@@ -795,6 +794,147 @@ void RemapOutputCallbacks::onWrite(NimBLECharacteristic* me) {
 			this->sendRawData(send_buf, 32);
 
 		}
+		case id_set_pin_set: {
+			// ESP32 本体の direct, touch, col, row を変更する(pinModeの初期化もする)
+			// 現状でi2c の設定がされている場合は一旦無しにしちゃう
+			// (i2c で使ってるピンがioで設定されるとややこしい話になる)
+			if (ioxp_sda >= 0 && ioxp_scl >= 0) {
+				// i2c 通信終了
+				// Wire.end(); // ボード ESP32 の 1.0.6 の Wire に end() が無かった
+				// ピンの設定削除
+				ioxp_sda = -1;
+				ioxp_scl = -1;
+			}
+			if (i2copt_len > 0) {
+				i2copt_len = -1;
+				delete[] i2copt;
+			}
+			// 現状のピン設定を解放
+			delete[] direct_list;
+			delete[] touch_list;
+			delete[] col_list;
+			delete[] row_list;
+			// 読み込み開始バイト
+			m = 1;
+			// direct ピン設定
+			direct_len = remap_buf[m]; // direct ピンの設定数取得
+			m++;
+			direct_list = new short[direct_len];
+			for (i=0; i<direct_len; i++) {
+				direct_list[i] = remap_buf[m];
+				m++;
+			}
+			// touch ピン設定
+			touch_len = remap_buf[m]; // touch ピンの設定数取得
+			m++;
+			touch_list = new short[touch_len];
+			for (i=0; i<touch_len; i++) {
+				touch_list[i] = remap_buf[m];
+				m++;
+			}
+			// col ピン設定
+			col_len = remap_buf[m]; // col ピンの設定数取得
+			m++;
+			col_list = new short[col_len];
+			for (i=0; i<col_len; i++) {
+				col_list[i] = remap_buf[m];
+				m++;
+			}
+			// row ピン設定
+			row_len = remap_buf[m]; // row ピンの設定数取得
+			m++;
+			row_list = new short[row_len];
+			for (i=0; i<row_len; i++) {
+				row_list[i] = remap_buf[m];
+				m++;
+			}
+			// キー数計算
+			common_cls.pin_setup();
+			// レスポンスデータ作成
+			send_buf[0] = id_set_pin_set; // ピン設定
+			send_buf[1] = ((key_input_length >> 24) & 0xff);
+			send_buf[2] = ((key_input_length >> 16) & 0xff);
+			send_buf[3] = ((key_input_length >> 8) & 0xff);
+			send_buf[4] = (key_input_length & 0xff);
+			for (i=2; i<32; i++) send_buf[i] = 0x00;
+			return;
+		}
+		case id_i2c_read: {
+			// i2c からデータ読み込み
+		    m = remap_buf[1]; // 読み込みに行くアドレス取得
+			l = remap_buf[2]; // 読み込む長さ
+			if (l > 28) l = 28; // 読み込む長さは28バイトがMAX
+			for (i=0; i<32; i++) send_buf[i] = 0x00;
+			send_buf[0] = id_i2c_read; // キーの入力状態
+			send_buf[1] = m; // 読み込みに行くアドレス
+			send_buf[2] = wirelib_cls.read(m, &send_buf[3], l); // 読み込み
+			return;
+		}
+		case id_i2c_write: {
+			// i2c へデータ書込み
+		    m = remap_buf[1]; // 書込みに行くアドレス取得
+			l = remap_buf[2]; // 書き込む長さ
+			if (l > 28) l = 28; // 書き込む長さは28バイトがMAX
+			send_buf[0] = id_i2c_write; // キーの入力状態
+			send_buf[1] = m; // 読み込みに行くアドレス
+			send_buf[2] = wirelib_cls.write(m, &remap_buf[3], l); // 書込み
+			for (i=2; i<32; i++) send_buf[i] = 0x00;
+			return;
+		}
+		case id_get_analog_switch: {
+			// アナログスイッチの情報を取得
+		    m = remap_buf[1]; // 読み込みに行くアナログスイッチのID
+			l = m - direct_len - touch_len;
+			setting_key_press *kp;
+			if (common_cls.key_point[m] >= 0) {
+				kp = &setting_press[common_cls.key_point[m]]; // キーの設定取得
+				send_buf[3] = kp->actuation_type;
+				send_buf[4] = kp->actuation_point;
+				send_buf[5] = kp->rapid_trigger;
+			} else {
+				send_buf[3] = ACTUATION_TYPE_DEFAULT;
+				send_buf[4] = ACTUATION_POINT_DEFAULT;
+				send_buf[5] = RAPID_TRIGGER_DEFAULT;
+			}
+			send_buf[0] = id_get_analog_switch;
+			send_buf[1] = common_cls.key_point[m];
+			send_buf[2] = hall_list[l];
+			send_buf[6] = (hall_offset[l] >> 8) & 0xFF;
+			send_buf[7] = hall_offset[l] & 0xFF;
+			send_buf[8] = common_cls.input_key_analog[l];
+			send_buf[9] = common_cls.analog_stroke_most[l];
+			send_buf[10] = common_cls.input_key[m];
+			for (i=11; i<32; i++) send_buf[i] = 0x00;
+			return;
+		}
+		case id_set_analog_switch: {
+			// アナログスイッチの設定を変更
+		    m = remap_buf[1]; // 変更するアナログスイッチのID
+			p = remap_buf[2]; // ラピットトリガーのタイプ
+			x = remap_buf[3]; // 設定するアクチュエーションポイント
+			s = remap_buf[4]; // 設定するラピットトリガー
+			setting_key_press *kp;
+			if (common_cls.key_point[m] >= 0) {
+				kp = &setting_press[common_cls.key_point[m]]; // キーの設定取得
+				kp->actuation_type = p;
+				kp->actuation_point = x;
+				kp->rapid_trigger = s;
+				send_buf[1] = 0;
+			} else {
+				send_buf[1] = 1;
+			}
+			send_buf[0] = id_set_analog_switch;
+			for (i=2; i<32; i++) send_buf[i] = 0x00;
+			return;
+		}
+		case id_get_firmware_status: {
+			// ファームウェアステータス取得
+			sprintf((char *)send_buf, "%c%s-%s", id_get_firmware_status, FIRMWARE_VERSION, EEP_DATA_VERSION);
+			// this->sendRawData(send_buf, 32);
+			return;
+
+		}
+
 
 		default: {
 			remap_buf[0] = 0xFF;

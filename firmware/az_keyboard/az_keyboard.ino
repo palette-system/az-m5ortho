@@ -80,9 +80,6 @@ void setup() {
 
     } else {
         ESP_LOGD(LOG_TAG, "キーボードモード起動\n");
-        if (common_cls.on_tft_unit() && op_movie_flag) {
-            disp->open_movie();
-        }
         // キーボードとして起動
         azkb.start_keyboard();
     }

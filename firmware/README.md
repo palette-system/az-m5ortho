@@ -38,13 +38,14 @@ AZ-M5ortho で使用しているファームウェアソースです。<br>
 - ESP8266Audio 1.9.7
 - M5Stack 0.4.1
 <br>
-※ lv_arduino のライブラリインストール後 https://github.com/palette-system/az-m5ortho/tree/main/firmware/lv_arduino のファイルを インストールしたlv_arduinoのディレクトリにコピーして下さい。<br>
+※ lv_arduino のライブラリインストール後 https://github.com/palette-system/az-m5ortho/tree/main/firmware/lv_arduino のファイルを インストールしたlv_arduinoのディレクトリにコピーして下さい。
 <br>
 ※ 使用フォント　http://www.fontna.com/blog/1226/
 <br>　　　LogoTypeGothic ロゴたいぷゴシック 07LogoTypeGothic7.ttf
+<br>
 ※ フォントコンバーター： https://lvgl.io/tools/fontconverter
 <br>
-※ コンバートした文字： https://github.com/palette-system/az-m5ortho/blob/main/firmware/lv_arduino/enable_text.txt
+※ コンバート時に指定した文字： https://github.com/palette-system/az-m5ortho/blob/main/firmware/lv_arduino/enable_text.txt
 <br><br>
 
 ## 書込み時のボード設定

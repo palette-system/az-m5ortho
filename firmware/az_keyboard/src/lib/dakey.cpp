@@ -2,33 +2,33 @@
 #include "dakey.h"
 
 
-// ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+// ï¿½Rï¿½ï¿½ï¿½Xï¿½gï¿½ï¿½ï¿½Nï¿½^
 Dakey::Dakey() {
 }
 
 
-// ‘ÅŒ®”ƒNƒ‰ƒX‰Šú‰»
+// ï¿½ÅŒï¿½ï¿½ï¿½ï¿½Nï¿½ï¿½ï¿½Xï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 void Dakey::begin() {
 	this->last_save_key_count = -1;
 	this->last_save_time = 0;
-	// ‚Æ‚è‚ ‚¦‚¸‰ß‹•ª‚Ì‘ÅŒ®”‚Í–ˆ‰ñíœ
+	// ï¿½Æ‚è‚ ï¿½ï¿½ï¿½ï¿½ï¿½ß‹ï¿½ï¿½ï¿½ï¿½Ì‘ÅŒï¿½ï¿½ï¿½ï¿½Í–ï¿½ï¿½ï¿½íœ
 	common_cls.delete_indexof_all("D_");
-	// ‘ÅŒ®”‚ğ•Û‘¶(Å‰‚Ì0‚ğ•Û‘¶)(Wifi‚É‚Â‚È‚ª‚Á‚Ä‚¢‚Ä©“®•Û‘¶ON‚È‚ç‚Î)
+	// ï¿½ÅŒï¿½ï¿½ï¿½ï¿½ï¿½Û‘ï¿½(ï¿½Åï¿½ï¿½ï¿½0ï¿½ï¿½Û‘ï¿½)(Wifiï¿½É‚Â‚È‚ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½Äï¿½ï¿½ï¿½ï¿½Û‘ï¿½ONï¿½È‚ï¿½ï¿½)
 	if (wifi_conn_flag && key_count_auto_save) {
 		this->save_dakey(0);
 	}
 }
 
 
-// ‘ÅŒ®”©“®•Û‘¶‚·‚é‚©‚Ç‚¤‚©‚Ìİ’è‚ğ•ÏX
+// ï¿½ÅŒï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Û‘ï¿½ï¿½ï¿½ï¿½é‚©ï¿½Ç‚ï¿½ï¿½ï¿½ï¿½Ìİ’ï¿½ï¿½ÏX
 void Dakey::set_auto_save_change() {
 	if (key_count_auto_save) {
-		// OFF‚É‚·‚é
+		// OFFï¿½É‚ï¿½ï¿½ï¿½
 		key_count_auto_save = 0;
 	} else {
-		// ON‚É‚·‚é
+		// ONï¿½É‚ï¿½ï¿½ï¿½
 		key_count_auto_save = 1;
-		// Œ»İ‚Ì‘ÅŒ®”‚ğ•Û‘¶
+		// ï¿½ï¿½ï¿½İ‚Ì‘ÅŒï¿½ï¿½ï¿½ï¿½ï¿½Û‘ï¿½
 		this->save_dakey(0);
 	}
 	common_cls.save_file_data(KEY_COUNT_AUTO_SAVE_PATH, (uint8_t *)&key_count_auto_save, 1);
@@ -36,54 +36,54 @@ void Dakey::set_auto_save_change() {
 }
 
 
-// Œ»İ‚Ì‘ÅŒ®”‚ğ•Û‘¶‚·‚é
+// ï¿½ï¿½ï¿½İ‚Ì‘ÅŒï¿½ï¿½ï¿½ï¿½ï¿½Û‘ï¿½ï¿½ï¿½ï¿½ï¿½
 void Dakey::save_dakey(uint8_t view_flag) {
 	char save_path[32];
 	String date_now;
 	int i;
-	// WiFi‚É‚Â‚È‚ª‚Á‚Ä–³‚¯‚ê‚Î‰½‚à‚µ‚È‚¢
+	// WiFiï¿½É‚Â‚È‚ï¿½ï¿½ï¿½ï¿½Ä–ï¿½ï¿½ï¿½ï¿½ï¿½Î‰ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È‚ï¿½
 	if (!wifi_conn_flag) {
-		// WiFi‚ÉÚ‘±‚µ‚Ä‰º‚³‚¢ƒGƒ‰[•\¦
-		if (common_cls.on_tft_unit()) {
-			disp->view_error_wifi_conn();
-		}
+		// WiFiï¿½ÉÚ‘ï¿½ï¿½ï¿½ï¿½Ä‰ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Gï¿½ï¿½ï¿½[ï¿½\ï¿½ï¿½
+		// if (common_cls.on_tft_unit()) {
+		//	disp->view_error_wifi_conn();
+		// }
 		return;
 	}
-	// ƒtƒ@ƒCƒ‹‚Ì‹ó‚«—e—Ê‚ª10kb‚ğ‰º‰ñ‚Á‚½‚ç‰½‚à‚µ‚È‚¢
+	// ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½Ì‹ó‚«—eï¿½Ê‚ï¿½10kbï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ç‰½ï¿½ï¿½ï¿½ï¿½ï¿½È‚ï¿½
 	int size_free = common_cls.spiffs_total() - common_cls.spiffs_used();
 	if (size_free < 10240) {
 		return;
 	}
-	// WEB‚©‚çŒ»İ“ú‚ğæ“¾
+	// WEBï¿½ï¿½ï¿½çŒ»ï¿½İ“ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½æ“¾
 	date_now = common_cls.send_webhook_simple("http://azkey.jp/api/date.php");
-	// ƒtƒ@ƒCƒ‹‚É‘‚«‚Ş
+	// ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½Éï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	File fp;
 	sprintf(save_path, "/D_%06D", boot_count);
 	if (SPIFFS.exists(save_path)){
-		// ƒtƒ@ƒCƒ‹‚ª‚ ‚ê‚Î’Ç‹L
+		// ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î’Ç‹L
 		fp = SPIFFS.open(save_path, "a");
 	} else {
-		// ƒtƒ@ƒCƒ‹‚ª–³‚¯‚ê‚ÎV‹Kì¬
+		// ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎVï¿½Kï¿½ì¬
 		fp = SPIFFS.open(save_path, "w");
 		fp.printf("uid=%S&boot=%D&data=", eep_data.uid, boot_count);
 	}
 	if (!fp) {
-		// ƒtƒ@ƒCƒ‹‘‚İ¸”s
+		// ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İï¿½ï¿½s
 		return;
 	}
-	// “ú‚ğ‘‚İ
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	fp.print(date_now);
 	if (common_cls.key_count_total == 0) {
-		// ‹N“®‚µ‚ÄÅ‰‚Ì‘‚İ
+		// ï¿½Nï¿½ï¿½ï¿½ï¿½ï¿½ÄÅï¿½ï¿½Ìï¿½ï¿½ï¿½ï¿½ï¿½
 		fp.print(",0");
 	} else if (this->last_save_key_count == common_cls.key_count_total) {
-		// ÅŒã‚É‘‚«‚ñ‚¾‘ÅŒ®”‚©‚ç‘‚¦‚Ä‚È‚¢
+		// ï¿½ÅŒï¿½Éï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ñ‚¾‘ÅŒï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ç‘ï¿½ï¿½ï¿½Ä‚È‚ï¿½
 		fp.print(",1");
 	} else {
-		// ‘ÅŒ®”‚ğ‘‚İ
+		// ï¿½ÅŒï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		fp.print(",2,");
-		// ‘ÅŒ®ƒf[ƒ^‚ğURL‚É’Ç‰Á‚·‚é
-		for (i=0; i<KEY_INPUT_MAX; i++) {
+		// ï¿½ÅŒï¿½ï¿½fï¿½[ï¿½^ï¿½ï¿½URLï¿½É’Ç‰ï¿½ï¿½ï¿½ï¿½ï¿½
+		for (i=0; i<key_input_length; i++) {
 			fp.printf("%04x", common_cls.key_count[i]);
 		}
 	}
@@ -91,18 +91,18 @@ void Dakey::save_dakey(uint8_t view_flag) {
 	fp.close();
 	this->last_save_key_count = common_cls.key_count_total;
 	this->last_save_time = millis();
-	// ‘ÅŒ®”‚ğ•Û‘¶‚µ‚Ü‚µ‚½‚ğ•\¦
+	// ï¿½ÅŒï¿½ï¿½ï¿½ï¿½ï¿½Û‘ï¿½ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½ï¿½ï¿½\ï¿½ï¿½
 	if (view_flag) disp->view_dakey_save_comp();
 	
 }
 
 
-// ’èŠúˆ—
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 void Dakey::loop_exec() {
-	// ©“®•Û‘¶ˆ—
-	if (wifi_conn_flag && // Wifi‚ÉŒq‚ª‚Á‚Ä‚¢‚é
-		key_count_auto_save && // ©“®•Û‘¶ON
-		(this->last_save_time + AUTO_SAVE_INTERVAL) < millis() ) { // ÅŒã‚É•Û‘¶‚µ‚½ŠÔ‚©‚çˆê’èˆÈãŠÔ‚ªŒo‚Á‚½‚ç
+	// ï¿½ï¿½ï¿½ï¿½ï¿½Û‘ï¿½ï¿½ï¿½ï¿½ï¿½
+	if (wifi_conn_flag && // Wifiï¿½ÉŒqï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½
+		key_count_auto_save && // ï¿½ï¿½ï¿½ï¿½ï¿½Û‘ï¿½ON
+		(this->last_save_time + AUTO_SAVE_INTERVAL) < millis() ) { // ï¿½ÅŒï¿½É•Û‘ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô‚ï¿½ï¿½ï¿½ï¿½ï¿½Èãï¿½Ô‚ï¿½ï¿½oï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		this->save_dakey(1);
 	}
 }

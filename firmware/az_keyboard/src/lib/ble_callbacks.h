@@ -53,6 +53,14 @@ enum via_command_id {
     id_read_key                             = 0x3E,
     id_get_rotary_key                       = 0x3F,
     id_get_pim447                           = 0x40,
+    id_set_pin_set                          = 0x41,
+    id_i2c_read                             = 0x42,
+    id_i2c_write                            = 0x43,
+    id_get_analog_switch                    = 0x44,
+    id_set_analog_switch                    = 0x45,
+
+    // ステータス取得
+    id_get_firmware_status                  = 0x60,
 
     // システム用
     id_unhandled                            = 0xFF,
