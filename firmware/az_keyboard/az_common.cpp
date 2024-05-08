@@ -270,24 +270,25 @@ int azcrc32(uint8_t* d, int len) {
     return (r ^ (-1));
 };
 
-
+// サウンド定期処理
 static void background_loop(void* arg) {
   while (true) {
     unsigned long start_time = millis();
     // サウンドを制御する定期処理
     sound_cls.loop_exec();
-    // LED用定期処理
-    // rgb_led_cls.rgb_led_loop_exec();
     unsigned long work_time = millis() - start_time;
     if (work_time < 3) { vTaskDelay(3 - work_time); }
   }
 }
 
-// 画面描画ループ
+// 画面、Neopixel定期処理
 static void background_disp_loop(void* arg) {
   while (true) {
     unsigned long start_time = millis();
+    // 画面定期処理
     if (!menu_mode_flag && aztool_mode_flag == 0 && disp_enable) lv_task_handler();
+    // Neopixel定期処理
+    rgb_led_cls.rgb_led_loop_exec();
     unsigned long work_time = millis() - start_time;
     if (work_time < 30) { vTaskDelay(30 - work_time); }
   }
@@ -1027,6 +1028,8 @@ void AzCommon::load_setting_json() {
     // RGBLED設定の取得
     rgb_pin = -1;
     if (setting_obj.containsKey("rgb_pin")) rgb_pin = setting_obj["rgb_pin"].as<signed int>();
+    rgb_len = -1;
+    if (setting_obj.containsKey("rgb_len")) rgb_len = setting_obj["rgb_len"].as<signed int>();
     matrix_row = -1;
     if (setting_obj.containsKey("matrix_row")) matrix_row = setting_obj["matrix_row"].as<signed int>();
     matrix_col = -1;

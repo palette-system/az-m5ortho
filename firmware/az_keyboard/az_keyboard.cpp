@@ -842,11 +842,6 @@ void AzKeyboard::mouse_loop_pad() {
     if(M5.Touch.ispressed()) {
         int x, y, send_x, send_y;
         TouchPoint_t tp;
-        if (last_touch_index < 0) {
-          last_touch_index = 0;
-          touch_send_count = 0;
-          touch_send_index = 0;
-        }
         tp = M5.Touch.getPressPoint();
         if (disp_rotation == 0) { // 左が上
           x = tp.x;
@@ -862,6 +857,11 @@ void AzKeyboard::mouse_loop_pad() {
           y = tp.x;
         }
         if (x > 20 && x < 220 && y > 20 && y < 300) {
+            if (last_touch_index < 0) {
+            last_touch_index = 0;
+            touch_send_count = 0;
+            touch_send_index = 0;
+            }
             send_x = ((x - start_touch_x) * mouse_pad_setting.mouse_speed) / 50;
             send_y = ((y - start_touch_y) * mouse_pad_setting.mouse_speed) / 50;
             //bleKeyboard.mouse_move関数の引数がsigned charのため、singed charの範囲内にクリッピングしなければならない。by Doi.
@@ -897,9 +897,11 @@ void AzKeyboard::mouse_loop_pad() {
                 last_touch_index = -1;
                 return;
             }
+        } else {
+            last_touch_index = 0;
         }
     } else {
-        if (last_touch_index >= 0 && last_touch_index < 40&& touch_send_count == 0 && !bleKeyboard.mouse_press_check(1)
+        if (last_touch_index >= 0 && last_touch_index < 60 && touch_send_count < 5 && !bleKeyboard.mouse_press_check(1)
             ) {
             bleKeyboard.mouse_press(1);
             delay(50);
@@ -908,7 +910,7 @@ void AzKeyboard::mouse_loop_pad() {
         last_touch_index = -1;
     }
     if (send_move_x_buf != 0 || send_move_y_buf != 0) send_move_index++;
-    if (send_move_index > 1) {
+    if (send_move_index > 3) {
         bleKeyboard.mouse_move(send_move_x_buf, send_move_y_buf, 0, 0);
         send_move_x_buf = 0;
         send_move_y_buf = 0;
@@ -1043,6 +1045,6 @@ void AzKeyboard::loop_exec(void) {
 
     ne = millis();
     // Serial.printf("sleep: %d\n", (ne - ns));
-    vTaskDelay(7);
+    vTaskDelay(3);
 
 }
