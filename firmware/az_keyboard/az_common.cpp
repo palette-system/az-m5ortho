@@ -303,7 +303,7 @@ AzCommon::AzCommon() {
 // 共通処理の初期化
 void AzCommon::common_start() {
     // M5Stack初期化
-    M5.begin(true, true, true, true);
+    M5.begin(true, true, true, false);
     M5.Axp.SetLed(false); // サイドの緑LEDを消す
     M5.Lcd.setRotation(0); // 画面を横向きにする
     // 乱数初期化
