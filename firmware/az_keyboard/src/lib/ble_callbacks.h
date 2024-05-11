@@ -134,6 +134,8 @@ class RemapOutputCallbacks : public NimBLECharacteristicCallbacks {
 	void sendRawData(uint8_t *data, uint8_t data_length); // Remapにデータを返す
 };
 
+// HidrawCallback
+void HidrawCallbackExec(int data_length);
 
 
 #endif // CONFIG_BT_NIMBLE_ROLE_PERIPHERAL

@@ -18,6 +18,9 @@
 // 設定ファイルのパス
 #define NEO_SETTING_PATH  "/neo.dat"
 
+// 最後に送ったデータを再送信する回数
+#define NEO_LAST_SEND_COUNT  2
+
 // 常に光らせるキー
 struct neo_select_key {
 	int8_t layer_id; // レイヤー
@@ -62,6 +65,7 @@ class Neopixel
 		int8_t *key_matrix; // マトリックス上にどうキーが並んでいるかデータ
 		int *_select_layer_no; // 今選択中のキーレイヤー
 		bool *_back_flag; // キーに割り当てられていないLEDかどうかのフラグ(後ろ向きのLEDとか)
+		short last_send_index; // 最後に送ったデータの送信回数（送信失敗して光りっぱなしになってしまう事があるので一番最後に送ったデータは何回か送る）
 		neo_select_key select_key[NEO_SELECT_KEY_MAX]; // 常に光らせるキー
 		neo_setting _setting; // 光らせ方の設定
 		int8_t  setting_change; // 設定変更フラグ

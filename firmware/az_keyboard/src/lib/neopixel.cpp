@@ -324,7 +324,15 @@ void Neopixel::rgb_led_loop_exec() {
 	this->select_key_show();
 	int end_crc = this->get_data_crc32();
 	// LEDにデータを送る
-    if (start_crc != end_crc) this->rgb_led->show();
+    if (start_crc != end_crc) {
+		// 前回送ったデータと違えばデータを送る
+		this->last_send_index = 0;
+		this->rgb_led->show();
+	} else if (this->last_send_index < NEO_LAST_SEND_COUNT) {
+		// 前回送ったデータと一緒でも再送信回数データを送る
+		this->last_send_index++;
+		this->rgb_led->show();
+	}
 }
 
 
