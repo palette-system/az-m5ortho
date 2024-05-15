@@ -192,7 +192,7 @@ void BleKeyboardJIS::taskServer(void* pvParameter)
     bleKeyboardInstance->pAdvertising->setScanResponse(true);
     bleKeyboardInstance->pAdvertising->start();
     NimBLEDevice::setMTU(127);
-    Serial.printf("getMTU = %d\n", NimBLEDevice::getMTU());
+    // Serial.printf("getMTU = %d\n", NimBLEDevice::getMTU());
 
 
 

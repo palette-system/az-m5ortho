@@ -959,6 +959,26 @@ void AzKeyboard::mouse_loop_none() {
     }
 }
 
+// タッチパネル用定期処理
+void AzKeyboard::touch_loop_exec(void) {
+  while (true) {
+    if (aztool_mode_flag == 2) { delay(100); continue; }
+    unsigned long start_time = millis();
+    // タッチパネルマウス操作
+    if (mouse_pad_status == 1) { // マウスパッド操作の時
+        mouse_loop_pad();
+    } else if (mouse_pad_status == 2) { // ジョイスティック操作の時
+        mouse_loop_joy();
+    } else if (mouse_pad_status == 3) { // ソフトウェアキーの場合
+        // if ((lix % 2) == 0) disp->loop_exec(); // LVGLの表示をする
+    } else if (mouse_pad_status == 0) { // 操作なし設定で操作なしの時
+        mouse_loop_none();
+    }
+    unsigned long work_time = millis() - start_time;
+    if (work_time < 3) { vTaskDelay(3 - work_time); }
+  }
+}
+
 // 定期実行の処理
 void AzKeyboard::loop_exec(void) {
   unsigned long ns, ne;
@@ -994,18 +1014,6 @@ void AzKeyboard::loop_exec(void) {
 
     // RGB_LEDを制御する定期処理
     rgb_led_cls.rgb_led_loop_exec();
-
-    // タッチパネルマウス操作
-    // Serial.printf("mouse_pad_status: %D\n", mouse_pad_status);
-    if (mouse_pad_status == 1) { // マウスパッド操作の時
-        mouse_loop_pad();
-    } else if (mouse_pad_status == 2) { // ジョイスティック操作の時
-        mouse_loop_joy();
-    } else if (mouse_pad_status == 3) { // ソフトウェアキーの場合
-        // if ((lix % 2) == 0) disp->loop_exec(); // LVGLの表示をする
-    } else if (mouse_pad_status == 0) { // 操作なし設定で操作なしの時
-        mouse_loop_none();
-    }
 
     if (pw_update_index >= 0) pw_update_index++;
     if (pw_update_index > 6000) disp->view_power();

@@ -1,6 +1,7 @@
 #ifndef AzKeyboard_h
 #define AzKeyboard_h
 
+static void background_touch_loop(void* arg);
 
 // クラスの定義
 class AzKeyboard
@@ -8,6 +9,7 @@ class AzKeyboard
     public:
         AzKeyboard();   // コンストラクタ
         void start_keyboard(); // キーボードとして処理開始
+        void touch_loop_exec(void); // タッチパッド操作用のループ処理
         void loop_exec();         // キーボード定期処理
         void key_action_exec(); // ステータスが変更されたキーのアクションを実行する
         void key_repeat_exec(); // キー連打処理

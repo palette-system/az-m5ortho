@@ -306,7 +306,7 @@ void AzCommon::common_start() {
     M5.begin(true, true, true, false);
     M5.Axp.SetLed(false); // サイドの緑LEDを消す
     M5.Lcd.setRotation(0); // 画面を横向きにする
-    Serial.begin(115200); // シリアル通信開始
+    // Serial.begin(115200); // シリアル通信開始
     // 乱数初期化
     randomSeed(millis());
     // ファイルシステム初期化

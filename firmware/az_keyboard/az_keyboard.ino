@@ -17,6 +17,12 @@ AzKeyboard azkb = AzKeyboard();
 // 設定モードクラス
 AzSetting azstg = AzSetting();
 
+// タッチパネル用定期処理
+static void background_touch_loop(void* arg) {
+  azkb.touch_loop_exec();
+}
+
+
 void setup() {
     int i, j, s;
     // 共通処理の初期化
@@ -83,6 +89,9 @@ void setup() {
         ESP_LOGD(LOG_TAG, "キーボードモード起動\n");
         // キーボードとして起動
         azkb.start_keyboard();
+        // タッチパネル用バック処理
+        xTaskCreatePinnedToCore(background_touch_loop, "tcloop", 2048, NULL, 20, NULL, 0);
+
     }
 }
 
