@@ -314,7 +314,7 @@ class AzCommon
         void blemac_load(); // BLE用macアドレスリスト読み込み
         void blemac_add(uint8_t *addr); // BLE用macアドレス追加
         void moniter_brightness(int set_type); // 画面の明るさ設定
-        int i2c_setup(int p, i2c_option *opt); // IOエキスパンダの初期化(戻り値：増えるキーの数)
+        int i2c_setup(int p, i2c_option *opt, short map_set); // IOエキスパンダの初期化(戻り値：増えるキーの数)
         void pin_setup(); // キーの入力ピンの初期化
         bool layers_exists(int layer_no); // レイヤーが存在するか確認
         void layer_set(int layer_no); // 現在のレイヤーを指定したレイヤーにする

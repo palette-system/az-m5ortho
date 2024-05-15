@@ -306,6 +306,7 @@ void AzCommon::common_start() {
     M5.begin(true, true, true, false);
     M5.Axp.SetLed(false); // サイドの緑LEDを消す
     M5.Lcd.setRotation(0); // 画面を横向きにする
+    Serial.begin(115200); // シリアル通信開始
     // 乱数初期化
     randomSeed(millis());
     // ファイルシステム初期化
@@ -1505,7 +1506,7 @@ bool AzCommon::create_setting_json() {
 }
 
 // I2C機器の初期化(戻り値：増えるキーの数)
-int AzCommon::i2c_setup(int p, i2c_option *opt) {
+int AzCommon::i2c_setup(int p, i2c_option *opt, short map_set) {
     int i, j, k, m, x;
     int r = 0;
     int set_type[16];
@@ -1526,12 +1527,14 @@ int AzCommon::i2c_setup(int p, i2c_option *opt) {
                 ioxp_status[x] = 0;
             }
             if (ioxp_status[x] < 1) {
-            // Serial.printf("i2c_setup: begin %D\n", i2cioxp_obj.ioxp[i].addr);
+                // Serial.printf("i2c_setup: begin %D start\n", i2cioxp_obj.ioxp[i].addr);
                 if (ioxp_obj[x]->begin_I2C(i2cioxp_obj.ioxp[i].addr, &Wire)) {
                     ioxp_hash[x] = 1;
                     ioxp_status[x] = 1;
+                    // Serial.printf("i2c_setup: begin %D OK\n", i2cioxp_obj.ioxp[i].addr);
                 } else {
                     // 初期化失敗
+                    // Serial.printf("i2c_setup: begin %D NG\n", i2cioxp_obj.ioxp[i].addr);
                     continue;
                 }
             }
@@ -1574,8 +1577,9 @@ int AzCommon::i2c_setup(int p, i2c_option *opt) {
         // 設定データのメモリに反映
         memcpy(opt->data, &i2cazxp_obj, sizeof(i2c_azxp));
 
-
     }
+    // マップ設定をするフラグが無ければここで返す
+    if (map_set <= 0) return p;
     // マッピングに合わせてキー番号を付けなおす
     if (opt->opt_type == 1 || opt->opt_type == 2 || opt->opt_type == 3 || opt->opt_type == 4 || opt->opt_type == 5) {
         // キーの番号をmapデータに入れる
@@ -1694,7 +1698,7 @@ void AzCommon::pin_setup() {
 
         // I2C接続のオプション初期化
         for (i=0; i<i2copt_len; i++) {
-            key_input_length = i2c_setup(key_input_length, &i2copt[i]);
+            key_input_length = i2c_setup(key_input_length, &i2copt[i], 1);
         }
         
     }
@@ -1909,6 +1913,7 @@ int AzCommon::i2c_read(int p, i2c_option *opt, char *read_data) {
     uint16_t rowput_mask;
     int rowput_len;
     int read_data_bit = 8;
+    uint16_t read_one;
     uint16_t read_raw[32];
     Adafruit_MCP23X17 *ioxp;
     i2c_map i2cmap_obj;
@@ -1943,12 +1948,32 @@ int AzCommon::i2c_read(int p, i2c_option *opt, char *read_data) {
                     if (rowput_mask & 0xff) { // ポートA
                         ioxp->writeGPIO(i2cioxp_obj.ioxp[i].row_output[j] & 0xff, 0); // ポートAに出力
                     }
-                    read_raw[e] = ~ioxp->readGPIOAB() | rowput_mask; // ポートA,B両方のデータを取得
+                    // IOエキスパンダの戻りが全部押されてた場合ピンのリセットからやりなおし
+                    read_one = ioxp->readGPIOAB();
+                    if (read_one == 0) { // 全ピン0の場合リセットがかかった可能性あり
+                        delay(10);
+                        i2c_setup(0, opt, 0); // ピンのセットアップやりなおし
+                        delay(10);
+                        return i2c_read(p, opt, read_data); // 読み込みやりなおし
+                    }
+                    // ポートA,B両方のデータを取得
+                    if (read_one < 0xffff) { // 0xffff が来るときはIOエキスパンダが接続されていない
+                        read_raw[e] = ~read_one | rowput_mask;
+                    } else {
+                        read_raw[e] = 0;
+                    }
                     e++;
                 }
             } else {
                 // col と row が無い場合はダイレクトのみ
-                read_raw[e] = ~ioxp_obj[x]->readGPIOAB(); // ポートA,B両方のデータを取得
+                read_one = ioxp_obj[x]->readGPIOAB();
+                if (read_one == 0) { // 全ピン0の場合リセットがかかった可能性あり
+                    delay(10);
+                    i2c_setup(0, opt, 0); // ピンのセットアップやりなおし
+                    delay(10);
+                    return i2c_read(p, opt, read_data); // 読み込みやりなおし
+                }
+                read_raw[e] = ~read_one; // ポートA,B両方のデータを取得
                 e++;
             }
         }
