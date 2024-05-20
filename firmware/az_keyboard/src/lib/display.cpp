@@ -1037,10 +1037,6 @@ void Display::view_keyboard_setting() {
 void Display::view_black() {
 }
 
-// 画面いっぱいに画像を表示する
-void Display::view_full_image(uint8_t *image_data) {
-}
-
 // 数字を表示
 void Display::view_int(uint16_t x, uint16_t y, int v) {
 	/*
@@ -1121,13 +1117,6 @@ void Display::view_dakagi_qr_on() {
 		this->_qr_flag = 1;
 		this->view_type = DISP_TYPE_DKQRCOD;
 	}
-}
-
-
-// 画面を真っ暗にする
-void Display::view_full_black() {
-    M5.Lcd.fillScreen(BLACK);
-    this->_last_view_type = 255;
 }
 
 

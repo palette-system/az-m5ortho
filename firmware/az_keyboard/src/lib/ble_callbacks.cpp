@@ -963,7 +963,7 @@ void HidrawCallbackExec(int data_length) {
 		}
 		case id_get_firmware_status: {
 			// ファームウェアステータス取得
-			sprintf((char *)send_buf, "%c%s-%s", id_get_firmware_status, FIRMWARE_VERSION, EEP_DATA_VERSION);
+			sprintf((char *)send_buf, "%c1-%s-%s", id_get_firmware_status, FIRMWARE_VERSION, EEP_DATA_VERSION);
 			// this->sendRawData(send_buf, 32);
 			return;
 

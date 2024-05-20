@@ -90,7 +90,7 @@ void setup() {
         // キーボードとして起動
         azkb.start_keyboard();
         // タッチパネル用バック処理
-        xTaskCreatePinnedToCore(background_touch_loop, "tcloop", 2048, NULL, 20, NULL, 0);
+        xTaskCreatePinnedToCore(background_touch_loop, "tcloop", 2048, NULL, 20, NULL, 1);
 
     }
 }

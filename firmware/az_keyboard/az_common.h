@@ -45,7 +45,7 @@
 
 
 // ファームウェアのバージョン文字
-#define FIRMWARE_VERSION   "000223"
+#define FIRMWARE_VERSION   "000300"
 
 // EEPROMに保存しているデータのバージョン文字列
 #define EEP_DATA_VERSION    "AZM024"
@@ -55,7 +55,10 @@
 #define BLE_HID_PID  0xA111
 
 // キースキャンループの待ち時間デフォルト(ms)
-#define LOOP_DELAY_DEFAULT  5
+#define LOOP_DELAY_DEFAULT  10
+
+// タッチパッドスキャンループの待ち時間デフォルト(ms)
+#define LOOP_DELAY_TOUCH_DEFAULT  3
 
 // JSON のファイルパス
 #define SETTING_JSON_PATH "/setting.json"
@@ -420,6 +423,9 @@ extern int key_input_length;
 
 // キースキャンループの待ち時間
 extern short loop_delay;
+
+// タッチパッドスキャンループの待ち時間
+extern short loop_delay_touch;
 
 // ディスプレイの向き
 extern uint8_t disp_rotation;

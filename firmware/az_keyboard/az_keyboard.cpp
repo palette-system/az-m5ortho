@@ -975,7 +975,7 @@ void AzKeyboard::touch_loop_exec(void) {
         mouse_loop_none();
     }
     unsigned long work_time = millis() - start_time;
-    if (work_time < 3) { vTaskDelay(3 - work_time); }
+    if (work_time < loop_delay_touch) { vTaskDelay(loop_delay_touch - work_time); }
   }
 }
 
@@ -1053,6 +1053,6 @@ void AzKeyboard::loop_exec(void) {
 
     ne = millis();
     // Serial.printf("sleep: %d\n", (ne - ns));
-    vTaskDelay(3);
+    vTaskDelay(loop_delay);
 
 }

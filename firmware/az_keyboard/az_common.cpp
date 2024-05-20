@@ -105,6 +105,9 @@ int key_input_length;
 // キースキャンループの待ち時間
 short loop_delay;
 
+// タッチパッドスキャンループの待ち時間
+short loop_delay_touch;
+
 // ディスプレイの向き
 uint8_t disp_rotation;
 
@@ -277,7 +280,7 @@ static void background_loop(void* arg) {
     // サウンドを制御する定期処理
     sound_cls.loop_exec();
     unsigned long work_time = millis() - start_time;
-    if (work_time < 3) { vTaskDelay(3 - work_time); }
+    if (work_time < 5) { vTaskDelay(5 - work_time); }
   }
 }
 
@@ -670,6 +673,13 @@ void AzCommon::load_setting_json() {
         loop_delay = setting_obj["loop_delay"].as<signed int>();
     } else {
         loop_delay = LOOP_DELAY_DEFAULT;
+    }
+
+    // キースキャンループの待ち時間
+    if (setting_obj.containsKey("loop_delay_touch")) {
+        loop_delay_touch = setting_obj["loop_delay_touch"].as<signed int>();
+    } else {
+        loop_delay_touch = LOOP_DELAY_TOUCH_DEFAULT;
     }
 
     // キーボードのタイプがeep_dataと一致しなければ現在選択しているキーボードと、設定ファイルのキーボードが一致していないので
